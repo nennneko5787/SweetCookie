@@ -1,0 +1,37 @@
+# Gradle
+.gradle/
+build/
+!build-logic/
+!build.gradle.kts
+out/
+
+# Stonecutter — generated per-node build dirs and the active-version marker
+versions/*/build/
+.stonecutter/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# Minecraft dev runs
+run/
+runs/
+versions/*/run/
+
+# Upstream metadata is FETCHED, never committed. See spec/upstream/fetch.md.
+.upstream-cache/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local-only developer overrides
+local.properties
+gradle.local.properties

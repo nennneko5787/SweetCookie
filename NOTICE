@@ -1,0 +1,80 @@
+SweetCookie
+Copyright (c) 2026 nennneko5787
+Licensed under the MIT License. See LICENSE.
+
+This file records third-party material and the terms under which it is used.
+Policy is ADR-0006 (spec/adr/0006-licensing-and-attribution.md) and constitution rule 10.
+
+================================================================================
+NO MOJANG CONTENT IS DISTRIBUTED
+================================================================================
+
+SweetCookie reads Bedrock add-ons but ships none of Mojang's material.
+
+Mojang schema and reference metadata (https://github.com/Mojang/bedrock-samples,
+licensed NOASSERTION under Mojang's own terms) is FETCHED AT BUILD TIME, pinned by
+commit SHA and per-file SHA-256 in spec/upstream/bedrock-samples.lock.json, and used
+only to generate source code. Neither that metadata nor any copy of Mojang's data
+appears in a released artifact.
+
+Minecraft is a trademark of Mojang Synergies AB. SweetCookie is not affiliated with,
+endorsed by, or sponsored by Mojang Synergies AB or Microsoft Corporation.
+
+================================================================================
+BUNDLED AND LINKED DEPENDENCIES
+================================================================================
+
+team.unnamed:mocha .......................................... MIT
+    Molang parser and JVM bytecode compiler.
+    https://github.com/unnamed/mocha
+    See spec/adr/0008-mocha-for-molang.md.
+
+org.geysermc.geyser:api ..................... MIT, compileOnly (not redistributed)
+    https://github.com/GeyserMC/Geyser
+
+com.viaversion:viaversion-api ............ GPL-3.0, compileOnly (not redistributed)
+    Used only for optional runtime detection. No ViaVersion code is linked into or
+    distributed with SweetCookie; the API is a compile-time-only dependency, which
+    is why its licence does not propagate.
+    https://github.com/ViaVersion/ViaVersion
+
+================================================================================
+REFERENCED WORK
+================================================================================
+
+Consulted to understand Bedrock's formats and Bedrock/Java semantics. Where an
+implementation here was informed by one of these, the source file says so and states
+that the implementation is independent.
+
+MIT — may be adapted with attribution:
+    GeyserMC/Geyser, GeyserMC/mappings, GeyserMC/Hydraulic, GeyserMC/MCProtocolLib
+        The largest existing body of Bedrock/Java semantic mappings.
+    EaseCation/FabricRock
+        The only prior attempt to load .mcaddon files in Java Edition.
+    unnamed/hephaestus-engine, unnamed/creative
+
+Apache-2.0 — may be adapted with attribution:
+    CloudburstMC/Protocol
+
+GPL-3.0 and AGPL-3.0 — READ ONLY. NO CODE FROM THESE IS PRESENT IN SWEETCOOKIE:
+    JannisX11/blockbench           the de-facto specification of the .geo.json format
+    JannisX11/snowstorm            reference implementation of the particle format
+    GeyserMC/Rainbow               its OUTPUT SCHEMA is matched; its code is not used
+    Kas-tle/java2bedrock.sh
+    CloudburstMC/Nukkit
+
+    Reading a program to learn a FILE FORMAT is not derivation of that program.
+    Reimplementing the format independently is legitimate, and the distinction is
+    maintained deliberately: any file whose implementation was informed by one of
+    these carries a comment naming what was consulted and asserting independence.
+    If that cannot be stated honestly, the code does not go in.
+
+LGPL-3.0 — consulted for component and AI semantics only:
+    AllayMC/Allay, PowerNukkitX
+
+================================================================================
+CONFORMANCE CORPUS
+================================================================================
+
+Every add-on under spec/conformance/ is 100% original content authored for this
+project. No community pack, no vanilla file, not a fragment of either.

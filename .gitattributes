@@ -1,0 +1,23 @@
+* text=auto eol=lf
+
+*.bat        text eol=crlf
+gradlew      text eol=lf
+*.sh         text eol=lf
+
+# Conformance goldens are compared byte-for-byte. Never let git touch them.
+spec/conformance/**/expected/**  -text
+spec/conformance/**/*.png        binary
+spec/conformance/**/*.nbt        binary
+spec/conformance/**/*.mcstructure binary
+
+*.png   binary
+*.jpg   binary
+*.ogg   binary
+*.jar   binary
+*.zip   binary
+*.mcpack  binary
+*.mcaddon binary
+
+# Generated — keep diffs out of review by default
+docs/compatibility/**   linguist-generated=true
+**/src/generated/**     linguist-generated=true
