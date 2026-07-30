@@ -1,0 +1,50 @@
+# Per-node dependency versions. Replaces the versions/<node>/gradle.properties pattern.
+# Read in buildscripts with prop("deps.minecraft") etc.
+#
+# Adding a Minecraft version means one `match(...)` argument in settings.gradle.kts and one
+# section per loader here. Nothing else moves — SC-220 section 6.
+
+# Which Loom to resolve. dev.kikugie.loom-back-compat picks the plain or the -remap flavour
+# per node, which is what lets one buildscript span the 26.1 deobfuscation seam.
+loomx.loom_version = "1.17.17"
+
+mod.id            = "sweetcookie"
+mod.name          = "SweetCookie"
+mod.group         = "net.nennneko5787"
+mod.version       = "0.1.0"
+mod.description   = "Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition."
+mod.authors       = ["nennneko5787"]
+mod.license.name  = "MIT"
+mod.license.url   = "https://opensource.org/licenses/MIT"
+mod.sources_url   = "https://github.com/nennneko5787/SweetCookie"
+mod.issues_url    = "https://github.com/nennneko5787/SweetCookie/issues"
+# Required on both sides: Bedrock geometry, Molang and particles are client-side work.
+mod.environment   = "both"
+
+# ── Fabric ───────────────────────────────────────────────────────────────────
+[fabric]
+deps.fabric-loader = "0.19.3"
+
+[fabric."26.2"]
+deps.minecraft  = "26.2"
+deps.fabric-api = "0.156.0+26.2"
+deps.java       = "25"
+
+[fabric."1.21.11"]
+deps.minecraft  = "1.21.11"
+deps.fabric-api = "0.141.6+1.21.11"
+deps.java       = "21"
+
+# ── NeoForge ─────────────────────────────────────────────────────────────────
+[neoforge]
+
+[neoforge."26.2"]
+deps.minecraft = "26.2"
+# Still -beta as of 2026-07-31; NeoForge has published no 26.2 release announcement.
+deps.neoforge  = "26.2.0.40-beta"
+deps.java      = "25"
+
+[neoforge."1.21.11"]
+deps.minecraft = "1.21.11"
+deps.neoforge  = "21.11.45"
+deps.java      = "21"

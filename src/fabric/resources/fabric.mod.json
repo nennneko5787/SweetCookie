@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "sweetcookie",
+  "version": "0.1.0",
+  "name": "SweetCookie",
+  "description": "Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.",
+  "authors": ["nennneko5787"],
+  "contact": {
+    "homepage": "https://github.com/nennneko5787/SweetCookie",
+    "sources": "https://github.com/nennneko5787/SweetCookie",
+    "issues": "https://github.com/nennneko5787/SweetCookie/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["net.nennneko5787.sweetcookie.fabric.SweetCookieFabric"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.11"
+  },
+  "suggests": {
+    "modmenu": "*"
+  },
+  "_comment": "TODO(spike): the minecraft range must become per-node. A single broad range is wrong across the 1.21.11/26.2 seam and will let the mod load on a version it was not compiled for. SC-220 section 6 requires adding a version to touch only settings.gradle.kts and the properties file, so this metadata has to be generated, not hand-written."
+}

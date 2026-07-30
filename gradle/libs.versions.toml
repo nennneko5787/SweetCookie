@@ -1,0 +1,38 @@
+[versions]
+# Build plugins — verified against their maven metadata on 2026-07-31.
+stonecutter      = "0.9.7"
+loom-back-compat = "0.4.1"
+loom             = "1.17.17"
+moddev           = "2.0.143"
+foojay           = "1.0.0"
+mod-publish      = "2.1.1"
+
+# Runtime, shared by every node.
+fabric-loader    = "0.19.3"
+
+# core/ dependencies. These must never pull in Minecraft — ADR-0001.
+mocha            = "3.0.1"
+junit            = "5.11.4"
+
+# compileOnly interop. Never redistributed; see NOTICE.
+geyser-api       = "2.11.0-SNAPSHOT"
+viaversion-api   = "5.11.0"
+
+[libraries]
+mocha           = { module = "team.unnamed:mocha",                 version.ref = "mocha" }
+junit-bom       = { module = "org.junit:junit-bom",                version.ref = "junit" }
+junit-jupiter   = { module = "org.junit.jupiter:junit-jupiter" }
+junit-launcher  = { module = "org.junit.platform:junit-platform-launcher" }
+geyser-api      = { module = "org.geysermc.geyser:api",            version.ref = "geyser-api" }
+viaversion-api  = { module = "com.viaversion:viaversion-api",      version.ref = "viaversion-api" }
+
+[plugins]
+stonecutter      = { id = "dev.kikugie.stonecutter",       version.ref = "stonecutter" }
+loom-back-compat = { id = "dev.kikugie.loom-back-compat",  version.ref = "loom-back-compat" }
+# Both Loom flavours are declared and neither is applied directly: loom-back-compat picks one per
+# node, so that a single Fabric buildscript spans the 26.1 deobfuscation seam. `-remap` is for the
+# obfuscated nodes, plain for the unobfuscated ones; they share a version line.
+loom             = { id = "net.fabricmc.fabric-loom",       version.ref = "loom" }
+loom-remap       = { id = "net.fabricmc.fabric-loom-remap", version.ref = "loom" }
+moddev           = { id = "net.neoforged.moddev",          version.ref = "moddev" }
+mod-publish      = { id = "me.modmuss50.mod-publish-plugin", version.ref = "mod-publish" }

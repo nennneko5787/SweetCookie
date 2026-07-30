@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The specification gate. Seconds, no Minecraft, and it is what stops the coverage ledger from
+  # drifting into fiction (constitution rule 9). Runs first so a dishonest ledger fails fast.
+  spec:
+    name: Specification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Build core first so specLinks has bytecode to scan; without it the traceability check
+      # silently passes on an empty scan.
+      - name: Build the Minecraft-free core
+        run: ./gradlew --project-dir core build
+
+      - name: Specification checks
+        run: ./gradlew specAll
+
+  # Every (Minecraft version x loader). A change may land on one combination first, but one that
+  # breaks another combination's BUILD is rejected - SC-220 section 9. Deferring cross-version
+  # parity is how a project discovers at month nine that its render abstraction does not fit.
+  nodes:
+    name: ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 26.2-fabric
+          - 26.2-neoforge
+          - 1.21.11-fabric
+          - 1.21.11-neoforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # The daemon runs on the newest JDK any node needs; each node then targets its own
+          # release through a toolchain. 26.2 requires Java 25, 1.21.11 requires 21.
+          java-version: |
+            21
+            25
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build ${{ matrix.node }}
+        run: ./gradlew ":${{ matrix.node }}:build"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sweetcookie-${{ matrix.node }}
+          path: versions/${{ matrix.node }}/build/libs/*.jar
+          if-no-files-found: error
+
+  # Fails when Mojang publishes a feature identifier the ledger does not know about. Separated from
+  # the `spec` job because it needs network access to fetch the pinned upstream snapshot, and a
+  # network failure should not be indistinguishable from a stale ledger.
+  upstream:
+    name: Upstream drift
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Fetch pinned Mojang metadata
+        run: ./gradlew fetchUpstreamMetadata
+
+      # Resolved by ADDING a `status: stub` coverage entry - not by implementing the feature, and
+      # not by silencing the check. See spec/upstream/fetch.md.
+      - name: Check for undeclared Bedrock features
+        run: ./gradlew specUpstreamDiff

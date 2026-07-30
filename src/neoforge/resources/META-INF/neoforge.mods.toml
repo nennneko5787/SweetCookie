@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/nennneko5787/SweetCookie/issues"
+
+# TODO(spike): versionRange values must become per-node. A single broad range is wrong across the
+# 1.21.11/26.2 seam and lets the mod load on a version it was not compiled for. SC-220 section 6
+# requires adding a Minecraft version to touch only settings.gradle.kts and the properties file,
+# so this metadata has to be generated rather than hand-written.
+
+[[mods]]
+modId = "sweetcookie"
+version = "0.1.0"
+displayName = "SweetCookie"
+authors = "nennneko5787"
+description = '''
+Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.
+
+Loads .mcaddon and .mcpack files - behaviour packs and resource packs - and executes them inside
+Java Edition: custom blocks, items, entities with their component and AI-goal definitions, Bedrock
+skeletal models and animations, Molang, Snowstorm particles, loot tables, recipes and spawn rules.
+'''
+
+[[dependencies.sweetcookie]]
+modId = "neoforge"
+type = "required"
+versionRange = "[1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.sweetcookie]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.11,)"
+ordering = "NONE"
+side = "BOTH"
