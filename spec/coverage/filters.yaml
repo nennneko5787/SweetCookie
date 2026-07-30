@@ -12,8 +12,9 @@
 domain: filters
 spec: SC-140
 upstream:
-  source: "metadata/doc_modules/entities.json"
-  pointer: "/data_items/Filters"
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Filters"
 
 entries:
   # ── Identity, family, variant ──────────────────────────────────────────────
@@ -257,4 +258,10 @@ entries:
   - id: random_chance
     status: stub
   - id: redstone_strength_at_position
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: is_weather
     status: stub

@@ -7,7 +7,10 @@
 
 domain: molang-math
 spec: SC-130
-upstream: null
+upstream:
+  - source: "metadata/molang_modules/mojang-molang-queries.json"
+    pointer: "/math_functions"
+    idField: name
 
 entries:
   - id: math.abs
@@ -127,4 +130,12 @@ entries:
   - id: math.ease_out_bounce
     status: stub
   - id: math.ease_in_out_bounce
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: math.inverse_lerp
+    status: stub
+  - id: math.sign
     status: stub

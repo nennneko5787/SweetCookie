@@ -12,8 +12,10 @@
 domain: entity-goals
 spec: SC-160
 upstream:
-  source: "metadata/doc_modules/entities.json"
-  pointer: "/data_items/AI Goals"
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Server Entity Documentation"
+      - "AI Goals"
 
 entries:
   - id: "minecraft:behavior.melee_attack"
@@ -135,4 +137,234 @@ entries:
   - id: "minecraft:behavior.dragontakeoff"
     status: stub
   - id: "minecraft:behavior.dragondeath"
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: "minecraft:behavior.beg"
+    status: stub
+  - id: "minecraft:behavior.celebrate_survive"
+    status: stub
+  - id: "minecraft:behavior.charge_held_item"
+    status: stub
+  - id: "minecraft:behavior.defend_trusted_target"
+    status: stub
+  - id: "minecraft:behavior.defend_village_target"
+    status: stub
+  - id: "minecraft:behavior.door_interact"
+    status: stub
+  - id: "minecraft:behavior.drink_milk"
+    status: stub
+  - id: "minecraft:behavior.drink_potion"
+    status: stub
+  - id: "minecraft:behavior.eat_mob"
+    status: stub
+  - id: "minecraft:behavior.emerge"
+    status: stub
+  - id: "minecraft:behavior.enderman_leave_block"
+    status: stub
+  - id: "minecraft:behavior.enderman_take_block"
+    status: stub
+  - id: "minecraft:behavior.equip_item"
+    status: stub
+  - id: "minecraft:behavior.explore_outskirts"
+    status: stub
+  - id: "minecraft:behavior.fertilize_farm_block"
+    status: stub
+  - id: "minecraft:behavior.find_cover"
+    status: stub
+  - id: "minecraft:behavior.find_mount"
+    status: stub
+  - id: "minecraft:behavior.find_underwater_treasure"
+    status: stub
+  - id: "minecraft:behavior.fire_at_target"
+    status: stub
+  - id: "minecraft:behavior.float_tempt"
+    status: stub
+  - id: "minecraft:behavior.float_wander"
+    status: stub
+  - id: "minecraft:behavior.follow_caravan"
+    status: stub
+  - id: "minecraft:behavior.follow_mob"
+    status: stub
+  - id: "minecraft:behavior.follow_target_leader"
+    status: stub
+  - id: "minecraft:behavior.go_and_give_items_to_noteblock"
+    status: stub
+  - id: "minecraft:behavior.go_and_give_items_to_owner"
+    status: stub
+  - id: "minecraft:behavior.go_home"
+    status: stub
+  - id: "minecraft:behavior.guardian_attack"
+    status: stub
+  - id: "minecraft:behavior.harvest_farm_block"
+    status: stub
+  - id: "minecraft:behavior.hold_ground"
+    status: stub
+  - id: "minecraft:behavior.inspect_bookshelf"
+    status: stub
+  - id: "minecraft:behavior.investigate_suspicious_location"
+    status: stub
+  - id: "minecraft:behavior.jump_around_target"
+    status: stub
+  - id: "minecraft:behavior.jump_to_block"
+    status: stub
+  - id: "minecraft:behavior.lay_down"
+    status: stub
+  - id: "minecraft:behavior.lay_egg"
+    status: stub
+  - id: "minecraft:behavior.leap_at_target"
+    status: stub
+  - id: "minecraft:behavior.make_love"
+    status: stub
+  - id: "minecraft:behavior.melee_box_attack"
+    status: stub
+  - id: "minecraft:behavior.mingle"
+    status: stub
+  - id: "minecraft:behavior.move_around_target"
+    status: stub
+  - id: "minecraft:behavior.move_indoors"
+    status: stub
+  - id: "minecraft:behavior.move_outdoors"
+    status: stub
+  - id: "minecraft:behavior.move_through_village"
+    status: stub
+  - id: "minecraft:behavior.move_to_block"
+    status: stub
+  - id: "minecraft:behavior.move_to_liquid"
+    status: stub
+  - id: "minecraft:behavior.move_to_poi"
+    status: stub
+  - id: "minecraft:behavior.move_to_random_block"
+    status: stub
+  - id: "minecraft:behavior.move_towards_dwelling_restriction"
+    status: stub
+  - id: "minecraft:behavior.move_towards_home_restriction"
+    status: stub
+  - id: "minecraft:behavior.nap"
+    status: stub
+  - id: "minecraft:behavior.nearest_prioritized_attackable_target"
+    status: stub
+  - id: "minecraft:behavior.ocelot_sit_on_block"
+    status: stub
+  - id: "minecraft:behavior.ocelotattack"
+    status: stub
+  - id: "minecraft:behavior.offer_flower"
+    status: stub
+  - id: "minecraft:behavior.owner_hurt_by_target"
+    status: stub
+  - id: "minecraft:behavior.owner_hurt_target"
+    status: stub
+  - id: "minecraft:behavior.pet_sleep_with_owner"
+    status: stub
+  - id: "minecraft:behavior.place_block"
+    status: stub
+  - id: "minecraft:behavior.play"
+    status: stub
+  - id: "minecraft:behavior.play_dead"
+    status: stub
+  - id: "minecraft:behavior.player_ride_tamed"
+    status: stub
+  - id: "minecraft:behavior.raid_garden"
+    status: stub
+  - id: "minecraft:behavior.ram_attack"
+    status: stub
+  - id: "minecraft:behavior.random_breach"
+    status: stub
+  - id: "minecraft:behavior.random_look_around_and_sit"
+    status: stub
+  - id: "minecraft:behavior.random_search_and_dig"
+    status: stub
+  - id: "minecraft:behavior.random_sitting"
+    status: stub
+  - id: "minecraft:behavior.receive_love"
+    status: stub
+  - id: "minecraft:behavior.restrict_open_door"
+    status: stub
+  - id: "minecraft:behavior.roll"
+    status: stub
+  - id: "minecraft:behavior.run_around_like_crazy"
+    status: stub
+  - id: "minecraft:behavior.scared"
+    status: stub
+  - id: "minecraft:behavior.share_items"
+    status: stub
+  - id: "minecraft:behavior.silverfish_merge_with_stone"
+    status: stub
+  - id: "minecraft:behavior.silverfish_wake_up_friends"
+    status: stub
+  - id: "minecraft:behavior.skeleton_horse_trap"
+    status: stub
+  - id: "minecraft:behavior.sleep"
+    status: stub
+  - id: "minecraft:behavior.slime_attack"
+    status: stub
+  - id: "minecraft:behavior.slime_float"
+    status: stub
+  - id: "minecraft:behavior.slime_keep_on_jumping"
+    status: stub
+  - id: "minecraft:behavior.slime_random_direction"
+    status: stub
+  - id: "minecraft:behavior.snacking"
+    status: stub
+  - id: "minecraft:behavior.sniff"
+    status: stub
+  - id: "minecraft:behavior.sonic_boom"
+    status: stub
+  - id: "minecraft:behavior.squid_dive"
+    status: stub
+  - id: "minecraft:behavior.squid_flee"
+    status: stub
+  - id: "minecraft:behavior.squid_idle"
+    status: stub
+  - id: "minecraft:behavior.squid_move_away_from_ground"
+    status: stub
+  - id: "minecraft:behavior.squid_out_of_water"
+    status: stub
+  - id: "minecraft:behavior.stay_near_noteblock"
+    status: stub
+  - id: "minecraft:behavior.stomp_attack"
+    status: stub
+  - id: "minecraft:behavior.stomp_turtle_egg"
+    status: stub
+  - id: "minecraft:behavior.stroll_towards_village"
+    status: stub
+  - id: "minecraft:behavior.swell"
+    status: stub
+  - id: "minecraft:behavior.swim_idle"
+    status: stub
+  - id: "minecraft:behavior.swim_up_for_breath"
+    status: stub
+  - id: "minecraft:behavior.swim_with_entity"
+    status: stub
+  - id: "minecraft:behavior.swoop_attack"
+    status: stub
+  - id: "minecraft:behavior.take_block"
+    status: stub
+  - id: "minecraft:behavior.take_flower"
+    status: stub
+  - id: "minecraft:behavior.teleport_to_owner"
+    status: stub
+  - id: "minecraft:behavior.timer_flag_1"
+    status: stub
+  - id: "minecraft:behavior.timer_flag_2"
+    status: stub
+  - id: "minecraft:behavior.timer_flag_3"
+    status: stub
+  - id: "minecraft:behavior.trade_interest"
+    status: stub
+  - id: "minecraft:behavior.trade_with_player"
+    status: stub
+  - id: "minecraft:behavior.vex_copy_owner_target"
+    status: stub
+  - id: "minecraft:behavior.vex_random_move"
+    status: stub
+  - id: "minecraft:behavior.wither_random_attack_pos_goal"
+    status: stub
+  - id: "minecraft:behavior.wither_target_highest_damage"
+    status: stub
+  - id: "minecraft:behavior.work"
+    status: stub
+  - id: "minecraft:behavior.work_composter"
     status: stub

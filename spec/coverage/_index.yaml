@@ -11,9 +11,14 @@
 # A human NEVER writes `status: implemented`. `specReport` promotes an entry when its conformance
 # cases pass. See spec/process.md section 4.
 #
-# Shards marked `seeded: partial` were populated from research rather than from upstream metadata.
-# Running `./gradlew fetchUpstreamMetadata specUpstreamDiff` completes them — the missing entries
-# will be reported, not silently absent, which is the entire point of the mechanism.
+# `seeded` says where a shard's entries came from:
+#   upstream  generated from the pinned snapshot and verified by specUpstreamDiff
+#   full      hand-written and believed complete
+#   partial   hand-written from research; gaps are likely
+#   manual    not a Mojang-enumerated list at all
+#
+# The upstream SELECTORS live in each shard, not here. This index used to duplicate them, and every
+# duplicated pointer turned out to be wrong - which is exactly how a second copy fails.
 
 version: 1
 
@@ -33,25 +38,19 @@ shards:
   - file: entity-components.yaml
     spec: SC-160
     title: minecraft:entity components
-    seeded: partial
-    expectedCount: 120
-    upstream:
-      source: metadata/doc_modules/entities.json
-      pointer: /data_items/Entity Components
+    seeded: upstream
+    expectedCount: 119   # upstream: Server Entity Documentation / Components
 
   - file: entity-goals.yaml
     spec: SC-160
     title: minecraft:behavior.* AI goals
-    seeded: partial
+    seeded: upstream
     expectedCount: 171
-    upstream:
-      source: metadata/doc_modules/entities.json
-      pointer: /data_items/AI Goals
 
   - file: entity-properties.yaml
     spec: SC-160
     title: Entity properties and the 49 flag-like components
-    seeded: partial
+    seeded: upstream
     expectedCount: 49
 
   - file: entity-events.yaml
@@ -66,9 +65,6 @@ shards:
     title: minecraft:block components, triggers and event responses
     seeded: full
     expectedCount: 54          # 32 components + 7 triggers + 15 event responses
-    upstream:
-      source: metadata/doc_modules/blocks.json
-      pointer: /data_items
 
   - file: block-states-traits.yaml
     spec: SC-150
@@ -81,9 +77,6 @@ shards:
     title: minecraft:item components
     seeded: full
     expectedCount: 44
-    upstream:
-      source: metadata/json_schemas/server/item/1.26.30/Item Components.json
-      pointer: /properties
 
   # ── Expression and predicate languages ─────────────────────────────────────
   - file: filters.yaml
@@ -91,19 +84,12 @@ shards:
     title: Filter tests
     seeded: full
     expectedCount: 106
-    upstream:
-      source: metadata/doc_modules/entities.json
-      pointer: /data_items/Filters
 
   - file: molang-queries.yaml
     spec: SC-130
     title: Molang query.* functions
-    seeded: partial
+    seeded: upstream
     expectedCount: 315
-    upstream:
-      source: metadata/molang_modules/mojang-molang-queries.json
-      pointer: /vanilla_data_modules/queries
-      idField: name
 
   - file: molang-math.yaml
     spec: SC-130
@@ -145,11 +131,8 @@ shards:
   - file: functions-commands.yaml
     spec: SC-190
     title: mcfunction commands
-    seeded: partial
+    seeded: upstream
     expectedCount: null
-    upstream:
-      source: metadata/command_modules/mojang-commands.json
-      pointer: /command_modules
 
   - file: features-featurerules.yaml
     spec: SC-190
@@ -259,10 +242,10 @@ shards:
     spec: SC-200
     title: "@minecraft/server"
     seeded: partial
-    expectedCount: 439
-    upstream:
-      source: metadata/script_modules/@minecraft/server.d.ts
-      pointer: ""
+    expectedCount: 439   # not wired; see the shard header
+    # Not wired to upstream on purpose - see the header of the shard. Doing so would add ~420 stubs
+    # for a subsystem ADR-0005 sequences last. Revisit when scripting work starts.
+    upstream: null
 
   - file: script-api-server-ui.yaml
     spec: SC-200

@@ -13,83 +13,84 @@
 domain: functions-commands
 spec: SC-190
 upstream:
-  source: "metadata/command_modules/mojang-commands.json"
-  pointer: "/command_modules"
+  - source: "metadata/command_modules/mojang-commands.json"
+    pointer: "/commands"
+    idField: name
 
 entries:
-  - id: command/summon
+  - id: summon
     status: stub
-  - id: command/tp
+  - id: tp
     status: stub
-  - id: command/give
+  - id: give
     status: stub
-  - id: command/setblock
+  - id: setblock
     status: stub
-  - id: command/fill
+  - id: fill
     status: stub
-  - id: command/execute
+  - id: execute
     status: stub
     notes: >-
       Grammar was rewritten in 1.19.50 and still differs from Java's.
-  - id: command/scoreboard
+  - id: scoreboard
     status: stub
-  - id: command/tag
+  - id: tag
     status: stub
-  - id: command/effect
+  - id: effect
     status: stub
-  - id: command/playsound
+  - id: playsound
     status: stub
-  - id: command/particle
+  - id: particle
     status: stub
-  - id: command/title
+  - id: title
     status: stub
-  - id: command/tellraw
+  - id: tellraw
     status: stub
-  - id: command/event
+  - id: event
     status: stub
     notes: >-
       Bedrock-only: fires an entity event.
-  - id: command/scriptevent
+  - id: scriptevent
     status: stub
     notes: >-
       Bedrock-only. Depends on SC-200.
-  - id: command/damage
+  - id: damage
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/ride
+  - id: ride
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/structure
+  - id: structure
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/camera
+  - id: camera
     status: stub
     notes: >-
       Bedrock-only. No Java analogue.
-  - id: command/hud
+  - id: hud
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/inputpermission
+  - id: inputpermission
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/dialogue
+  - id: dialogue
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/aimassist
+  - id: aimassist
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/fog
+  - id: fog
     status: stub
     notes: >-
       Bedrock-only.
-  - id: command/music
+  - id: music
     status: stub
     notes: >-
       Bedrock-only.
@@ -104,4 +105,124 @@ entries:
   - id: selector/scores
     status: stub
   - id: functions/tick_json
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: allowlist
+    status: stub
+  - id: camerashake
+    status: stub
+  - id: changesetting
+    status: stub
+  - id: clear
+    status: stub
+  - id: clearspawnpoint
+    status: stub
+  - id: clone
+    status: stub
+  - id: controlscheme
+    status: stub
+  - id: daylock
+    status: stub
+  - id: deop
+    status: stub
+  - id: difficulty
+    status: stub
+  - id: enchant
+    status: stub
+  - id: function
+    status: stub
+  - id: gamemode
+    status: stub
+  - id: gamerule
+    status: stub
+  - id: gametest
+    status: stub
+  - id: help
+    status: stub
+  - id: kick
+    status: stub
+  - id: kill
+    status: stub
+  - id: list
+    status: stub
+  - id: locate
+    status: stub
+  - id: loot
+    status: stub
+  - id: me
+    status: stub
+  - id: mobevent
+    status: stub
+  - id: op
+    status: stub
+  - id: packstack
+    status: stub
+  - id: permission
+    status: stub
+  - id: place
+    status: stub
+  - id: playanimation
+    status: stub
+  - id: project
+    status: stub
+  - id: recipe
+    status: stub
+  - id: reload
+    status: stub
+  - id: reloadconfig
+    status: stub
+  - id: reloadpacketlimitconfig
+    status: stub
+  - id: replaceitem
+    status: stub
+  - id: save
+    status: stub
+  - id: say
+    status: stub
+  - id: schedule
+    status: stub
+  - id: script
+    status: stub
+  - id: sendshowstoreoffer
+    status: stub
+  - id: setmaxplayers
+    status: stub
+  - id: setworldspawn
+    status: stub
+  - id: spawnpoint
+    status: stub
+  - id: spreadplayers
+    status: stub
+  - id: stop
+    status: stub
+  - id: stopsound
+    status: stub
+  - id: teleport
+    status: stub
+  - id: tell
+    status: stub
+  - id: testfor
+    status: stub
+  - id: testforblock
+    status: stub
+  - id: testforblocks
+    status: stub
+  - id: tickingarea
+    status: stub
+  - id: time
+    status: stub
+  - id: titleraw
+    status: stub
+  - id: toggledownfall
+    status: stub
+  - id: transfer
+    status: stub
+  - id: weather
+    status: stub
+  - id: wsserver
+    status: stub
+  - id: xp
     status: stub

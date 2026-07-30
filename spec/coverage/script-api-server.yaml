@@ -1,19 +1,26 @@
-# 439 exported classes in @minecraft/server 2.8.0. SEEDED PARTIALLY - the full member list is
-# generated from the .d.ts so the gap is VISIBLE rather than asserted.
+# 439 exported classes in @minecraft/server 2.8.0. SEEDED PARTIALLY - 18 of them are listed here.
 #
 # Only the core subset is in scope. Anything outside it throws a JS Error naming the member and its
 # coverage entry; silently returning undefined produces bugs a pack author cannot diagnose.
 #
 # Scripting ships as a SEPARATE OPTIONAL MOD (ADR-0005) and is sequenced last.
 #
+# NOT WIRED TO UPSTREAM, and that is a scoping decision rather than an oversight.
+#
+# The real surface lives in metadata/script_modules/@minecraft/server-bindings_<version>.json - the
+# server_<version>.json files turn out to be 291-byte re-exports, which an earlier guess here got
+# wrong. Pointing specUpstreamDiff at the bindings file would add roughly 420 stub entries for a
+# subsystem that is deliberately sequenced last, making half the ledger noise about work nobody has
+# started. The gap is already known and stated: 18 of 439.
+#
+# Wire this up when scripting work actually begins, not before.
+#
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
 
 domain: script-api-server
 spec: SC-200
-upstream:
-  source: "metadata/script_modules/@minecraft/server.d.ts"
-  pointer: ""
+upstream: null
 
 entries:
   - id: "@minecraft/server:world"

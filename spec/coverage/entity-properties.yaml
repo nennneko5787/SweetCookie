@@ -10,7 +10,11 @@
 
 domain: entity-properties
 spec: SC-160
-upstream: null
+upstream:
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Server Entity Documentation"
+      - "Properties"
 
 entries:
   - id: property/bool
@@ -90,4 +94,53 @@ entries:
   - id: "minecraft:sound_volume"
     status: stub
   - id: "minecraft:water_movement"
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: "minecraft:ambient_sound_interval"
+    status: stub
+  - id: "minecraft:body_rotation_always_follows_head"
+    status: stub
+  - id: "minecraft:body_rotation_blocked"
+    status: stub
+  - id: "minecraft:cannot_be_attacked"
+    status: stub
+  - id: "minecraft:default_look_angle"
+    status: stub
+  - id: "minecraft:equipment"
+    status: stub
+  - id: "minecraft:fire_immune"
+    status: stub
+  - id: "minecraft:ignore_cannot_be_attacked"
+    status: stub
+  - id: "minecraft:is_collidable"
+    status: stub
+  - id: "minecraft:is_pregnant"
+    status: stub
+  - id: "minecraft:item_controllable"
+    status: stub
+  - id: "minecraft:loot"
+    status: stub
+  - id: "minecraft:movement_sound_distance_offset"
+    status: stub
+  - id: "minecraft:offspring"
+    status: stub
+  - id: "minecraft:renders_when_invisible"
+    status: stub
+  - id: "minecraft:rotation_axis_aligned"
+    status: stub
+  - id: "minecraft:rotation_locked_to_vehicle"
+    status: stub
+  - id: "minecraft:scale"
+    status: stub
+  - id: "minecraft:type_family"
+    status: stub
+    notes: >-
+      Bedrock's own grouping mechanism, and the reason custom entities do not need Java entity
+      tags - which they cannot have anyway. SC-120 section 5.2.
+  - id: "minecraft:uses_legacy_friction"
+    status: stub
+  - id: "minecraft:wants_jockey"
     status: stub

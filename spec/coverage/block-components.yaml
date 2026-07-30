@@ -9,8 +9,18 @@
 domain: block-components
 spec: SC-150
 upstream:
-  source: "metadata/doc_modules/blocks.json"
-  pointer: "/data_items"
+  - source: "metadata/doc_modules/blocks.json"
+    nodePath:
+      - "Blocks"
+      - "Block Components"
+  - source: "metadata/doc_modules/blocks.json"
+    nodePath:
+      - "Blocks"
+      - "Block Trigger Components"
+  - source: "metadata/doc_modules/blocks.json"
+    nodePath:
+      - "Blocks"
+      - "Block Event Responses"
 
 entries:
   # ── Shape and collision ────────────────────────────────────────────────────
@@ -141,73 +151,73 @@ entries:
     notes: Script-registered custom components. Depends on SC-200.
 
   # ── Trigger components (7) ─────────────────────────────────────────────────
-  - id: minecraft:block/on_fall_on
+  - id: "minecraft:on_fall_on"
     status: stub
 
-  - id: minecraft:block/on_interact
+  - id: "minecraft:on_interact"
     status: stub
 
-  - id: minecraft:block/on_placed
+  - id: "minecraft:on_placed"
     status: stub
 
-  - id: minecraft:block/on_player_destroyed
+  - id: "minecraft:on_player_destroyed"
     status: stub
 
-  - id: minecraft:block/on_player_placing
+  - id: "minecraft:on_player_placing"
     status: stub
 
-  - id: minecraft:block/on_step_off
+  - id: "minecraft:on_step_off"
     status: stub
 
-  - id: minecraft:block/on_step_on
+  - id: "minecraft:on_step_on"
     status: stub
 
   # ── Event responses (15) ───────────────────────────────────────────────────
-  - id: minecraft:block/event/add_mob_effect
+  - id: add_mob_effect
     status: stub
 
-  - id: minecraft:block/event/damage
+  - id: damage
     status: stub
 
-  - id: minecraft:block/event/decrement_stack
+  - id: decrement_stack
     status: stub
 
-  - id: minecraft:block/event/die
+  - id: die
     status: stub
 
-  - id: minecraft:block/event/play_effect
+  - id: play_effect
     status: stub
 
-  - id: minecraft:block/event/play_sound
+  - id: play_sound
     status: stub
 
-  - id: minecraft:block/event/remove_mob_effect
+  - id: remove_mob_effect
     status: stub
 
-  - id: minecraft:block/event/run_command
+  - id: run_command
     status: stub
     notes: >-
       Executes a BEDROCK command string, which is not a Java command. SC-190 governs translation;
       unsupported commands are refused rather than approximated. Permission level is an open
       security decision (SC-260 section 6).
 
-  - id: minecraft:block/event/set_block
+  - id: set_block
     status: stub
 
-  - id: minecraft:block/event/set_block_at_pos
+  - id: set_block_at_pos
     status: stub
 
-  - id: minecraft:block/event/set_block_state
+  - id: set_block_state
     status: stub
 
-  - id: minecraft:block/event/spawn_loot
+  - id: spawn_loot
     status: stub
 
-  - id: minecraft:block/event/swing
+  - id: swing
     status: stub
 
-  - id: minecraft:block/event/teleport
+  - id: teleport
     status: stub
 
-  - id: minecraft:block/event/transform_item
+  - id: transform_item
     status: stub

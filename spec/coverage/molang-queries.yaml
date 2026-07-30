@@ -11,9 +11,9 @@
 domain: molang-queries
 spec: SC-130
 upstream:
-  source: "metadata/molang_modules/mojang-molang-queries.json"
-  pointer: "/vanilla_data_modules/queries"
-  idField: name
+  - source: "metadata/molang_modules/mojang-molang-queries.json"
+    pointer: "/queries"
+    idField: name
 
 entries:
   - id: query.anim_time
@@ -125,4 +125,546 @@ entries:
     notes: >-
       Java village detection differs substantially from Bedrock's.
   - id: query.has_biome_tag
+    status: stub
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: query.above_top_solid
+    status: stub
+  - id: query.all
+    status: stub
+  - id: query.all_animations_finished
+    status: stub
+  - id: query.all_tags
+    status: stub
+  - id: query.anger_level
+    status: stub
+  - id: query.any
+    status: stub
+  - id: query.any_animation_finished
+    status: stub
+  - id: query.any_tag
+    status: stub
+  - id: query.approx_eq
+    status: stub
+  - id: query.armor_color_slot
+    status: stub
+  - id: query.armor_damage_slot
+    status: stub
+  - id: query.armor_material_slot
+    status: stub
+  - id: query.average_frame_time
+    status: stub
+  - id: query.base_swing_duration
+    status: stub
+  - id: query.block_face
+    status: stub
+  - id: query.block_has_all_tags
+    status: stub
+  - id: query.block_has_any_tag
+    status: stub
+  - id: query.block_neighbor_has_all_tags
+    status: stub
+  - id: query.block_neighbor_has_any_tag
+    status: stub
+  - id: query.bone_aabb
+    status: stub
+  - id: query.bone_orientation_matrix
+    status: stub
+  - id: query.bone_orientation_trs
+    status: stub
+  - id: query.bone_origin
+    status: stub
+  - id: query.bone_rotation
+    status: stub
+  - id: query.camera_rotation
+    status: stub
+  - id: query.can_climb
+    status: stub
+  - id: query.can_damage_nearby_mobs
+    status: stub
+  - id: query.can_dash
+    status: stub
+  - id: query.can_fly
+    status: stub
+  - id: query.can_power_jump
+    status: stub
+  - id: query.can_swim
+    status: stub
+  - id: query.can_walk
+    status: stub
+  - id: query.cape_flap_amount
+    status: stub
+  - id: query.cardinal_block_face_placed_on
+    status: stub
+  - id: query.cardinal_facing
+    status: stub
+  - id: query.cardinal_facing_2d
+    status: stub
+  - id: query.cardinal_player_facing
+    status: stub
+  - id: query.client_max_render_distance
+    status: stub
+  - id: query.client_memory_tier
+    status: stub
+  - id: query.combine_entities
+    status: stub
+  - id: query.cooldown_time
+    status: stub
+  - id: query.cooldown_time_remaining
+    status: stub
+  - id: query.count
+    status: stub
+  - id: query.current_squish_value
+    status: stub
+  - id: query.dash_cooldown_progress
+    status: stub
+  - id: query.day
+    status: stub
+  - id: query.death_ticks
+    status: stub
+  - id: query.debug_output
+    status: stub
+  - id: query.effect_emitter_count
+    status: stub
+  - id: query.effect_particle_count
+    status: stub
+  - id: query.entity_biome_has_all_tags
+    status: stub
+  - id: query.entity_biome_has_any_identifier
+    status: stub
+  - id: query.entity_biome_has_any_tags
+    status: stub
+  - id: query.equipped_item_all_tags
+    status: stub
+  - id: query.equipped_item_any_tag
+    status: stub
+  - id: query.equipped_item_is_attachable
+    status: stub
+  - id: query.eye_target_x_rotation
+    status: stub
+  - id: query.eye_target_y_rotation
+    status: stub
+  - id: query.facing_target_to_range_attack
+    status: stub
+  - id: query.frame_alpha
+    status: stub
+  - id: query.fuse_time
+    status: stub
+  - id: query.get_actor_info_id
+    status: stub
+  - id: query.get_animation_frame
+    status: stub
+  - id: query.get_default_bone_pivot
+    status: stub
+  - id: query.get_level_seed_based_fraction
+    status: stub
+  - id: query.get_locator_offset
+    status: stub
+  - id: query.get_name
+    status: stub
+  - id: query.get_pack_setting
+    status: stub
+  - id: query.get_root_locator_offset
+    status: stub
+  - id: query.graphics_mode_is_any
+    status: stub
+  - id: query.had_component_group
+    status: stub
+  - id: query.has_any_family
+    status: stub
+  - id: query.has_any_leashed_entity_of_type
+    status: stub
+  - id: query.has_armor_slot
+    status: stub
+  - id: query.has_block_property
+    status: stub
+  - id: query.has_block_state
+    status: stub
+  - id: query.has_cape
+    status: stub
+  - id: query.has_collision
+    status: stub
+  - id: query.has_dash_cooldown
+    status: stub
+  - id: query.has_gravity
+    status: stub
+  - id: query.has_head_gear
+    status: stub
+  - id: query.has_owner
+    status: stub
+  - id: query.has_player_rider
+    status: stub
+  - id: query.has_rider
+    status: stub
+  - id: query.has_target
+    status: stub
+  - id: query.head_roll_angle
+    status: stub
+  - id: query.heartbeat_interval
+    status: stub
+  - id: query.heartbeat_phase
+    status: stub
+  - id: query.heightmap
+    status: stub
+  - id: query.hurt_direction
+    status: stub
+  - id: query.hurt_time
+    status: stub
+  - id: query.in_range
+    status: stub
+  - id: query.invulnerable_ticks
+    status: stub
+  - id: query.is_admiring
+    status: stub
+  - id: query.is_attached
+    status: stub
+  - id: query.is_attached_to_entity
+    status: stub
+  - id: query.is_avoiding_block
+    status: stub
+  - id: query.is_avoiding_mobs
+    status: stub
+  - id: query.is_breathing
+    status: stub
+  - id: query.is_bribed
+    status: stub
+  - id: query.is_carrying_block
+    status: stub
+  - id: query.is_casting
+    status: stub
+  - id: query.is_celebrating
+    status: stub
+  - id: query.is_celebrating_special
+    status: stub
+  - id: query.is_charged
+    status: stub
+  - id: query.is_charging
+    status: stub
+  - id: query.is_chested
+    status: stub
+  - id: query.is_cooldown_category
+    status: stub
+  - id: query.is_crawling
+    status: stub
+  - id: query.is_critical
+    status: stub
+  - id: query.is_croaking
+    status: stub
+  - id: query.is_dancing
+    status: stub
+  - id: query.is_delayed_attacking
+    status: stub
+  - id: query.is_digging
+    status: stub
+  - id: query.is_eating
+    status: stub
+  - id: query.is_eating_mob
+    status: stub
+  - id: query.is_elder
+    status: stub
+  - id: query.is_emerging
+    status: stub
+  - id: query.is_emoting
+    status: stub
+  - id: query.is_enchanted
+    status: stub
+  - id: query.is_feeling_happy
+    status: stub
+  - id: query.is_fire_immune
+    status: stub
+  - id: query.is_ghost
+    status: stub
+  - id: query.is_gliding
+    status: stub
+  - id: query.is_grazing
+    status: stub
+  - id: query.is_idling
+    status: stub
+  - id: query.is_ignited
+    status: stub
+  - id: query.is_illager_captain
+    status: stub
+  - id: query.is_in_contact_with_water
+    status: stub
+  - id: query.is_in_lava
+    status: stub
+  - id: query.is_in_love
+    status: stub
+  - id: query.is_in_ui
+    status: stub
+  - id: query.is_in_water_or_rain
+    status: stub
+  - id: query.is_interested
+    status: stub
+  - id: query.is_item_equipped
+    status: stub
+  - id: query.is_item_name_any
+    status: stub
+  - id: query.is_jump_goal_jumping
+    status: stub
+  - id: query.is_jumping
+    status: stub
+  - id: query.is_laying_down
+    status: stub
+  - id: query.is_laying_egg
+    status: stub
+  - id: query.is_leashed
+    status: stub
+  - id: query.is_levitating
+    status: stub
+  - id: query.is_lingering
+    status: stub
+  - id: query.is_local_player
+    status: stub
+  - id: query.is_moving
+    status: stub
+  - id: query.is_name_any
+    status: stub
+  - id: query.is_on_fire
+    status: stub
+  - id: query.is_onfire
+    status: stub
+  - id: query.is_orphaned
+    status: stub
+  - id: query.is_owner_identifier_any
+    status: stub
+  - id: query.is_pack_setting_enabled
+    status: stub
+  - id: query.is_pack_setting_selected
+    status: stub
+  - id: query.is_persona_or_premium_skin
+    status: stub
+  - id: query.is_playing_dead
+    status: stub
+  - id: query.is_powered
+    status: stub
+  - id: query.is_pregnant
+    status: stub
+  - id: query.is_ram_attacking
+    status: stub
+  - id: query.is_resting
+    status: stub
+  - id: query.is_riding
+    status: stub
+  - id: query.is_riding_any_entity_of_type
+    status: stub
+  - id: query.is_rising
+    status: stub
+  - id: query.is_roaring
+    status: stub
+  - id: query.is_rolling
+    status: stub
+  - id: query.is_scared
+    status: stub
+  - id: query.is_scenting
+    status: stub
+  - id: query.is_searching
+    status: stub
+  - id: query.is_selected_item
+    status: stub
+  - id: query.is_shaking
+    status: stub
+  - id: query.is_shaking_wetness
+    status: stub
+  - id: query.is_sheared
+    status: stub
+  - id: query.is_shield_powered
+    status: stub
+  - id: query.is_silent
+    status: stub
+  - id: query.is_sneezing
+    status: stub
+  - id: query.is_sniffing
+    status: stub
+  - id: query.is_sonic_boom
+    status: stub
+  - id: query.is_spectator
+    status: stub
+  - id: query.is_stackable
+    status: stub
+  - id: query.is_stalking
+    status: stub
+  - id: query.is_standing
+    status: stub
+  - id: query.is_stunned
+    status: stub
+  - id: query.is_transforming
+    status: stub
+  - id: query.is_using_item
+    status: stub
+  - id: query.is_wall_climbing
+    status: stub
+  - id: query.item_is_charged
+    status: stub
+  - id: query.item_remaining_use_duration
+    status: stub
+  - id: query.item_slot_to_bone_name
+    status: stub
+  - id: query.key_frame_lerp_time
+    status: stub
+  - id: query.kinetic_weapon_damage_duration
+    status: stub
+  - id: query.kinetic_weapon_delay
+    status: stub
+  - id: query.kinetic_weapon_dismount_duration
+    status: stub
+  - id: query.kinetic_weapon_knockback_duration
+    status: stub
+  - id: query.last_frame_time
+    status: stub
+  - id: query.last_hit_by_player
+    status: stub
+  - id: query.last_input_mode_is_any
+    status: stub
+  - id: query.leashed_entity_count
+    status: stub
+  - id: query.lie_amount
+    status: stub
+  - id: query.life_span
+    status: stub
+  - id: query.lod_index
+    status: stub
+  - id: query.log
+    status: stub
+  - id: query.main_hand_item_max_duration
+    status: stub
+  - id: query.main_hand_item_use_duration
+    status: stub
+  - id: query.max_durability
+    status: stub
+  - id: query.max_trade_tier
+    status: stub
+  - id: query.maximum_frame_time
+    status: stub
+  - id: query.minimum_frame_time
+    status: stub
+  - id: query.model_scale
+    status: stub
+  - id: query.modified_distance_moved
+    status: stub
+  - id: query.modified_swing_duration
+    status: stub
+  - id: query.moon_brightness
+    status: stub
+  - id: query.moon_phase
+    status: stub
+  - id: query.movement_direction
+    status: stub
+  - id: query.noise
+    status: stub
+  - id: query.on_fire_time
+    status: stub
+  - id: query.out_of_control
+    status: stub
+  - id: query.overlay_alpha
+    status: stub
+  - id: query.owner_identifier
+    status: stub
+  - id: query.player_level
+    status: stub
+  - id: query.position
+    status: stub
+  - id: query.position_delta
+    status: stub
+  - id: query.previous_squish_value
+    status: stub
+  - id: query.relative_block_has_all_tags
+    status: stub
+  - id: query.relative_block_has_any_tag
+    status: stub
+  - id: query.remaining_durability
+    status: stub
+  - id: query.ride_body_x_rotation
+    status: stub
+  - id: query.ride_body_y_rotation
+    status: stub
+  - id: query.ride_head_x_rotation
+    status: stub
+  - id: query.ride_head_y_rotation
+    status: stub
+  - id: query.rider_body_x_rotation
+    status: stub
+  - id: query.rider_body_y_rotation
+    status: stub
+  - id: query.rider_head_x_rotation
+    status: stub
+  - id: query.rider_head_y_rotation
+    status: stub
+  - id: query.roll_counter
+    status: stub
+  - id: query.rotation_to_camera
+    status: stub
+  - id: query.scoreboard
+    status: stub
+  - id: query.server_memory_tier
+    status: stub
+  - id: query.shake_angle
+    status: stub
+  - id: query.shake_time
+    status: stub
+  - id: query.shield_blocking_bob
+    status: stub
+  - id: query.show_bottom
+    status: stub
+  - id: query.sit_amount
+    status: stub
+  - id: query.sleep_rotation
+    status: stub
+  - id: query.sneeze_counter
+    status: stub
+  - id: query.spellcolor
+    status: stub
+  - id: query.standing_scale
+    status: stub
+  - id: query.state_time
+    status: stub
+  - id: query.structural_integrity
+    status: stub
+  - id: query.surface_particle_color
+    status: stub
+  - id: query.surface_particle_texture_coordinate
+    status: stub
+  - id: query.surface_particle_texture_size
+    status: stub
+  - id: query.swell_amount
+    status: stub
+  - id: query.swelling_dir
+    status: stub
+  - id: query.swim_amount
+    status: stub
+  - id: query.tail_angle
+    status: stub
+  - id: query.texture_frame_index
+    status: stub
+  - id: query.ticks_since_last_kinetic_weapon_hit
+    status: stub
+  - id: query.time_of_day
+    status: stub
+  - id: query.time_since_last_vibration_detection
+    status: stub
+  - id: query.timer_flag_1
+    status: stub
+  - id: query.timer_flag_2
+    status: stub
+  - id: query.timer_flag_3
+    status: stub
+  - id: query.total_emitter_count
+    status: stub
+  - id: query.total_particle_count
+    status: stub
+  - id: query.touch_only_affects_hotbar
+    status: stub
+  - id: query.trade_tier
+    status: stub
+  - id: query.unhappy_counter
+    status: stub
+  - id: query.walk_distance
+    status: stub
+  - id: query.wing_flap_position
+    status: stub
+  - id: query.wing_flap_speed
+    status: stub
+  - id: query.yaw_speed
     status: stub

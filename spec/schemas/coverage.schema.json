@@ -19,26 +19,40 @@
       "$ref": "#/$defs/specId"
     },
     "upstream": {
-      "description": "Where the authoritative feature list comes from, so specUpstreamDiff can detect additions. Null for domains with no machine-readable upstream source.",
+      "description": "Where the authoritative feature lists come from, so specUpstreamDiff can detect additions. A LIST, because one shard often draws on several places: block-components needs three, since Mojang documents components, trigger components and event responses as separate sections of one file. Null for domains with no machine-readable upstream source. A selector that resolves to no identifiers is a build failure, not an empty result - see spec/upstream/fetch.md.",
       "oneOf": [
         { "type": "null" },
         {
-          "type": "object",
-          "required": ["source", "pointer"],
-          "additionalProperties": false,
-          "properties": {
-            "source": {
-              "description": "Path within the pinned bedrock-samples snapshot. Never vendored; see spec/upstream/fetch.md.",
-              "type": "string"
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "description": "Path within the pinned bedrock-samples snapshot. Never vendored; see spec/upstream/fetch.md.",
+                "type": "string"
+              },
+              "nodePath": {
+                "description": "For doc_modules files, which are named `nodes[]` trees that an RFC 6901 pointer cannot address. Names the path to walk; the identifiers are the `name` of each child of the selected node. Example: [\"Server Entity Documentation\", \"AI Goals\"].",
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1
+              },
+              "pointer": {
+                "description": "RFC 6901 JSON pointer, for plain JSON. Mutually exclusive with nodePath.",
+                "type": "string"
+              },
+              "idField": {
+                "description": "Field holding the identifier when the pointer targets an array of objects.",
+                "type": "string"
+              }
             },
-            "pointer": {
-              "description": "RFC 6901 JSON pointer to the array or object whose keys are the feature IDs.",
-              "type": "string"
-            },
-            "idField": {
-              "description": "Field holding the feature ID when the pointer targets an array of objects. Omit when the pointer targets an object whose keys are the IDs.",
-              "type": "string"
-            }
+            "anyOf": [
+              { "required": ["nodePath"] },
+              { "required": ["pointer"] }
+            ]
           }
         }
       ]

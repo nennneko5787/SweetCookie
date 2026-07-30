@@ -65,44 +65,87 @@ abstract class SpecUpstreamDiffTask : DefaultTask() {
         val known = shards.flatMap { it.entries }.map { it.id }.toSet()
         val problems = Problems("specUpstreamDiff")
 
+        var checked = 0
         for (shard in shards) {
-            val source = shard.upstreamSource ?: continue
-            val file = cache.resolve(source)
-            if (!file.isFile) {
-                problems.report(
-                    "spec/coverage/${shard.domain}.yaml",
-                    "declares upstream source `$source`, which is not in the fetched snapshot"
-                )
-                continue
-            }
-            val upstreamIds = extractIds(file, shard.upstreamPointer.orEmpty(), shard.upstreamIdField)
-            val missing = upstreamIds
-                .filterNot { it in known }
-                .filterNot { id -> allowlist.any { matches(id, it) } }
-            for (id in missing.sorted()) {
-                problems.report(
-                    "spec/coverage/${shard.domain}.yaml",
-                    "upstream declares `$id`, which has no coverage entry. " +
-                        "Add it with `status: stub`."
-                )
+            val where = "spec/coverage/${shard.domain}.yaml"
+            for (selector in shard.upstream) {
+                val file = cache.resolve(selector.source)
+                if (!file.isFile) {
+                    problems.report(where, "declares `${selector.source}`, not in the fetched snapshot")
+                    continue
+                }
+
+                val upstreamIds = extractIds(file, selector)
+
+                // A selector that resolves to nothing is a DEFECT, not an empty result. The first
+                // version of this task returned an empty list for an unresolvable pointer, so a
+                // ledger missing 111 of 171 AI goals reported "covers every upstream identifier".
+                // A check that cannot fail is worse than no check.
+                if (upstreamIds.isEmpty()) {
+                    problems.report(
+                        where,
+                        "selector ${selector.describe} resolved to no identifiers. " +
+                            "The addressing is wrong, or upstream moved it - either way this shard " +
+                            "is NOT being checked."
+                    )
+                    continue
+                }
+
+                checked += upstreamIds.size
+                val missing = upstreamIds
+                    .filterNot { it in known }
+                    .filterNot { id -> allowlist.any { matches(id, it) } }
+                for (id in missing.sorted()) {
+                    problems.report(
+                        where,
+                        "upstream declares `$id`, which has no coverage entry. Add `status: stub`."
+                    )
+                }
             }
         }
 
         problems.failIfAny()
-        logger.lifecycle("specUpstreamDiff: ledger covers every upstream identifier at $commit.")
+        logger.lifecycle(
+            "specUpstreamDiff: $checked upstream identifier(s) all covered, at $commit."
+        )
     }
 
-    private fun extractIds(file: File, pointer: String, idField: String?): List<String> {
+    private fun extractIds(file: File, selector: UpstreamSelector): List<String> {
         val root = json.readTree(file)
+
+        // doc_modules files are named `nodes[]` trees. An RFC 6901 pointer cannot select "the child
+        // called AI Goals", so those shards address by node name instead.
+        if (selector.nodePath.isNotEmpty()) {
+            var node: JsonNode = root
+            for (name in selector.nodePath) {
+                val children = node["nodes"] ?: return emptyList()
+                node = children.firstOrNull { it["name"]?.asText() == name } ?: return emptyList()
+            }
+            return (node["nodes"] ?: return emptyList())
+                .mapNotNull { it["name"]?.asText() }
+                .map { cleanDocName(it) }
+        }
+
+        val pointer = selector.pointer.orEmpty()
         val node: JsonNode = if (pointer.isBlank()) root else root.at(pointer)
         return when {
             node.isMissingNode -> emptyList()
-            node.isObject -> node.fieldNames().asSequence().toList()
-            node.isArray && idField != null -> node.mapNotNull { it[idField]?.asText() }
+            node.isArray && selector.idField != null -> node.mapNotNull { it[selector.idField]?.asText() }
             node.isArray -> node.mapNotNull { if (it.isTextual) it.asText() else it["name"]?.asText() }
+            node.isObject -> node.fieldNames().asSequence().toList()
             else -> emptyList()
         }
     }
+
+    /**
+     * Strips the human-readable annotation Mojang appends to doc-tree node names.
+     *
+     * The `name` field is not a bare identifier. It reads
+     * `minecraft:behavior.melee_attack (See JSON Schema since 1.26.0)`, and taking it verbatim
+     * injects 554 entries whose ids contain prose. Found the hard way, twice.
+     */
+    private fun cleanDocName(raw: String): String =
+        raw.substringBefore(" (").trim()
 
     /** Entries may use a trailing `*` wildcard, e.g. `minecraft:editor_*`. */
     private fun matches(id: String, pattern: String): Boolean =

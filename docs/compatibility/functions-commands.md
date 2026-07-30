@@ -7,33 +7,91 @@ Ledger: [`spec/coverage/functions-commands.yaml`](../../spec/coverage/functions-
 
 | Feature | Status | Notes |
 |---|---|---|
-| `command/summon` | stub |  |
-| `command/tp` | stub |  |
-| `command/give` | stub |  |
-| `command/setblock` | stub |  |
-| `command/fill` | stub |  |
-| `command/execute` | stub | Grammar was rewritten in 1.19.50 and still differs from Java's. |
-| `command/scoreboard` | stub |  |
-| `command/tag` | stub |  |
-| `command/effect` | stub |  |
-| `command/playsound` | stub |  |
-| `command/particle` | stub |  |
-| `command/title` | stub |  |
-| `command/tellraw` | stub |  |
-| `command/event` | stub | Bedrock-only: fires an entity event. |
-| `command/scriptevent` | stub | Bedrock-only. Depends on SC-200. |
-| `command/damage` | stub | Bedrock-only. |
-| `command/ride` | stub | Bedrock-only. |
-| `command/structure` | stub | Bedrock-only. |
-| `command/camera` | stub | Bedrock-only. No Java analogue. |
-| `command/hud` | stub | Bedrock-only. |
-| `command/inputpermission` | stub | Bedrock-only. |
-| `command/dialogue` | stub | Bedrock-only. |
-| `command/aimassist` | stub | Bedrock-only. |
-| `command/fog` | stub | Bedrock-only. |
-| `command/music` | stub | Bedrock-only. |
+| `summon` | stub |  |
+| `tp` | stub |  |
+| `give` | stub |  |
+| `setblock` | stub |  |
+| `fill` | stub |  |
+| `execute` | stub | Grammar was rewritten in 1.19.50 and still differs from Java's. |
+| `scoreboard` | stub |  |
+| `tag` | stub |  |
+| `effect` | stub |  |
+| `playsound` | stub |  |
+| `particle` | stub |  |
+| `title` | stub |  |
+| `tellraw` | stub |  |
+| `event` | stub | Bedrock-only: fires an entity event. |
+| `scriptevent` | stub | Bedrock-only. Depends on SC-200. |
+| `damage` | stub | Bedrock-only. |
+| `ride` | stub | Bedrock-only. |
+| `structure` | stub | Bedrock-only. |
+| `camera` | stub | Bedrock-only. No Java analogue. |
+| `hud` | stub | Bedrock-only. |
+| `inputpermission` | stub | Bedrock-only. |
+| `dialogue` | stub | Bedrock-only. |
+| `aimassist` | stub | Bedrock-only. |
+| `fog` | stub | Bedrock-only. |
+| `music` | stub | Bedrock-only. |
 | `selector/family` | stub | @e[family=] has no Java equivalent; type_family is ours. |
 | `selector/hasitem` | stub |  |
 | `selector/haspermission` | stub |  |
 | `selector/scores` | stub |  |
 | `functions/tick_json` | stub |  |
+| `allowlist` | stub |  |
+| `camerashake` | stub |  |
+| `changesetting` | stub |  |
+| `clear` | stub |  |
+| `clearspawnpoint` | stub |  |
+| `clone` | stub |  |
+| `controlscheme` | stub |  |
+| `daylock` | stub |  |
+| `deop` | stub |  |
+| `difficulty` | stub |  |
+| `enchant` | stub |  |
+| `function` | stub |  |
+| `gamemode` | stub |  |
+| `gamerule` | stub |  |
+| `gametest` | stub |  |
+| `help` | stub |  |
+| `kick` | stub |  |
+| `kill` | stub |  |
+| `list` | stub |  |
+| `locate` | stub |  |
+| `loot` | stub |  |
+| `me` | stub |  |
+| `mobevent` | stub |  |
+| `op` | stub |  |
+| `packstack` | stub |  |
+| `permission` | stub |  |
+| `place` | stub |  |
+| `playanimation` | stub |  |
+| `project` | stub |  |
+| `recipe` | stub |  |
+| `reload` | stub |  |
+| `reloadconfig` | stub |  |
+| `reloadpacketlimitconfig` | stub |  |
+| `replaceitem` | stub |  |
+| `save` | stub |  |
+| `say` | stub |  |
+| `schedule` | stub |  |
+| `script` | stub |  |
+| `sendshowstoreoffer` | stub |  |
+| `setmaxplayers` | stub |  |
+| `setworldspawn` | stub |  |
+| `spawnpoint` | stub |  |
+| `spreadplayers` | stub |  |
+| `stop` | stub |  |
+| `stopsound` | stub |  |
+| `teleport` | stub |  |
+| `tell` | stub |  |
+| `testfor` | stub |  |
+| `testforblock` | stub |  |
+| `testforblocks` | stub |  |
+| `tickingarea` | stub |  |
+| `time` | stub |  |
+| `titleraw` | stub |  |
+| `toggledownfall` | stub |  |
+| `transfer` | stub |  |
+| `weather` | stub |  |
+| `wsserver` | stub |  |
+| `xp` | stub |  |

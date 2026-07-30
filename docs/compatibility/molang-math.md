@@ -66,3 +66,5 @@ Ledger: [`spec/coverage/molang-math.yaml`](../../spec/coverage/molang-math.yaml)
 | `math.ease_in_bounce` | stub |  |
 | `math.ease_out_bounce` | stub |  |
 | `math.ease_in_out_bounce` | stub |  |
+| `math.inverse_lerp` | stub |  |
+| `math.sign` | stub |  |

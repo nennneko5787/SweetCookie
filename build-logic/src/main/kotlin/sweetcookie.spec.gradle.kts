@@ -1,9 +1,11 @@
 import net.nennneko5787.sweetcookie.gradle.AdrIndexTask
+import net.nennneko5787.sweetcookie.gradle.FetchUpstreamTask
 import net.nennneko5787.sweetcookie.gradle.SpecLanguageTask
 import net.nennneko5787.sweetcookie.gradle.SpecLinkTask
 import net.nennneko5787.sweetcookie.gradle.SpecReportTask
 import net.nennneko5787.sweetcookie.gradle.SpecUpstreamDiffTask
 import net.nennneko5787.sweetcookie.gradle.SpecValidateTask
+import net.nennneko5787.sweetcookie.gradle.UpdateUpstreamLockTask
 
 // The specification checks. Constitution rule 9: the ledger is verified, not trusted.
 //
@@ -44,10 +46,32 @@ val specLinks = tasks.register<SpecLinkTask>("specLinks") {
     mustRunAfter(specValidate)
 }
 
+val upstreamCache = layout.projectDirectory.dir(".upstream-cache")
+
+// Nothing from Mojang/bedrock-samples is committed - it is NOASSERTION-licensed, fetched at build
+// time, and used only to generate code. Constitution rule 10, spec/upstream/fetch.md.
+val fetchUpstreamMetadata = tasks.register<FetchUpstreamTask>("fetchUpstreamMetadata") {
+    group = "specification"
+    description = "Download the pinned Mojang metadata into .upstream-cache, verifying every hash."
+    specDir.set(specDirectory)
+    cacheDir.set(upstreamCache)
+}
+
+// Deliberately manual. Bumping the snapshot is how new Bedrock features enter view, and a human
+// must see the resulting list of work rather than have the ledger silently re-baselined.
+tasks.register<UpdateUpstreamLockTask>("updateUpstreamLock") {
+    group = "specification"
+    description = "Pin a new bedrock-samples snapshot. Pass --ref=<branch|tag|sha>."
+    specDir.set(specDirectory)
+}
+
 val specUpstreamDiff = tasks.register<SpecUpstreamDiffTask>("specUpstreamDiff") {
     group = "specification"
     description = "Fail when Mojang publishes a feature identifier the ledger does not know about."
     specDir.set(specDirectory)
+    // Not a dependency: specAll must work offline on a fresh clone, where the task skips with an
+    // explanation instead of failing. CI fetches first.
+    mustRunAfter(fetchUpstreamMetadata)
 }
 
 val specReport = tasks.register<SpecReportTask>("specReport") {

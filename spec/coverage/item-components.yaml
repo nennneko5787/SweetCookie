@@ -11,8 +11,8 @@
 domain: item-components
 spec: SC-170
 upstream:
-  source: "metadata/json_schemas/server/item/1.26.30/Item Components.json"
-  pointer: "/properties"
+  - source: "metadata/json_schemas/server/item/1.26.30/Item Components.json"
+    pointer: "/properties"
 
 entries:
   # ── Stack identity and size ────────────────────────────────────────────────

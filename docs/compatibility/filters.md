@@ -114,3 +114,4 @@ Ledger: [`spec/coverage/filters.yaml`](../../spec/coverage/filters.yaml)
 | `is_difficulty` | stub |  |
 | `random_chance` | stub |  |
 | `redstone_strength_at_position` | stub |  |
+| `is_weather` | stub |  |

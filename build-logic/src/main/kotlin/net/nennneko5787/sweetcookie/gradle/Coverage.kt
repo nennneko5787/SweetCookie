@@ -31,13 +31,35 @@ data class CoverageEntry(
     val claimsImplementation: Boolean get() = status == "implemented" || status == "partial"
 }
 
+/**
+ * One place in the upstream metadata that supplies feature identifiers for a shard.
+ *
+ * A shard may declare several. `block-components` needs three, because Mojang documents block
+ * components, trigger components and event responses as separate sections of one file.
+ *
+ * Two addressing modes, because upstream uses two shapes:
+ *
+ *  - [pointer] + [idField] for plain JSON — `mojang-molang-queries.json` is
+ *    `{"queries": [{"name": "query.foo"}, ...]}`.
+ *  - [nodePath] for the `doc_modules` trees, which are named `nodes[]` hierarchies that an RFC 6901
+ *    pointer cannot address at all. Identifiers are the `name` of each child of the selected node.
+ */
+data class UpstreamSelector(
+    val source: String,
+    val pointer: String?,
+    val idField: String?,
+    val nodePath: List<String>,
+) {
+    val describe: String
+        get() = if (nodePath.isNotEmpty()) "$source [${nodePath.joinToString(" / ")}]"
+        else "$source [${pointer.orEmpty()}]"
+}
+
 data class CoverageShard(
     val file: File,
     val domain: String,
     val spec: String,
-    val upstreamSource: String?,
-    val upstreamPointer: String?,
-    val upstreamIdField: String?,
+    val upstream: List<UpstreamSelector>,
     val entries: List<CoverageEntry>,
 )
 
@@ -65,7 +87,16 @@ object CoverageLoader {
 
         val domain = root["domain"] as? String ?: error("${file.name}: missing `domain`")
         val spec = root["spec"] as? String ?: error("${file.name}: missing `spec`")
-        val upstream = root["upstream"] as? Map<String, Any?>
+
+        val upstream = (root["upstream"] as? List<Map<String, Any?>>).orEmpty().map { sel ->
+            UpstreamSelector(
+                source = sel["source"] as? String
+                    ?: error("${file.name}: an upstream selector has no `source`"),
+                pointer = sel["pointer"] as? String,
+                idField = sel["idField"] as? String,
+                nodePath = (sel["nodePath"] as? List<String>).orEmpty(),
+            )
+        }
 
         val entries = (root["entries"] as? List<Map<String, Any?>>).orEmpty().map { raw ->
             val id = raw["id"] as? String ?: error("${file.name}: entry with no `id`")
@@ -89,9 +120,7 @@ object CoverageLoader {
             file = file,
             domain = domain,
             spec = spec,
-            upstreamSource = upstream?.get("source") as? String,
-            upstreamPointer = upstream?.get("pointer") as? String,
-            upstreamIdField = upstream?.get("idField") as? String,
+            upstream = upstream,
             entries = entries,
         )
     }

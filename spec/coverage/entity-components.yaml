@@ -11,8 +11,10 @@
 domain: entity-components
 spec: SC-160
 upstream:
-  source: "metadata/doc_modules/entities.json"
-  pointer: "/data_items/Entity Components"
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Server Entity Documentation"
+      - "Components"
 
 entries:
   - id: "minecraft:movement.basic"
@@ -65,10 +67,6 @@ entries:
     status: stub
   - id: "minecraft:custom_hit_test"
     status: stub
-  - id: "minecraft:scale"
-    status: stub
-  - id: "minecraft:is_collidable"
-    status: stub
   - id: "minecraft:health"
     status: stub
   - id: "minecraft:breathable"
@@ -83,8 +81,6 @@ entries:
       Uses the filter grammar.
   - id: "minecraft:hurt_on_condition"
     status: stub
-  - id: "minecraft:fire_immune"
-    status: stub
   - id: "minecraft:breedable"
     status: stub
   - id: "minecraft:tameable"
@@ -97,20 +93,11 @@ entries:
     status: stub
   - id: "minecraft:anger_level"
     status: stub
-  - id: "minecraft:type_family"
-    status: stub
-    notes: >-
-      Bedrock's own grouping mechanism. Implemented by us, independent of Java entity tags - SC-120 section
-      5.2.
   - id: "minecraft:inventory"
     status: stub
     notes: >-
       container_type is a closed set in Bedrock; Java can define new ones.
-  - id: "minecraft:equipment"
-    status: stub
   - id: "minecraft:equippable"
-    status: stub
-  - id: "minecraft:loot"
     status: stub
   - id: "minecraft:economy_trade_table"
     status: stub
@@ -147,3 +134,143 @@ entries:
     fidelity: >-
       A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by SweetCookie's
       own sideband scheduling instead, so declaring it has no observable effect.
+
+  # --- Added from the pinned upstream snapshot -----------------------------
+  # These are Mojang's own identifiers, not hand-curated. They carry no notes
+  # because nobody has looked at them yet - which is exactly what stub means.
+  - id: "minecraft:admire_item"
+    status: stub
+  - id: "minecraft:annotation.break_door"
+    status: stub
+  - id: "minecraft:annotation.open_door"
+    status: stub
+  - id: "minecraft:attack_cooldown"
+    status: stub
+  - id: "minecraft:barter"
+    status: stub
+  - id: "minecraft:block_climber"
+    status: stub
+  - id: "minecraft:boostable"
+    status: stub
+  - id: "minecraft:break_blocks"
+    status: stub
+  - id: "minecraft:bribeable"
+    status: stub
+  - id: "minecraft:buoyant"
+    status: stub
+  - id: "minecraft:can_join_raid"
+    status: stub
+  - id: "minecraft:celebrate_hunt"
+    status: stub
+  - id: "minecraft:combat_regeneration"
+    status: stub
+  - id: "minecraft:damage_over_time"
+    status: stub
+  - id: "minecraft:dash_action"
+    status: stub
+  - id: "minecraft:dimension_bound"
+    status: stub
+  - id: "minecraft:drying_out_timer"
+    status: stub
+  - id: "minecraft:entity_armor_equipment_slot_mapping"
+    status: stub
+  - id: "minecraft:entity_sensor"
+    status: stub
+  - id: "minecraft:equip_item"
+    status: stub
+  - id: "minecraft:exhaustion_values"
+    status: stub
+  - id: "minecraft:experience_reward"
+    status: stub
+  - id: "minecraft:flocking"
+    status: stub
+  - id: "minecraft:free_camera_controlled"
+    status: stub
+  - id: "minecraft:game_event_movement_tracking"
+    status: stub
+  - id: "minecraft:genetics"
+    status: stub
+  - id: "minecraft:giveable"
+    status: stub
+  - id: "minecraft:group_size"
+    status: stub
+  - id: "minecraft:grows_crop"
+    status: stub
+  - id: "minecraft:healable"
+    status: stub
+  - id: "minecraft:heartbeat"
+    status: stub
+  - id: "minecraft:home"
+    status: stub
+  - id: "minecraft:inside_block_notifier"
+    status: stub
+  - id: "minecraft:insomnia"
+    status: stub
+  - id: "minecraft:instant_despawn"
+    status: stub
+  - id: "minecraft:item_hopper"
+    status: stub
+  - id: "minecraft:jump.dynamic"
+    status: stub
+  - id: "minecraft:jump.static"
+    status: stub
+  - id: "minecraft:leashable_to"
+    status: stub
+  - id: "minecraft:looked_at"
+    status: stub
+  - id: "minecraft:managed_wandering_trader"
+    status: stub
+  - id: "minecraft:mob_effect"
+    status: stub
+  - id: "minecraft:mob_effect_immunity"
+    status: stub
+  - id: "minecraft:out_of_control"
+    status: stub
+  - id: "minecraft:peek"
+    status: stub
+  - id: "minecraft:pushable_by_block"
+    status: stub
+  - id: "minecraft:pushable_by_entity"
+    status: stub
+  - id: "minecraft:raid_trigger"
+    status: stub
+  - id: "minecraft:rail_movement"
+    status: stub
+  - id: "minecraft:rail_sensor"
+    status: stub
+  - id: "minecraft:ravager_blocked"
+    status: stub
+  - id: "minecraft:reflect_projectiles"
+    status: stub
+  - id: "minecraft:scheduler"
+    status: stub
+  - id: "minecraft:shareables"
+    status: stub
+  - id: "minecraft:shooter"
+    status: stub
+  - id: "minecraft:sittable"
+    status: stub
+  - id: "minecraft:spawn_egg_interaction"
+    status: stub
+  - id: "minecraft:suspect_tracking"
+    status: stub
+  - id: "minecraft:tamemount"
+    status: stub
+  - id: "minecraft:target_nearby_sensor"
+    status: stub
+  - id: "minecraft:teleport"
+    status: stub
+  - id: "minecraft:trail"
+    status: stub
+  - id: "minecraft:transient"
+    status: stub
+  - id: "minecraft:trusting"
+    status: stub
+  - id: "minecraft:underwater_mount_breathing"
+    status: stub
+  - id: "minecraft:variable_max_auto_step"
+    status: stub
+  - id: "minecraft:vertical_movement_action"
+    status: stub
+  - id: "minecraft:vibration_damper"
+    status: stub

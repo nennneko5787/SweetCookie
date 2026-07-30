@@ -50,10 +50,42 @@ Generating code from a schema is not redistributing the schema. Shipping the sch
 `.upstream-cache/` is gitignored. `fetchUpstreamMetadata` is skipped when the cache is present and
 its hashes match.
 
+### Addressing upstream
+
+Upstream uses two shapes, so a coverage shard's `upstream` is a **list** of selectors:
+
+| Shape | Selector | Example |
+|---|---|---|
+| Plain JSON | `pointer` (RFC 6901) plus optional `idField` | `mojang-molang-queries.json` is `{"queries": [{"name": "query.foo"}]}` |
+| `doc_modules` tree | `nodePath` | `["Server Entity Documentation", "AI Goals"]` |
+
+`doc_modules` files are named `nodes[]` hierarchies that an RFC 6901 pointer cannot address at all —
+there is no way to say "the child called AI Goals". Hence the second form.
+
+A shard may need several: `block-components` uses three, because Mojang documents block components,
+trigger components and event responses as separate sections of one file.
+
+**Two traps, both found the hard way.**
+
+*Node names carry prose.* The `name` field reads
+`minecraft:behavior.melee_attack (See JSON Schema since 1.26.0)`, not a bare identifier. Taking it
+verbatim injected 554 entries whose ids contained documentation. The extractor strips everything
+from the first ` (`.
+
+*Not every node is a feature list.* `Client Entity Documentation` looks like one and is not — its
+children are section headings, one of which is the empty string and another
+`materials, textures, animations`. Shards whose upstream node is prose rather than identifiers set
+`upstream: null` and say why in the header. Wiring them produces entries that are worse than absent,
+because they look verified.
+
 ### `specUpstreamDiff`
 
 The mechanism that keeps the ledger honest in the *other* direction. It fails the build when
 upstream declares a feature identifier that `spec/coverage/**` does not know about.
+
+**A selector that resolves to nothing is a failure, not an empty result.** The first version of the
+task returned an empty list for an unresolvable pointer, so a ledger missing 111 of 171 AI goals
+reported "covers every upstream identifier". A check that cannot fail is worse than no check.
 
 That failure is resolved by **adding a coverage entry at `status: stub`** — not by implementing the
 feature, and not by silencing the check. The result is that a Bedrock update shows up as a concrete,

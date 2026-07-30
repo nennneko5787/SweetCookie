@@ -10,7 +10,15 @@
 
 domain: entity-events
 spec: SC-160
-upstream: null
+upstream:
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Server Entity Documentation"
+      - "Built-in Events"
+  - source: "metadata/doc_modules/entities.json"
+    nodePath:
+      - "Server Entity Documentation"
+      - "Triggers"
 
 entries:
   - id: event/add
@@ -46,23 +54,23 @@ entries:
     status: stub
   - id: "minecraft:on_prime"
     status: stub
-  - id: trigger/on_death
+  - id: "minecraft:on_death"
     status: stub
-  - id: trigger/on_hurt
+  - id: "minecraft:on_hurt"
     status: stub
-  - id: trigger/on_hurt_by_player
+  - id: "minecraft:on_hurt_by_player"
     status: stub
-  - id: trigger/on_ignite
+  - id: "minecraft:on_ignite"
     status: stub
-  - id: trigger/on_friendly_anger
+  - id: "minecraft:on_friendly_anger"
     status: stub
-  - id: trigger/on_start_landing
+  - id: "minecraft:on_start_landing"
     status: stub
-  - id: trigger/on_start_takeoff
+  - id: "minecraft:on_start_takeoff"
     status: stub
-  - id: trigger/on_target_acquired
+  - id: "minecraft:on_target_acquired"
     status: stub
-  - id: trigger/on_target_escape
+  - id: "minecraft:on_target_escape"
     status: stub
-  - id: trigger/on_wake_with_owner
+  - id: "minecraft:on_wake_with_owner"
     status: stub

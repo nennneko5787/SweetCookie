@@ -5,8 +5,11 @@
 
 domain: rp-client-entity
 spec: SC-180
+# NOT wired to upstream. Client Entity Documentation looks like a feature list but its children
+# are DOC SECTION HEADINGS - one is the empty string, another is "materials, textures, animations".
+# Using them as identifiers produced 14 entries that mean nothing. The hand-written decomposition
+# below is the useful one; it is ours, not Mojang's, and does not claim otherwise.
 upstream: null
-
 entries:
   - id: client_entity/materials
     status: stub

@@ -5,7 +5,7 @@
 Every Bedrock feature identifier SweetCookie knows about, and what it does with it.
 Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conventions.md).
 
-**833 tracked feature identifiers across 38 domains.**
+**1359 tracked feature identifiers across 38 domains.**
 
 | Domain | Spec | Total | implemented | partial | stub | unsupported | wontfix |
 |---|---|--:|--:|--:|--:|--:|--:|
@@ -13,19 +13,19 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [block-components](block-components.md) | SC-150 | 54 | 0 | 0 | 54 | 0 | 0 |
 | [block-states-traits](block-states-traits.md) | SC-150 | 8 | 0 | 0 | 8 | 0 | 0 |
 | [dialogue](dialogue.md) | SC-190 | 2 | 0 | 0 | 0 | 2 | 0 |
-| [entity-components](entity-components.md) | SC-160 | 56 | 0 | 0 | 55 | 0 | 1 |
+| [entity-components](entity-components.md) | SC-160 | 118 | 0 | 0 | 117 | 0 | 1 |
 | [entity-events](entity-events.md) | SC-160 | 23 | 0 | 0 | 23 | 0 | 0 |
-| [entity-goals](entity-goals.md) | SC-160 | 60 | 0 | 0 | 60 | 0 | 0 |
-| [entity-properties](entity-properties.md) | SC-160 | 38 | 0 | 0 | 38 | 0 | 0 |
+| [entity-goals](entity-goals.md) | SC-160 | 173 | 0 | 0 | 173 | 0 | 0 |
+| [entity-properties](entity-properties.md) | SC-160 | 59 | 0 | 0 | 59 | 0 | 0 |
 | [features-featurerules](features-featurerules.md) | SC-190 | 8 | 0 | 0 | 0 | 8 | 0 |
-| [filters](filters.md) | SC-140 | 107 | 0 | 0 | 107 | 0 | 0 |
-| [functions-commands](functions-commands.md) | SC-190 | 30 | 0 | 0 | 30 | 0 | 0 |
+| [filters](filters.md) | SC-140 | 108 | 0 | 0 | 108 | 0 | 0 |
+| [functions-commands](functions-commands.md) | SC-190 | 88 | 0 | 0 | 88 | 0 | 0 |
 | [interop-geyser](interop-geyser.md) | SC-210 | 7 | 0 | 0 | 6 | 1 | 0 |
 | [interop-viaversion](interop-viaversion.md) | SC-270 | 8 | 0 | 0 | 8 | 0 | 0 |
 | [item-components](item-components.md) | SC-170 | 45 | 0 | 0 | 45 | 0 | 0 |
 | [loot](loot.md) | SC-190 | 30 | 0 | 0 | 30 | 0 | 0 |
-| [molang-math](molang-math.md) | SC-130 | 59 | 0 | 0 | 59 | 0 | 0 |
-| [molang-queries](molang-queries.md) | SC-130 | 50 | 0 | 0 | 50 | 0 | 0 |
+| [molang-math](molang-math.md) | SC-130 | 61 | 0 | 0 | 61 | 0 | 0 |
+| [molang-queries](molang-queries.md) | SC-130 | 319 | 0 | 0 | 319 | 0 | 0 |
 | [molang-syntax](molang-syntax.md) | SC-130 | 15 | 0 | 0 | 15 | 0 | 0 |
 | [packaging](packaging.md) | SC-100 | 19 | 0 | 0 | 16 | 3 | 0 |
 | [recipes](recipes.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
@@ -47,7 +47,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [spawn-rules](spawn-rules.md) | SC-190 | 16 | 0 | 0 | 16 | 0 | 0 |
 | [structures](structures.md) | SC-190 | 6 | 0 | 0 | 3 | 3 | 0 |
 | [trading](trading.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
-| **total** | | **833** | **0** | **0** | **798** | **25** | **10** |
+| **total** | | **1359** | **0** | **0** | **1324** | **25** | **10** |
 
 ## How to read this
 
