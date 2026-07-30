@@ -70,10 +70,14 @@ jobs:
   # Fails when Mojang publishes a feature identifier the ledger does not know about. Separated from
   # the `spec` job because it needs network access to fetch the pinned upstream snapshot, and a
   # network failure should not be indistinguishable from a stale ledger.
+  #
+  # Today this job is a placeholder that reports the check is inert: the snapshot is not pinned and
+  # `fetchUpstreamMetadata` is not written yet, so specUpstreamDiff skips with an explanation. The
+  # fetch step is deliberately ABSENT rather than present-and-failing - a job that is always red
+  # teaches people to ignore CI, which costs more than the missing check does.
   upstream:
     name: Upstream drift
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -82,10 +86,9 @@ jobs:
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Fetch pinned Mojang metadata
-        run: ./gradlew fetchUpstreamMetadata
-
-      # Resolved by ADDING a `status: stub` coverage entry - not by implementing the feature, and
-      # not by silencing the check. See spec/upstream/fetch.md.
+      # TODO: add `./gradlew fetchUpstreamMetadata` here once it exists, and drop this comment.
+      # Until then the step below prints why it cannot check anything. A failure here is resolved
+      # by ADDING a `status: stub` coverage entry - not by implementing the feature, and not by
+      # silencing the check. See spec/upstream/fetch.md.
       - name: Check for undeclared Bedrock features
         run: ./gradlew specUpstreamDiff

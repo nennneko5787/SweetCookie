@@ -23,6 +23,11 @@ half an hour. After that it is cached.
 
 Java 25 is required for the daemon, because 26.2 needs it. Gradle provisions toolchains itself.
 
+**On Windows:** git does not track the executable bit, so a shell script added from Windows lands in
+the repository as `100644` and every Linux CI job fails with `Permission denied`. This already
+happened once, to `gradlew`. After adding a `.sh` file, run `git update-index --chmod=+x <file>` and
+check with `git ls-files -s`.
+
 ## Where code goes
 
 | | |
