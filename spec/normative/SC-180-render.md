@@ -10,11 +10,18 @@ second renderer, and it is the largest client-side body of work in the project.
 
 ## 1. Decisions already taken
 
-**The render abstraction is designed from 26.2's constraints** (SC-220 §2.2). 1.21.11's
-`MultiBufferSource` is permissive; 26.2's submission model is restrictive; the interface follows the
-restrictive one and 1.21.11 emulates it.
+**There is no render abstraction for the geometry path.** Shared code calls
+`SubmitNodeCollector.submitCustomGeometry` directly, because the signature is identical on both
+supported versions. This replaces an earlier design built on a mistaken premise; ADR-0010 records
+what was wrong and why.
 
-**Backends live in per-version source directories**, never inline `//?` (SC-220 §3).
+**Version divergence exists elsewhere in rendering and is abstracted when first needed**, sized to
+the actual difference (§2.1). Where an abstraction is introduced, it is designed against the newest
+version's constraints, since a restrictive contract can be satisfied by a permissive backend and not
+the reverse (SC-220 §2.2).
+
+**Backends, where they exist, live in per-version source directories**, never inline `//?`
+(SC-220 §3).
 
 **Everything except the backends is version-free**: geometry traversal, bone matrices, animation
 sampling, animation-controller state machines, render-controller evaluation, Molang, Snowstorm
@@ -23,32 +30,47 @@ simulation. Target: under 10 % of client code is version-split.
 **Bedrock coordinate conventions are preserved in the IR** and converted once, here, where the
 result can be checked against a rendered image (SC-110 §6.1).
 
-## 2. The backend interface
+## 2. Submission
+
+Verified against both `minecraft-merged` jars, not against release notes:
 
 ```java
-public interface GfxBackend {
-    RenderLayerRef entityCutout(ResourceLocation texture);
-    RenderLayerRef entityTranslucent(ResourceLocation texture);
-    RenderLayerRef entityEmissive(ResourceLocation texture);
-    RenderLayerRef custom(BedrockMaterial material);
-    MeshHandle uploadMesh(BedrockMeshData data);
-}
+// net.minecraft.client.renderer.SubmitNodeCollector — IDENTICAL on 1.21.11 and 26.2
+void submitCustomGeometry(PoseStack, RenderType, CustomGeometryRenderer);
 
-public interface GfxSink {
-    void mesh(RenderLayerRef layer, Matrix4f pose, MeshHandle mesh,
-              int light, int overlay, int tintARGB);
-    void quads(RenderLayerRef layer, Matrix4f pose, Matrix3f normal, BedrockQuad[] quads,
-               int light, int overlay, int tintARGB);
-    void particleBatch(RenderLayerRef layer, ParticleBatch batch);
+interface CustomGeometryRenderer {
+    void render(PoseStack.Pose, VertexConsumer);
 }
-
-public interface RenderLayerRef {}   // RenderType on 1.21.11, RenderPipeline on 26.2
 ```
 
-`TODO(SC-180)`: **this interface is provisional until the 26.2 spike lands.** 26.2's
-`FeatureRenderer<SUBMIT>` / `SubmitNode` shape is known in outline but not verified against the real
-API. If `GfxSink` is wrong, the entire client is a rewrite — which is why the spike precedes all
-other client work.
+`RenderType`, `Identifier`, `PoseStack` and `VertexConsumer` are in the same packages on both
+versions. `RenderTypes.entityCutout(Identifier)` and its siblings supply the layer.
+
+Submission **deferred** vertex writing into a callback; it did not abolish it. That is the fact the
+earlier design got wrong, and it happens to suit this project: Bedrock render controllers choose
+geometry, texture and material per frame through Molang, so an upload-immutable-meshes API would
+have fought the format continuously.
+
+`src/main/java/.../client/render/BedrockCubeSubmitter.java` is the worked example and compiles
+unchanged on all four nodes.
+
+### 2.1 Where rendering actually diverges
+
+| Path | 1.21.11 vs 26.2 |
+|---|---|
+| `submitCustomGeometry` | **identical** — the path this project lives on |
+| `submitModelPart`, `submitModel` | differing overloads |
+| `submitBlockModel` | `BlockStateModel` vs `List<BlockStateModelPart>` |
+| `submitItem` | `BakedQuad` moved package |
+| Particles | `submitParticleGroup(ParticleGroupRenderer)` vs `submitQuadParticleGroup(QuadParticleRenderState)` |
+| `submitBlock` | removed in 26.2 |
+| `submitNameTag` | one extra parameter in 1.21.11 |
+
+`MultiBufferSource` still exists in 1.21.11 and is gone in 26.2, but nothing here needs it: the
+renderer rewrite landed at 1.21.9, so both supported versions already have the submission API.
+
+`TODO(SC-180)`: particles and block models get an abstraction when they are first implemented, not
+before. Their shape is not knowable yet and a seam built early would be the wrong one.
 
 ## 3. Geometry
 
@@ -119,8 +141,12 @@ Emitter components (`emitter_rate_*`, `emitter_lifetime_*`, `emitter_shape_*`,
 `bezier_chain`, `catmull_rom`) and `events`.
 
 Nearly every field is Molang. Java's `ParticleType`/`ParticleProvider` cannot express this, so
-SweetCookie ships its own particle engine, simulated in version-free code and submitted through
-`GfxSink.particleBatch`.
+SweetCookie ships its own particle engine, simulated in version-free code.
+
+Particle **submission** is one of the paths that genuinely diverges (§2.1):
+`submitParticleGroup(ParticleGroupRenderer)` on 1.21.11 versus
+`submitQuadParticleGroup(QuadParticleRenderState)` on 26.2. That abstraction is written when the
+particle engine is, not before.
 
 ## 8. Materials, textures, sounds
 

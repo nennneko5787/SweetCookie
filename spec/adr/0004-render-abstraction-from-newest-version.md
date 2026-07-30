@@ -1,8 +1,18 @@
 # ADR-0004 — The render abstraction is designed from the newest version's constraints
 
-**Status:** accepted
+**Status:** superseded-by ADR-0010
 **Date:** 2026-07-30
 **Affects:** SC-180, SC-220
+
+> **Superseded on 2026-07-31.** The factual premise below — that 26.2 forbids mid-frame vertex
+> writing and therefore needs an upload-immutable-meshes interface — is wrong. `SubmitNodeCollector`
+> already exists in 1.21.11, `submitCustomGeometry` is byte-identical on both versions, and it hands
+> back a live `VertexConsumer`. The geometry path needs no abstraction at all. See
+> [ADR-0010](0010-geometry-submission-needs-no-abstraction.md).
+>
+> The general rule this ADR states — design a version abstraction against the newest version's
+> constraints — survives and still applies to the paths that do diverge. What failed was the input:
+> the constraints were inferred from release notes rather than read from the jar.
 
 ## Context
 

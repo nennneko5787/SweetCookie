@@ -62,21 +62,18 @@ The interface **MUST** be designed against the **newest** version's constraints,
 older ones — never the reverse. A restrictive contract can always be satisfied by a permissive
 backend; a permissive contract cannot be satisfied by a restrictive one.
 
-The canonical case is rendering. 1.21.11 offers `MultiBufferSource` + `VertexConsumer`: mutable,
-mid-frame, immediate-ish. 26.2 removed it for a submission model with immutable nodes and no
-mid-frame mutation. Design `GfxSink` from 26.2's rules and 1.21.11 implements it easily; design it
-from 1.21.11's and 26.2 is impossible.
-
-```java
-// version-free
-public interface GfxSink {
-    void mesh(RenderLayerRef layer, Matrix4f pose, MeshHandle mesh, int light, int overlay, int tint);
-}
-public interface RenderLayerRef {}   // opaque: RenderType on 1.21.11, RenderPipeline on 26.2
-```
-
 Interfaces are resolved by the platform service loader (SC-230), which handles version and loader
 selection identically.
+
+**Introduce the interface when the divergence is real, not when it is anticipated.** Rendering was
+this document's worked example of an unavoidable abstraction, and the spike found it was not one:
+`submitCustomGeometry` is byte-identical on both versions and shared code calls it directly
+(ADR-0010, SC-180 §2). An abstraction built for a divergence that has not happened is guaranteed to
+be the wrong shape when one does, and — worse — it is never exercised, so it is silently wrong by
+the time it is needed.
+
+The rule about designing against the newest version still governs wherever an interface *is*
+warranted; it just does not license inventing one in advance.
 
 ### 2.3 Stonecutter comments (small, local divergence only)
 
@@ -127,9 +124,10 @@ enforced by the build graph rather than by review.
 **Render code in particular MUST use a directory**, not §2.3. Two thousand lines interleaved with
 `//? if >=26.2 {` is unmaintainable and rendering is exactly where the temptation peaks.
 
-Expected version-split surface: two `GfxBackend`/`GfxSink` implementations, the entity-renderer entry
-point, the particle render hook, the item/GUI render hook, and the packet-encode mixin targets
-(SC-270). That is the whole list; anything else appearing there deserves scrutiny in review.
+Expected version-split surface, now that the spike has narrowed it: the particle submission hook,
+the block-model and item submission hooks, the entity-renderer entry point, and the packet-encode
+mixin targets (SC-270). **Geometry submission is not on this list** — it is identical on both
+versions (SC-180 §2). Anything else appearing here deserves scrutiny in review.
 
 ## 4. Mixins
 

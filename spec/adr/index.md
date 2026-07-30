@@ -7,12 +7,13 @@
 | [0001](0001-minecraft-free-core.md) | Format parsing has no Minecraft dependency | accepted | SC-000, SC-100, SC-110, SC-220 | high |
 | [0002](0002-derived-logical-identifiers.md) | Logical identifiers are derived, physical slots are allocated | accepted | SC-120, SC-270 | very high |
 | [0003](0003-version-independent-wire-protocol.md) | Custom content never occupies a vanilla network registry identifier | accepted | SC-120, SC-160, SC-270 | high |
-| [0004](0004-render-abstraction-from-newest-version.md) | The render abstraction is designed from the newest version's constraints | accepted | SC-180, SC-220 | high |
+| [0004](0004-render-abstraction-from-newest-version.md) | The render abstraction is designed from the newest version's constraints | **superseded by 0010** | SC-180, SC-220 | — |
 | [0005](0005-scripting-as-optional-companion.md) | Scripting is an optional companion mod on GraalJS | accepted | SC-200, SC-260 | low |
 | [0006](0006-licensing-and-attribution.md) | Licensing and attribution — **MIT** | accepted | all | irreversible once contributed to |
 | [0007](0007-no-registry-entry-per-feature.md) | No Bedrock feature gets a Java registry entry | accepted | SC-120, SC-150, SC-160, SC-170 | high |
 | [0008](0008-mocha-for-molang.md) | Molang runs on `team.unnamed:mocha` | accepted | SC-130, SC-250 | low |
 | [0009](0009-hand-rolled-platform-services.md) | Platform abstraction is a hand-rolled `ServiceLoader` | accepted | SC-220, SC-230 | low |
+| [0010](0010-geometry-submission-needs-no-abstraction.md) | Geometry submission needs no version abstraction | accepted | SC-180, SC-220 | low |
 
 ## Open decisions
 
