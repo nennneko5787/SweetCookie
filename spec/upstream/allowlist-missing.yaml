@@ -1,0 +1,34 @@
+# Upstream feature identifiers deliberately absent from spec/coverage/**.
+#
+# `specUpstreamDiff` fails the build when upstream declares an identifier the ledger does not know
+# about. The correct fix is almost always to add a `status: stub` coverage entry — one line, and it
+# stays visible. This file is the escape hatch, and it should stay SHORT.
+#
+# Every entry needs a reason a stranger would accept. "Not relevant" is not a reason.
+#
+# Fields:
+#   id       the upstream identifier, verbatim
+#   reason   why it is not tracked
+#   source   which upstream file declares it
+#   since    when this exclusion was decided
+#   review   when to reconsider, or `never`
+
+version: 1
+
+entries:
+  - id: minecraft:editor_*
+    reason: >-
+      Bedrock Editor extension surface. Editor is a separate Bedrock application with no Java
+      counterpart, and a pack targeting it is not an add-on in the sense this project loads.
+    source: metadata/json_schemas/editor/
+    since: "2026-07-31"
+    review: never
+
+  - id: "chemistry:*"
+    reason: >-
+      The Education Edition chemistry feature set. Gated behind a manifest capability that
+      SweetCookie reports as unsupported, and it depends on Education-only blocks and UI that do not
+      exist in either Java Edition or standard Bedrock.
+    source: metadata/vanilladata_modules/
+    since: "2026-07-31"
+    review: never

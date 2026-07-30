@@ -1,0 +1,58 @@
+# TWO structurally incompatible file families, and this is the most important parsing fork in the
+# project. Both appear in the same vanilla pack.
+#
+# Family selection is by STRUCTURAL SNIFFING, not the declared format_version: authoring tools have
+# shipped mismatched declarations for years.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-geometry
+spec: SC-180
+upstream: null
+
+entries:
+  - id: geometry/family_1_8
+    status: stub
+    notes: >-
+      Top-level geometry.* keys, box UV only.
+  - id: geometry/family_modern
+    status: stub
+    notes: >-
+      minecraft:geometry array, per-face UV.
+  - id: geometry/bones
+    status: stub
+  - id: geometry/pivot
+    status: stub
+  - id: geometry/rotation
+    status: stub
+  - id: geometry/cubes
+    status: stub
+  - id: geometry/box_uv
+    status: stub
+    notes: >-
+      Expanded to per-face UV at parse time; the reverse is not expressible.
+  - id: geometry/per_face_uv
+    status: stub
+  - id: geometry/inflate
+    status: stub
+  - id: geometry/mirror
+    status: stub
+  - id: geometry/locators
+    status: stub
+  - id: geometry/poly_mesh
+    status: stub
+    notes: >-
+      Forces the dynamic block render path - cannot be transpiled to a Java block model.
+  - id: geometry/binding
+    status: stub
+    notes: >-
+      Molang bone reparenting, evaluated per frame.
+  - id: geometry/inheritance
+    status: stub
+    notes: >-
+      geometry.a:geometry.b parent syntax.
+  - id: geometry/visible_bounds
+    status: stub
+  - id: geometry/texture_meshes
+    status: stub

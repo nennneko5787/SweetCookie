@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/entity.schema.json",
+  "title": "EntityDefIr",
+  "description": "A Bedrock entity definition: a data-driven entity-component system with 120 components, 171 AI goals, component groups mutated at runtime by events, and typed properties. SC-160. Registration is SC-120 section 5.",
+
+  "type": "object",
+  "required": ["identifier", "components", "componentGroups", "events"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": { "$ref": "common.schema.json#/$defs/bedrockId" },
+
+    "isSpawnable": { "type": "boolean", "default": false },
+    "isSummonable": { "type": "boolean", "default": true },
+    "isExperimental": { "type": "boolean", "default": false },
+
+    "runtimeIdentifier": {
+      "description": "Masquerade as a vanilla Bedrock entity to inherit hardcoded client behaviour. No Java analogue; likely wontfix with a small allowlist (SC-160 section 2).",
+      "type": ["string", "null"]
+    },
+
+    "spawnCategory": {
+      "description": "Selects which registered EntityType the entity uses, because MobCategory is baked into EntityType and cannot be dynamic (SC-120 section 5.2).",
+      "type": ["string", "null"]
+    },
+
+    "classFamily": {
+      "description": "Inferred from the component set: which Java base class family this needs. Fixed at spawn time for a given individual.",
+      "enum": ["MOB", "PROJECTILE", "OBJECT"]
+    },
+
+    "properties": {
+      "description": "Typed entity properties, queryable as q.property() and settable by events. Synced over the sideband, never SynchedEntityData (constitution rule 6).",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/entityProperty" }
+    },
+
+    "components": {
+      "description": "The base component set. Keys are Bedrock component names.",
+      "type": "object"
+    },
+
+    "componentGroups": {
+      "description": "Named component sets that events add and remove at runtime. The mechanism with no Java analogue at all — adding or removing one rebuilds the GoalSelector at a tick boundary.",
+      "type": "object",
+      "additionalProperties": { "type": "object" }
+    },
+
+    "events": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/event" }
+    },
+
+    "animations": {
+      "description": "Server-side animation aliases from description.animations.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+
+    "scripts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "animate": { "type": "array", "items": { "type": ["string", "object"] } }
+      }
+    },
+
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" },
+
+    "vanillaFallback": {
+      "description": "Wire carrier entity type. SC-270 section 4.",
+      "type": ["string", "null"]
+    }
+  },
+
+  "$defs": {
+    "entityProperty": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["bool", "int", "float", "enum"] },
+        "range": { "$ref": "common.schema.json#/$defs/rangeF" },
+        "values": {
+          "description": "Enum members. Geyser caps these at 16 with 32-character names (SC-210 section 4).",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "default": { "type": ["boolean", "number", "string"] },
+        "clientSync": {
+          "description": "Whether the client needs this. Only synced properties cost bandwidth.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "event": {
+      "description": "A declarative mutation of the component-group set. Application order, re-entrancy and the recursion bound are TODO(SC-160) — Bedrock's behaviour there is undocumented and needs observation.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filters": { "$ref": "filter.schema.json" },
+        "add": { "$ref": "#/$defs/groupChange" },
+        "remove": { "$ref": "#/$defs/groupChange" },
+        "setProperty": { "type": "object" },
+        "trigger": { "type": ["string", "object"] },
+        "queueCommand": { "type": "object" },
+        "emitVibration": { "type": "object" },
+        "sequence": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "randomize": {
+          "description": "Weighted choice. Weights normalise at parse time; a zero total is SCE-2030 and the first entry is taken.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["weight", "event"],
+            "additionalProperties": false,
+            "properties": {
+              "weight": { "type": "number", "minimum": 0 },
+              "event": { "$ref": "#/$defs/event" }
+            }
+          }
+        },
+        "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+      }
+    },
+
+    "groupChange": {
+      "type": "object",
+      "required": ["componentGroups"],
+      "additionalProperties": false,
+      "properties": {
+        "componentGroups": { "type": "array", "items": { "type": "string" } },
+        "chance": {
+          "description": "Bedrock's %50 suffix syntax, normalised to a 0..1 probability. 1 when absent.",
+          "type": "number", "minimum": 0, "maximum": 1, "default": 1
+        }
+      }
+    }
+  }
+}

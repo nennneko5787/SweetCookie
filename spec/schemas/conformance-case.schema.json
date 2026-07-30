@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/conformance-case.schema.json",
+  "title": "SweetCookie conformance case",
+  "description": "spec/conformance/<domain>/<case>/case.yaml. Describes one executable statement of the form 'given this add-on, this must happen'. See spec/conformance/README.md.",
+
+  "type": "object",
+  "required": ["id", "tier", "spec", "features", "description"],
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "description": "Must equal <domain>/<case>, matching the directory path.",
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(/[a-z0-9_]+)+$"
+    },
+
+    "tier": {
+      "description": "T0 parse only, no Minecraft. T1 translation to runtime objects, no world. T2 headless server behaviour. T3 rendering, needs a client. T4 manual, needs a human. Choose the LOWEST tier that can prove the claim.",
+      "enum": ["T0", "T1", "T2", "T3", "T4"]
+    },
+
+    "spec": { "type": "string", "pattern": "^SC-[0-9]{3}$" },
+
+    "features": {
+      "description": "Bedrock feature IDs this case proves. Each must exist in a coverage shard; specConformance checks the link in both directions.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+
+    "description": {
+      "description": "What divergence or behaviour this case pins down, in one or two sentences. Say what would break if it regressed.",
+      "type": "string",
+      "minLength": 20
+    },
+
+    "pack": {
+      "description": "The add-on under test. 100% ORIGINAL CONTENT — constitution rule 10. Either a directory of files or a fixture to extend.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dir": {
+          "description": "Directory relative to the case, containing a pack tree. Defaults to 'pack'.",
+          "type": "string"
+        },
+        "extends": {
+          "description": "A fixture under spec/conformance/_fixtures/ to layer this pack on top of.",
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "loadOrder": {
+          "description": "For multi-pack cases: explicit pack order, overriding SC-100 section 5.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "world": {
+      "description": "Required for T2 and above.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fixture": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "seed": { "type": "integer" },
+        "gamerules": { "type": "object", "additionalProperties": { "type": ["string", "boolean", "integer"] } },
+        "time": { "type": "integer", "minimum": 0 },
+        "weather": { "enum": ["clear", "rain", "thunder"] },
+        "difficulty": { "enum": ["peaceful", "easy", "normal", "hard"] }
+      }
+    },
+
+    "steps": {
+      "description": "Actions performed before assertions. Executed in order. T2+ only.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "enum": ["placeBlock", "breakBlock", "giveItem", "useItem", "summonEntity",
+                     "setEntityProperty", "runCommand", "tick", "reloadPacks",
+                     "enablePack", "disablePack", "saveAndReload", "connectClient"]
+          },
+          "comment": { "type": "string" }
+        }
+      }
+    },
+
+    "expect": {
+      "description": "Golden files this case compares against, relative to the case directory. Goldens are canonical JSON (SC-000 section 6) except images.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ir": { "type": "string" },
+        "diagnostics": { "type": "string" },
+        "trace": { "type": "string" },
+        "screenshot": { "type": "string" },
+        "screenshotTolerance": {
+          "description": "Permitted mean per-channel difference, 0-255. Rendering is not bit-exact across drivers.",
+          "type": "number", "minimum": 0, "maximum": 255, "default": 2
+        }
+      }
+    },
+
+    "assert": {
+      "description": "Inline assertions for things too small to justify a golden file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["that"],
+        "additionalProperties": false,
+        "properties": {
+          "that": { "type": "string", "minLength": 3 },
+          "equals": {},
+          "contains": {},
+          "matches": { "type": "string" },
+          "absent": { "type": "boolean" }
+        }
+      }
+    },
+
+    "diagnostics": {
+      "description": "Diagnostic codes this case must produce, and codes it must NOT produce. A case that silently starts warning is a regression.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expected": { "type": "array", "items": { "type": "string", "pattern": "^SCE-[0-9]{4}$" } },
+        "forbidden": { "type": "array", "items": { "type": "string", "pattern": "^SCE-[0-9]{4}$" } },
+        "exhaustive": {
+          "description": "When true, any diagnostic not in 'expected' fails the case.",
+          "type": "boolean", "default": false
+        }
+      }
+    },
+
+    "versions": {
+      "description": "Minecraft nodes this case runs on. Omit for all. Use ONLY for cases about a version-specific mechanism — behaviour must not differ by version (SC-220 section 5).",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "loaders": {
+      "description": "Loaders this case runs on. Omit for all.",
+      "type": "array",
+      "items": { "enum": ["fabric", "neoforge"] }
+    },
+
+    "via": {
+      "description": "Version-translation equivalence, SC-270 section 13. Runs the case natively and through Via, then requires the client state traces to be identical.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverVersion", "clientVersion"],
+      "properties": {
+        "serverVersion": { "type": "string" },
+        "clientVersion": { "type": "string" },
+        "mustMatchNative": { "type": "boolean", "default": true }
+      }
+    },
+
+    "skip": {
+      "description": "Why this case is disabled. Presence disables it; specValidate reports every skipped case so they cannot be forgotten.",
+      "type": "string",
+      "minLength": 20
+    }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "tier": { "enum": ["T2", "T3", "T4"] } } },
+      "then": { "required": ["world"] }
+    },
+    {
+      "if": { "properties": { "tier": { "const": "T0" } } },
+      "then": { "required": ["pack"] }
+    }
+  ]
+}

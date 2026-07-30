@@ -1,0 +1,107 @@
+# BEDROCK COMMANDS ARE NOT JAVA COMMANDS. Selectors differ, execute has a different grammar, and
+# Bedrock has commands Java lacks entirely.
+#
+# Policy: translate what maps cleanly, REFUSE the rest with a diagnostic. Executing an approximation
+# of a command a pack author wrote is worse than not executing it, because the failure becomes silent
+# and the behaviour subtly wrong.
+#
+# Mojang ships a machine-readable command grammar; use it rather than hand-writing a parser.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: functions-commands
+spec: SC-190
+upstream:
+  source: "metadata/command_modules/mojang-commands.json"
+  pointer: "/command_modules"
+
+entries:
+  - id: command/summon
+    status: stub
+  - id: command/tp
+    status: stub
+  - id: command/give
+    status: stub
+  - id: command/setblock
+    status: stub
+  - id: command/fill
+    status: stub
+  - id: command/execute
+    status: stub
+    notes: >-
+      Grammar was rewritten in 1.19.50 and still differs from Java's.
+  - id: command/scoreboard
+    status: stub
+  - id: command/tag
+    status: stub
+  - id: command/effect
+    status: stub
+  - id: command/playsound
+    status: stub
+  - id: command/particle
+    status: stub
+  - id: command/title
+    status: stub
+  - id: command/tellraw
+    status: stub
+  - id: command/event
+    status: stub
+    notes: >-
+      Bedrock-only: fires an entity event.
+  - id: command/scriptevent
+    status: stub
+    notes: >-
+      Bedrock-only. Depends on SC-200.
+  - id: command/damage
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/ride
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/structure
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/camera
+    status: stub
+    notes: >-
+      Bedrock-only. No Java analogue.
+  - id: command/hud
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/inputpermission
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/dialogue
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/aimassist
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/fog
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: command/music
+    status: stub
+    notes: >-
+      Bedrock-only.
+  - id: selector/family
+    status: stub
+    notes: >-
+      @e[family=] has no Java equivalent; type_family is ours.
+  - id: selector/hasitem
+    status: stub
+  - id: selector/haspermission
+    status: stub
+  - id: selector/scores
+    status: stub
+  - id: functions/tick_json
+    status: stub

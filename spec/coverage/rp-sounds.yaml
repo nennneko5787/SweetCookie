@@ -1,0 +1,29 @@
+# Translated into Java sound definitions in the virtual resource pack.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-sounds
+spec: SC-180
+upstream: null
+
+entries:
+  - id: sounds.json/block_sounds
+    status: stub
+  - id: sounds.json/entity_sounds
+    status: stub
+  - id: sounds.json/individual_event_sounds
+    status: stub
+  - id: sounds.json/interactive_sounds
+    status: stub
+  - id: sound_definitions.json
+    status: stub
+  - id: music_definitions.json
+    status: stub
+  - id: sounds/ogg
+    status: stub
+  - id: sounds/fsb
+    status: wontfix
+    fidelity: >-
+      FMOD sound bank audio has no usable JVM decoder, so any sound shipped only as .fsb is silent; packs
+      almost always also ship .ogg, which is used instead.

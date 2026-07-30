@@ -1,0 +1,260 @@
+# Filter tests — SC-140
+#
+# All 106 Bedrock filter tests. This is a DECLARATIVE predicate system, separate from Molang:
+# {"test": …, "subject": …, "operator": …, "domain": …, "value": …} combined with
+# all_of / any_of / none_of. It accepts no expressions.
+#
+# Filters run on the AI hot path — every goal's canUse, every tick, for every entity — so they are
+# compiled at ingest, not interpreted from JSON. An unknown test evaluates to FALSE (safer than
+# true: an unimplemented test makes a behaviour not happen rather than happen unconditionally) and
+# emits one diagnostic per site, once, not per evaluation.
+
+domain: filters
+spec: SC-140
+upstream:
+  source: "metadata/doc_modules/entities.json"
+  pointer: "/data_items/Filters"
+
+entries:
+  # ── Identity, family, variant ──────────────────────────────────────────────
+  - id: is_family
+    status: stub
+    notes: Bedrock's own grouping mechanism (minecraft:type_family). Independent of Java entity tags, which we cannot grant — SC-120 section 5.2.
+  - id: has_tag
+    status: stub
+  - id: is_variant
+    status: stub
+  - id: is_mark_variant
+    status: stub
+  - id: is_skin_id
+    status: stub
+  - id: is_color
+    status: stub
+  - id: is_vehicle_family
+    status: stub
+  - id: is_controlling_passenger_family
+    status: stub
+  - id: has_component
+    status: stub
+
+  # ── Health and damage ──────────────────────────────────────────────────────
+  - id: actor_health
+    status: stub
+  - id: has_damage
+    status: stub
+  - id: is_missing_health
+    status: stub
+  - id: taking_fire_damage
+    status: stub
+  - id: on_fire
+    status: stub
+  - id: was_last_hurt_by
+    status: stub
+  - id: has_damaged_equipment
+    status: stub
+
+  # ── Equipment and inventory ────────────────────────────────────────────────
+  - id: has_equipment
+    status: stub
+  - id: has_equipment_tag
+    status: stub
+  - id: has_same_equipment_in_slot_as
+    status: stub
+  - id: all_slots_empty
+    status: stub
+  - id: any_slot_empty
+    status: stub
+  - id: has_ranged_weapon
+    status: stub
+  - id: has_silk_touch
+    status: stub
+  - id: has_item_with_component
+    status: stub
+  - id: has_container_open
+    status: stub
+  - id: has_trade_supply
+    status: stub
+
+  # ── Effects and abilities ──────────────────────────────────────────────────
+  - id: has_mob_effect
+    status: stub
+  - id: has_ability
+    status: stub
+  - id: has_nametag
+    status: stub
+
+  # ── Posture and activity ───────────────────────────────────────────────────
+  - id: is_baby
+    status: stub
+  - id: is_sneaking
+    status: stub
+  - id: is_sneak_held
+    status: stub
+  - id: is_sprinting
+    status: stub
+  - id: is_sleeping
+    status: stub
+  - id: is_sitting
+    status: stub
+  - id: is_moving
+    status: stub
+  - id: is_navigating
+    status: stub
+  - id: is_climbing
+    status: stub
+  - id: is_panicking
+    status: stub
+  - id: is_avoiding_mobs
+    status: stub
+  - id: is_immobile
+    status: stub
+  - id: is_persistent
+    status: stub
+  - id: is_visible
+    status: stub
+  - id: is_collidable
+    status: stub
+  - id: on_ground
+    status: stub
+  - id: on_ladder
+    status: stub
+  - id: inactivity_timer
+    status: stub
+
+  # ── Riding and leashing ────────────────────────────────────────────────────
+  - id: is_riding
+    status: stub
+  - id: is_riding_self
+    status: stub
+  - id: is_in_same_vehicle
+    status: stub
+  - id: is_vehicle
+    status: stub
+  - id: rider_count
+    status: stub
+  - id: is_leashed
+    status: stub
+  - id: is_leashed_to
+    status: stub
+  - id: in_caravan
+    status: stub
+
+  # ── Social ─────────────────────────────────────────────────────────────────
+  - id: is_owner
+    status: stub
+  - id: is_target
+    status: stub
+  - id: has_target
+    status: stub
+  - id: trusts
+    status: stub
+  - id: is_tamed
+    status: stub
+  - id: is_raider
+    status: stub
+  - id: surface_mob
+    status: stub
+  - id: is_bound_to_creaking_heart
+    status: stub
+
+  # ── Environment: fluid and blocks ──────────────────────────────────────────
+  - id: in_water
+    status: stub
+  - id: in_water_or_rain
+    status: stub
+  - id: is_underwater
+    status: stub
+  - id: in_contact_with_water
+    status: stub
+  - id: in_lava
+    status: stub
+  - id: in_block
+    status: stub
+  - id: is_block
+    status: stub
+  - id: is_waterlogged
+    status: stub
+  - id: on_hot_block
+    status: stub
+  - id: is_snow_covered
+    status: stub
+  - id: in_clouds
+    status: stub
+
+  # ── Environment: biome and dimension ───────────────────────────────────────
+  - id: is_biome
+    status: stub
+  - id: has_biome_tag
+    status: stub
+  - id: is_humid
+    status: stub
+  - id: is_temperature_type
+    status: stub
+  - id: is_temperature_value
+    status: stub
+  - id: in_nether
+    status: stub
+  - id: in_overworld
+    status: stub
+  - id: is_in_village
+    status: stub
+  - id: is_underground
+    status: stub
+  - id: is_altitude
+    status: stub
+
+  # ── Environment: light and weather ─────────────────────────────────────────
+  - id: light_level
+    status: stub
+  - id: is_brightness
+    status: stub
+  - id: weather
+    status: stub
+  - id: weather_at_position
+    status: stub
+
+  # ── Time ───────────────────────────────────────────────────────────────────
+  - id: clock_time
+    status: stub
+  - id: hourly_clock_time
+    status: stub
+  - id: is_daytime
+    status: stub
+  - id: moon_phase
+    status: stub
+  - id: moon_intensity
+    status: stub
+
+  # ── Distance ───────────────────────────────────────────────────────────────
+  - id: distance_to_nearest_player
+    status: stub
+  - id: target_distance
+    status: stub
+  - id: owner_distance
+    status: stub
+  - id: home_distance
+    status: stub
+  - id: y_rotation
+    status: stub
+
+  # ── Entity properties ──────────────────────────────────────────────────────
+  - id: has_property
+    status: stub
+  - id: bool_property
+    status: stub
+  - id: int_property
+    status: stub
+  - id: float_property
+    status: stub
+  - id: enum_property
+    status: stub
+
+  # ── World rules and randomness ─────────────────────────────────────────────
+  - id: is_game_rule
+    status: stub
+  - id: is_difficulty
+    status: stub
+  - id: random_chance
+    status: stub
+  - id: redstone_strength_at_position
+    status: stub

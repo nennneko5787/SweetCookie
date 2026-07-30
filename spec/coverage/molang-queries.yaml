@@ -1,0 +1,128 @@
+# 315 queries. SEEDED PARTIALLY - `specUpstreamDiff` discovers the rest from Mojang's own
+# machine-readable query manifest, which is the authoritative list.
+#
+# Queries are the bulk of the Molang work: the parser is not the hard part, the 315 bindings to
+# Java-side state are. Several have no Java equivalent at all and will settle as wontfix with a
+# documented constant.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: molang-queries
+spec: SC-130
+upstream:
+  source: "metadata/molang_modules/mojang-molang-queries.json"
+  pointer: "/vanilla_data_modules/queries"
+  idField: name
+
+entries:
+  - id: query.anim_time
+    status: stub
+  - id: query.life_time
+    status: stub
+  - id: query.delta_time
+    status: stub
+  - id: query.time_stamp
+    status: stub
+  - id: query.health
+    status: stub
+  - id: query.max_health
+    status: stub
+  - id: query.is_baby
+    status: stub
+  - id: query.is_sneaking
+    status: stub
+  - id: query.is_sprinting
+    status: stub
+  - id: query.is_swimming
+    status: stub
+  - id: query.is_on_ground
+    status: stub
+  - id: query.is_in_water
+    status: stub
+  - id: query.is_alive
+    status: stub
+  - id: query.is_angry
+    status: stub
+  - id: query.is_sitting
+    status: stub
+  - id: query.is_tamed
+    status: stub
+  - id: query.is_saddled
+    status: stub
+  - id: query.is_sleeping
+    status: stub
+  - id: query.is_invisible
+    status: stub
+  - id: query.is_first_person
+    status: stub
+  - id: query.modified_move_speed
+    status: stub
+  - id: query.ground_speed
+    status: stub
+  - id: query.vertical_speed
+    status: stub
+  - id: query.body_x_rotation
+    status: stub
+  - id: query.body_y_rotation
+    status: stub
+  - id: query.head_x_rotation
+    status: stub
+  - id: query.head_y_rotation
+    status: stub
+  - id: query.target_x_rotation
+    status: stub
+  - id: query.target_y_rotation
+    status: stub
+  - id: query.variant
+    status: stub
+  - id: query.mark_variant
+    status: stub
+  - id: query.skin_id
+    status: stub
+  - id: query.color
+    status: stub
+  - id: query.property
+    status: stub
+    notes: >-
+      Entity properties. SC-160 section 5.
+  - id: query.has_property
+    status: stub
+  - id: query.block_state
+    status: stub
+    notes: >-
+      One of the few queries legal in a block permutation condition.
+  - id: query.block_property
+    status: stub
+  - id: query.equipment_count
+    status: stub
+  - id: query.armor_texture_slot
+    status: stub
+  - id: query.get_equipped_item_name
+    status: stub
+  - id: query.item_in_use_duration
+    status: stub
+  - id: query.item_max_use_duration
+    status: stub
+  - id: query.blocking
+    status: stub
+  - id: query.get_nearby_entities
+    status: stub
+    notes: >-
+      Returns a list; used with the -> dereference operator.
+  - id: query.actor_count
+    status: stub
+  - id: query.distance_from_camera
+    status: stub
+  - id: query.camera_distance_range_lerp
+    status: stub
+  - id: query.is_using_vr
+    status: stub
+    notes: >-
+      Java has no VR mode; likely wontfix with a constant 0.
+  - id: query.is_in_village
+    status: stub
+    notes: >-
+      Java village detection differs substantially from Bedrock's.
+  - id: query.has_biome_tag
+    status: stub

@@ -1,0 +1,20 @@
+# minecraft:npc_dialogue. Bedrock's NPC dialogue screen has no Java counterpart; the closest surface is Java 26.1's dialog registry, which is a different model.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: dialogue
+spec: SC-190
+upstream: null
+
+entries:
+  - id: "minecraft:npc_dialogue/scenes"
+    status: unsupported
+    fidelity: >-
+      Dialogue scenes are parsed but never shown, so interacting with an NPC that defines them produces
+      no screen and no button actions run.
+  - id: "minecraft:npc_dialogue/buttons"
+    status: unsupported
+    fidelity: >-
+      Dialogue scenes are parsed but never shown, so interacting with an NPC that defines them produces
+      no screen and no button actions run.

@@ -1,0 +1,38 @@
+# Per-frame, Molang-driven selection of geometry, textures, materials and bone visibility. Bedrock's answer to Java blockstate JSON plus EntityRenderer subclassing, and it is fully dynamic - there is nothing static to precompute.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-render-controllers
+spec: SC-180
+upstream: null
+
+entries:
+  - id: render_controller/geometry
+    status: stub
+  - id: render_controller/materials
+    status: stub
+  - id: render_controller/textures
+    status: stub
+  - id: render_controller/part_visibility
+    status: stub
+  - id: render_controller/color
+    status: stub
+  - id: render_controller/overlay_color
+    status: stub
+  - id: render_controller/on_fire_color
+    status: stub
+  - id: render_controller/is_hurt_color
+    status: stub
+  - id: render_controller/uv_anim
+    status: stub
+  - id: render_controller/light_color_multiplier
+    status: stub
+  - id: render_controller/ignore_lighting
+    status: stub
+  - id: render_controller/filter_lighting
+    status: stub
+  - id: render_controller/arrays
+    status: stub
+    notes: >-
+      Molang-indexed variant selection. Indices floor and wrap.

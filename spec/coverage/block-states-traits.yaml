@@ -1,0 +1,45 @@
+# Bedrock block states are named lists of AT MOST 16 values; permutations are an ORDERED list of
+# Molang-conditioned component overrides where later entries win.
+#
+# Declaration order of states and of their values is NORMATIVE: it determines the mixed-radix index
+# encoding written into chunk storage (SC-120 section 6.1). Reordering a state is schema drift and
+# triggers a remap of every placed block.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: block-states-traits
+spec: SC-150
+upstream: null
+
+entries:
+  - id: states/bool
+    status: stub
+  - id: states/int
+    status: stub
+    notes: >-
+      Both the explicit list and the {min,max} shorthand.
+  - id: states/string
+    status: stub
+  - id: states/16_value_cap
+    status: stub
+    notes: >-
+      Bedrock's hard cap. Exceeding it is an authoring error we report rather than accommodate.
+  - id: "minecraft:placement_direction"
+    status: stub
+    notes: >-
+      Trait providing cardinal_direction, facing_direction and y_rotation_offset.
+  - id: "minecraft:placement_position"
+    status: stub
+    notes: >-
+      Trait providing block_face and vertical_half.
+  - id: permutations/ordered_override
+    status: stub
+    notes: >-
+      Later permutations override earlier ones per component key. Pre-resolved per state index at bind
+      time.
+  - id: permutations/molang_condition
+    status: stub
+    notes: >-
+      Restricted to block state and property queries plus pure maths - no entity or world context, which
+      is what makes pre-resolution possible.

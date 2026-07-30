@@ -1,0 +1,32 @@
+# A held or worn 3D model with its own geometry, animations and render controllers. NO Java equivalent - the largest single piece of work in SC-170.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-attachables
+spec: SC-170
+upstream: null
+
+entries:
+  - id: attachable/geometry
+    status: stub
+  - id: attachable/materials
+    status: stub
+  - id: attachable/textures
+    status: stub
+  - id: attachable/animations
+    status: stub
+  - id: attachable/animation_controllers
+    status: stub
+  - id: attachable/render_controllers
+    status: stub
+  - id: attachable/scripts
+    status: stub
+  - id: attachable/item
+    status: stub
+    notes: >-
+      Which items this attachable applies to.
+  - id: attachable/first_person
+    status: stub
+    notes: >-
+      First-person hand rendering differs substantially; may need its own path.

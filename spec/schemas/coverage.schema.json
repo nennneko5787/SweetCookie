@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/coverage.schema.json",
+  "title": "SweetCookie coverage shard",
+  "description": "One shard of the feature ledger. Validated by ./gradlew specValidate. See spec/process.md and spec/constitution.md rule 9. A shard is a YAML array of entries; this schema describes the parsed JSON.",
+
+  "type": "object",
+  "required": ["domain", "spec", "upstream", "entries"],
+  "additionalProperties": false,
+
+  "properties": {
+    "domain": {
+      "description": "Shard identifier. Must equal the file name without extension.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "spec": {
+      "description": "The normative document that defines this domain's semantics.",
+      "$ref": "#/$defs/specId"
+    },
+    "upstream": {
+      "description": "Where the authoritative feature list comes from, so specUpstreamDiff can detect additions. Null for domains with no machine-readable upstream source.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["source", "pointer"],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "description": "Path within the pinned bedrock-samples snapshot. Never vendored; see spec/upstream/fetch.md.",
+              "type": "string"
+            },
+            "pointer": {
+              "description": "RFC 6901 JSON pointer to the array or object whose keys are the feature IDs.",
+              "type": "string"
+            },
+            "idField": {
+              "description": "Field holding the feature ID when the pointer targets an array of objects. Omit when the pointer targets an object whose keys are the IDs.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+
+  "$defs": {
+    "specId": {
+      "type": "string",
+      "pattern": "^SC-[0-9]{3}$"
+    },
+
+    "fqcn": {
+      "description": "Fully qualified Java class name, which must carry a matching @SpecImpl annotation.",
+      "type": "string",
+      "pattern": "^net\\.nennneko5787\\.sweetcookie\\.[A-Za-z0-9_.$]+$"
+    },
+
+    "conformanceRef": {
+      "description": "Path under spec/conformance/, without a trailing slash.",
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(/[a-z0-9_]+)+$"
+    },
+
+    "entry": {
+      "type": "object",
+      "required": ["id", "status"],
+      "additionalProperties": false,
+
+      "properties": {
+        "id": {
+          "description": "The Bedrock feature identifier, verbatim, including namespace. Immutable once merged.",
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "description": "See spec/normative/SC-000-conventions.md section 3. A human never writes 'implemented' — specReport promotes it when conformance passes.",
+          "enum": ["stub", "partial", "implemented", "unsupported", "wontfix"]
+        },
+        "impl": {
+          "description": "The implementing class. Required unless status is stub, unsupported or wontfix.",
+          "$ref": "#/$defs/fqcn"
+        },
+        "fields": {
+          "description": "Per-field fidelity. Keys are the Bedrock field names; values say what happens to each.",
+          "type": "object",
+          "additionalProperties": { "enum": ["ok", "partial", "missing", "ignored", "wontfix"] }
+        },
+        "fidelity": {
+          "description": "An OBSERVABLE behavioural difference, not an implementation note. 'Not done yet' fails review; describe what a player would see. Required for partial, unsupported and wontfix. Optional for stub, whose meaning — recognised, parsed, no runtime effect — is already fully defined by the status.",
+          "type": "string",
+          "minLength": 40
+        },
+        "conformance": {
+          "description": "Conformance cases proving this entry. Required for implemented and partial.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/conformanceRef" },
+          "minItems": 1
+        },
+        "since": {
+          "description": "SweetCookie version in which this reached its current status.",
+          "type": "string"
+        },
+        "bedrockSince": {
+          "description": "Bedrock format_version or engine version that introduced the feature, when known.",
+          "type": "string"
+        },
+        "notes": {
+          "description": "Free text for anything that is not a fidelity statement — upstream documentation errors, links, observations.",
+          "type": "string"
+        },
+        "diagnostics": {
+          "description": "Diagnostic codes this feature can emit.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^SCE-[0-9]{4}$" }
+        }
+      },
+
+      "$comment": "This schema governs SHAPE. The conditional rules that govern MEANING are enforced in code, by SpecValidateTask, and are deliberately NOT restated here: expressing them twice made every violation report twice, once in readable prose and once as an unreadable `allOf[2].then.not` path. SC-000 section 2 already draws this line - the schema governs shape, the prose governs meaning. The rules enforced in code are: implemented and partial must name an `impl` and at least one `conformance` case; partial, unsupported and wontfix must carry a `fidelity` note describing an observable difference; stub must not name an `impl`; and a (spec, id) pair must be unique across shards."
+    }
+  }
+}

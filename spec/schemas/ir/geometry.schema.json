@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/geometry.schema.json",
+  "title": "GeometryIr",
+  "description": "A Bedrock model, normalised from BOTH file families into one shape. SC-180 section 3. The 1.8.0 family (top-level geometry.* keys, box UV) and the 1.12.0+ family (minecraft:geometry array, per-face UV, poly_mesh, binding) are structurally incompatible; family selection is by STRUCTURAL SNIFFING, not the declared format_version, because authoring tools have shipped mismatched declarations for years. Box UV normalises to per-face UV, since the reverse is not expressible.",
+
+  "type": "object",
+  "required": ["identifier", "textureWidth", "textureHeight", "bones", "sourceFamily"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": {
+      "description": "The geometry.<name> identifier, including the 'geometry.' prefix as written.",
+      "type": "string"
+    },
+    "sourceFamily": {
+      "description": "Which file family this was parsed from. Recorded for diagnostics only — downstream MUST NOT branch on it (SC-110 section 3.2).",
+      "enum": ["legacy_1_8", "modern"]
+    },
+    "parent": {
+      "description": "Bedrock allows geometry.a:geometry.b inheritance. Resolved lazily; a dangling parent is SCE-2012.",
+      "type": ["string", "null"]
+    },
+    "textureWidth": { "type": "integer", "minimum": 1 },
+    "textureHeight": { "type": "integer", "minimum": 1 },
+    "visibleBoundsWidth": { "type": "number" },
+    "visibleBoundsHeight": { "type": "number" },
+    "visibleBoundsOffset": { "$ref": "common.schema.json#/$defs/vec3f" },
+    "bones": {
+      "description": "Insertion-ordered. Hierarchy is by name reference, not nesting, matching Bedrock. A cycle is SCE-2013 and the cycle is broken at the later bone.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/bone" }
+    },
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+  },
+
+  "$defs": {
+    "bone": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "parent": { "type": ["string", "null"] },
+        "pivot": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "rotation": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "bindPoseRotation": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "mirror": { "type": "boolean", "default": false },
+        "inflate": { "type": "number", "default": 0 },
+        "reset": { "type": "boolean", "default": false },
+        "neverRender": { "type": "boolean", "default": false },
+        "binding": {
+          "description": "Molang bone reparenting, 1.16+. Evaluated per frame.",
+          "$ref": "common.schema.json#/$defs/molangExpr"
+        },
+        "cubes": { "type": "array", "items": { "$ref": "#/$defs/cube" } },
+        "locators": {
+          "description": "Named attachment points. A locator is either a position or a position plus rotation.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/locator" }
+        },
+        "polyMesh": { "$ref": "#/$defs/polyMesh" },
+        "textureMeshes": { "type": "array", "items": { "type": "object" } },
+        "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+      }
+    },
+
+    "cube": {
+      "type": "object",
+      "required": ["origin", "size", "uv"],
+      "additionalProperties": false,
+      "properties": {
+        "origin": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "size": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "rotation": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "pivot": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "inflate": { "type": "number", "default": 0 },
+        "mirror": { "type": "boolean", "default": false },
+        "uv": {
+          "description": "ALWAYS per-face in the IR. Box UV from the 1.8.0 family is expanded at parse time using the cube's size and the model's texture dimensions.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "north": { "$ref": "#/$defs/faceUv" },
+            "south": { "$ref": "#/$defs/faceUv" },
+            "east":  { "$ref": "#/$defs/faceUv" },
+            "west":  { "$ref": "#/$defs/faceUv" },
+            "up":    { "$ref": "#/$defs/faceUv" },
+            "down":  { "$ref": "#/$defs/faceUv" }
+          }
+        }
+      }
+    },
+
+    "faceUv": {
+      "type": "object",
+      "required": ["uv", "uvSize"],
+      "additionalProperties": false,
+      "properties": {
+        "uv": { "$ref": "common.schema.json#/$defs/vec2f" },
+        "uvSize": { "$ref": "common.schema.json#/$defs/vec2f" },
+        "materialInstance": {
+          "description": "Per-face material instance name, 1.16+. Blocks use this heavily (SC-150 section 5).",
+          "type": "string"
+        },
+        "uvRotation": { "type": "number" }
+      }
+    },
+
+    "locator": {
+      "type": "object",
+      "required": ["offset"],
+      "additionalProperties": false,
+      "properties": {
+        "offset": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "rotation": { "$ref": "common.schema.json#/$defs/vec3f" },
+        "ignoreInheritedScale": { "type": "boolean", "default": false }
+      }
+    },
+
+    "polyMesh": {
+      "description": "Arbitrary triangle or quad mesh, 1.16+. Cannot be transpiled to a Java block model, so its presence forces the dynamic render path (SC-150 section 5).",
+      "type": "object",
+      "required": ["polys", "positions"],
+      "additionalProperties": false,
+      "properties": {
+        "normalizedUvs": { "type": "boolean", "default": false },
+        "positions": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/vec3f" } },
+        "normals": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/vec3f" } },
+        "uvs": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/vec2f" } },
+        "polys": {
+          "description": "Each entry is 3 or 4 vertices, each vertex being [positionIndex, normalIndex, uvIndex].",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 4,
+            "items": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+# Grammar-level features, tracked separately from queries because a missing construct fails at PARSE
+# time and takes a whole expression with it, whereas a missing query degrades one value.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: molang-syntax
+spec: SC-130
+upstream: null
+
+entries:
+  - id: syntax/arithmetic
+    status: stub
+  - id: syntax/comparison
+    status: stub
+  - id: syntax/logical
+    status: stub
+  - id: syntax/ternary
+    status: stub
+  - id: syntax/binary_if
+    status: stub
+    notes: >-
+      `a ? b` with no else, yielding 0 when false. Distinct from ternary.
+  - id: syntax/null_coalesce
+    status: stub
+  - id: syntax/deref
+    status: stub
+    notes: >-
+      The -> operator. The right side evaluates in the left side's entity context.
+  - id: syntax/statements
+    status: stub
+    notes: >-
+      Multi-statement bodies must end in return.
+  - id: syntax/assignment
+    status: stub
+    notes: >-
+      Only variable. and temp. are assignable.
+  - id: syntax/loop
+    status: stub
+    notes: >-
+      Iteration is capped by SC-260 - an unbounded loop hangs a frame.
+  - id: syntax/for_each
+    status: stub
+  - id: syntax/break_continue
+    status: stub
+  - id: syntax/arrays
+    status: stub
+    notes: >-
+      Indices floor and wrap, so out of range is not an error.
+  - id: syntax/structs
+    status: stub
+  - id: syntax/case_insensitivity
+    status: stub
+    notes: >-
+      Everything except string literals.

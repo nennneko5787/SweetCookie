@@ -1,0 +1,38 @@
+# Seven Bedrock recipe types.
+#
+# The one genuine subtlety: custom items are all ONE carrier Item distinguished by a data component
+# (SC-120 section 4), and vanilla ingredient matching is by item identity. Custom ingredients
+# therefore need a custom Ingredient predicate. Settle that before implementation starts.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: recipes
+spec: SC-190
+upstream: null
+
+entries:
+  - id: "minecraft:recipe_shaped"
+    status: stub
+  - id: "minecraft:recipe_shapeless"
+    status: stub
+  - id: "minecraft:recipe_furnace"
+    status: stub
+  - id: "minecraft:recipe_brewing_mix"
+    status: stub
+    notes: >-
+      Java has no data-driven brewing; needs a SweetCookie-side implementation.
+  - id: "minecraft:recipe_brewing_container"
+    status: stub
+  - id: "minecraft:recipe_smithing_transform"
+    status: stub
+  - id: "minecraft:recipe_smithing_trim"
+    status: stub
+  - id: recipes/station_tags
+    status: stub
+    notes: >-
+      Bedrock routes recipes to stations via a tags array such as ["crafting_table"].
+  - id: recipes/aux_values
+    status: stub
+    notes: >-
+      Bedrock item identity includes an aux/data value; Java uses data components.

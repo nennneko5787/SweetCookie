@@ -1,0 +1,284 @@
+# SweetCookie coverage ledger — shard index
+#
+# THE LOAD-BEARING ARTIFACT OF THIS SPECIFICATION. Constitution rule 9.
+#
+# One entry per Bedrock feature identifier, with a status, the implementing class, an OBSERVABLE
+# fidelity note, and a link to the conformance case that proves it. CI does not trust any of that:
+# `specImplCheck` and `specConformance` verify the links exist in both directions, and
+# `specUpstreamDiff` fails the build when Mojang ships a feature identifier this ledger does not
+# know about.
+#
+# A human NEVER writes `status: implemented`. `specReport` promotes an entry when its conformance
+# cases pass. See spec/process.md section 4.
+#
+# Shards marked `seeded: partial` were populated from research rather than from upstream metadata.
+# Running `./gradlew fetchUpstreamMetadata specUpstreamDiff` completes them — the missing entries
+# will be reported, not silently absent, which is the entire point of the mechanism.
+
+version: 1
+
+# Where the authoritative feature lists come from. Pinned in spec/upstream/bedrock-samples.lock.json.
+# NEVER VENDORED — constitution rule 10.
+upstreamRepository: https://github.com/Mojang/bedrock-samples
+
+shards:
+  # ── Ingestion ──────────────────────────────────────────────────────────────
+  - file: packaging.yaml
+    spec: SC-100
+    title: Pack containers, manifest fields, subpacks
+    seeded: manual
+    expectedCount: null
+
+  # ── Entities ───────────────────────────────────────────────────────────────
+  - file: entity-components.yaml
+    spec: SC-160
+    title: minecraft:entity components
+    seeded: partial
+    expectedCount: 120
+    upstream:
+      source: metadata/doc_modules/entities.json
+      pointer: /data_items/Entity Components
+
+  - file: entity-goals.yaml
+    spec: SC-160
+    title: minecraft:behavior.* AI goals
+    seeded: partial
+    expectedCount: 171
+    upstream:
+      source: metadata/doc_modules/entities.json
+      pointer: /data_items/AI Goals
+
+  - file: entity-properties.yaml
+    spec: SC-160
+    title: Entity properties and the 49 flag-like components
+    seeded: partial
+    expectedCount: 49
+
+  - file: entity-events.yaml
+    spec: SC-160
+    title: Event responses, built-in events and triggers
+    seeded: full
+    expectedCount: null
+
+  # ── Blocks and items ───────────────────────────────────────────────────────
+  - file: block-components.yaml
+    spec: SC-150
+    title: minecraft:block components, triggers and event responses
+    seeded: full
+    expectedCount: 54          # 32 components + 7 triggers + 15 event responses
+    upstream:
+      source: metadata/doc_modules/blocks.json
+      pointer: /data_items
+
+  - file: block-states-traits.yaml
+    spec: SC-150
+    title: Block states, traits and permutation resolution
+    seeded: full
+    expectedCount: null
+
+  - file: item-components.yaml
+    spec: SC-170
+    title: minecraft:item components
+    seeded: full
+    expectedCount: 44
+    upstream:
+      source: metadata/json_schemas/server/item/1.26.30/Item Components.json
+      pointer: /properties
+
+  # ── Expression and predicate languages ─────────────────────────────────────
+  - file: filters.yaml
+    spec: SC-140
+    title: Filter tests
+    seeded: full
+    expectedCount: 106
+    upstream:
+      source: metadata/doc_modules/entities.json
+      pointer: /data_items/Filters
+
+  - file: molang-queries.yaml
+    spec: SC-130
+    title: Molang query.* functions
+    seeded: partial
+    expectedCount: 315
+    upstream:
+      source: metadata/molang_modules/mojang-molang-queries.json
+      pointer: /vanilla_data_modules/queries
+      idField: name
+
+  - file: molang-math.yaml
+    spec: SC-130
+    title: Molang math.* functions
+    seeded: full
+    expectedCount: 61
+
+  - file: molang-syntax.yaml
+    spec: SC-130
+    title: Molang grammar constructs
+    seeded: full
+    expectedCount: null
+
+  # ── Data domains ───────────────────────────────────────────────────────────
+  - file: recipes.yaml
+    spec: SC-190
+    title: Recipe types
+    seeded: full
+    expectedCount: 7
+
+  - file: loot.yaml
+    spec: SC-190
+    title: Loot table functions and conditions
+    seeded: partial
+    expectedCount: null
+
+  - file: trading.yaml
+    spec: SC-190
+    title: Trade tables
+    seeded: partial
+    expectedCount: null
+
+  - file: spawn-rules.yaml
+    spec: SC-190
+    title: Spawn rule condition components
+    seeded: full
+    expectedCount: 16
+
+  - file: functions-commands.yaml
+    spec: SC-190
+    title: mcfunction commands
+    seeded: partial
+    expectedCount: null
+    upstream:
+      source: metadata/command_modules/mojang-commands.json
+      pointer: /command_modules
+
+  - file: features-featurerules.yaml
+    spec: SC-190
+    title: Worldgen features and feature rules
+    seeded: partial
+    expectedCount: 26
+
+  - file: biomes.yaml
+    spec: SC-190
+    title: Server biome components
+    seeded: partial
+    expectedCount: null
+
+  - file: dialogue.yaml
+    spec: SC-190
+    title: NPC dialogue
+    seeded: partial
+    expectedCount: null
+
+  - file: structures.yaml
+    spec: SC-190
+    title: mcstructure and jigsaw worldgen
+    seeded: partial
+    expectedCount: null
+
+  # ── Resource pack ──────────────────────────────────────────────────────────
+  - file: rp-client-entity.yaml
+    spec: SC-180
+    title: minecraft:client_entity sections
+    seeded: full
+    expectedCount: 15
+
+  - file: rp-geometry.yaml
+    spec: SC-180
+    title: Geometry features across both file families
+    seeded: full
+    expectedCount: null
+
+  - file: rp-render-controllers.yaml
+    spec: SC-180
+    title: Render controller fields
+    seeded: full
+    expectedCount: null
+
+  - file: rp-animations.yaml
+    spec: SC-180
+    title: Animations and animation controllers
+    seeded: full
+    expectedCount: null
+
+  - file: rp-particles.yaml
+    spec: SC-180
+    title: Snowstorm emitter and particle components
+    seeded: partial
+    expectedCount: null
+
+  - file: rp-attachables.yaml
+    spec: SC-170
+    title: Attachables
+    seeded: partial
+    expectedCount: null
+
+  - file: rp-materials.yaml
+    spec: SC-180
+    title: Material files and render states
+    seeded: partial
+    expectedCount: null
+
+  - file: rp-textures.yaml
+    spec: SC-180
+    title: Texture atlases and flipbooks
+    seeded: full
+    expectedCount: null
+
+  - file: rp-sounds.yaml
+    spec: SC-180
+    title: Sound definitions
+    seeded: full
+    expectedCount: null
+
+  - file: rp-fog.yaml
+    spec: SC-180
+    title: Fog definitions
+    seeded: partial
+    expectedCount: null
+
+  - file: rp-client-biomes.yaml
+    spec: SC-180
+    title: Client biome definitions
+    seeded: partial
+    expectedCount: null
+
+  - file: rp-ui.yaml
+    spec: SC-180
+    title: JSON UI
+    seeded: full
+    expectedCount: null
+
+  - file: rp-lang-font.yaml
+    spec: SC-180
+    title: Localisation and fonts
+    seeded: full
+    expectedCount: null
+
+  # ── Scripting ──────────────────────────────────────────────────────────────
+  - file: script-api-server.yaml
+    spec: SC-200
+    title: "@minecraft/server"
+    seeded: partial
+    expectedCount: 439
+    upstream:
+      source: metadata/script_modules/@minecraft/server.d.ts
+      pointer: ""
+
+  - file: script-api-server-ui.yaml
+    spec: SC-200
+    title: "@minecraft/server-ui"
+    seeded: full
+    expectedCount: null
+
+  # ── Interoperability ───────────────────────────────────────────────────────
+  - file: interop-geyser.yaml
+    spec: SC-210
+    title: Geyser mirror surface
+    seeded: full
+    expectedCount: null
+
+  - file: interop-viaversion.yaml
+    spec: SC-270
+    title: Version-translation equivalence
+    seeded: full
+    expectedCount: null

@@ -1,0 +1,56 @@
+{
+  "$comment": "NOT a schema — this is DATA, asserted by a conformance case. SC-270 section 4. Every identifier listed here MUST exist in every supported Minecraft protocol version. Choosing a carrier that a downgrade target lacks recreates exactly the ViaVersion problem the wire protocol exists to avoid, so this list is deliberately conservative: it contains only content present since 1.21 and still present in 26.2. Adding a Minecraft node requires re-asserting it (SC-220 section 6 step 5).",
+
+  "validatedAgainst": ["1.21.11", "26.2"],
+
+  "blocks": {
+    "$comment": "Grouped by the visual and physical role a custom block might need. Selection is by material_instances colour, map_color, light and collision (SC-270 section 4).",
+    "solidOpaque": [
+      "minecraft:stone", "minecraft:cobblestone", "minecraft:dirt", "minecraft:sand",
+      "minecraft:gravel", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:black_wool",
+      "minecraft:red_wool", "minecraft:orange_wool", "minecraft:yellow_wool", "minecraft:lime_wool",
+      "minecraft:green_wool", "minecraft:cyan_wool", "minecraft:light_blue_wool", "minecraft:blue_wool",
+      "minecraft:purple_wool", "minecraft:magenta_wool", "minecraft:pink_wool", "minecraft:brown_wool",
+      "minecraft:gray_wool", "minecraft:light_gray_wool"
+    ],
+    "solidTranslucent": [
+      "minecraft:glass", "minecraft:white_stained_glass", "minecraft:black_stained_glass",
+      "minecraft:red_stained_glass", "minecraft:blue_stained_glass", "minecraft:green_stained_glass"
+    ],
+    "cutout": ["minecraft:oak_leaves", "minecraft:iron_bars"],
+    "lightEmitting": ["minecraft:glowstone", "minecraft:sea_lantern", "minecraft:shroomlight"],
+    "nonCollidable": ["minecraft:air", "minecraft:light", "minecraft:structure_void"],
+    "fallback": "minecraft:stone"
+  },
+
+  "items": {
+    "$comment": "The SERVER-side carrier is always sweetcookie:item (SC-120 section 4). These are the WIRE carriers only, chosen for plausible stack size and category on a client that never applies the overlay.",
+    "generic": ["minecraft:paper", "minecraft:stick", "minecraft:clay_ball", "minecraft:brick"],
+    "tool": ["minecraft:wooden_pickaxe", "minecraft:wooden_sword", "minecraft:wooden_shovel"],
+    "armor": ["minecraft:leather_helmet", "minecraft:leather_chestplate",
+              "minecraft:leather_leggings", "minecraft:leather_boots"],
+    "food": ["minecraft:bread", "minecraft:cooked_beef"],
+    "block": ["minecraft:stone"],
+    "fallback": "minecraft:paper"
+  },
+
+  "entities": {
+    "$comment": "Chosen for size and class so that a client without the overlay sees something of roughly the right shape in roughly the right place.",
+    "mobSmall": ["minecraft:chicken", "minecraft:rabbit"],
+    "mobMedium": ["minecraft:pig", "minecraft:sheep", "minecraft:zombie"],
+    "mobLarge": ["minecraft:cow", "minecraft:iron_golem"],
+    "projectile": ["minecraft:snowball", "minecraft:arrow"],
+    "object": ["minecraft:armor_stand", "minecraft:item_display", "minecraft:block_display",
+               "minecraft:interaction", "minecraft:marker"],
+    "fallback": "minecraft:marker"
+  },
+
+  "forbidden": {
+    "$comment": "Never usable as carriers, with the reason. This list is as important as the allowed one.",
+    "minecraft:bed": "removed from item model definition specials in 26.2",
+    "minecraft:standing_sign": "removed from item model definition specials in 26.2",
+    "minecraft:hanging_sign": "removed from item model definition specials in 26.2",
+    "minecraft:copper_golem_statue": "added after 1.21; absent on older downgrade targets",
+    "minecraft:end_cube": "added after 1.21; absent on older downgrade targets"
+  }
+}

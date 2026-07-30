@@ -1,0 +1,77 @@
+# Container formats, manifest shapes and the pack-level features of SC-100. Not a Mojang-enumerated
+# feature list, so this shard is hand-maintained and has no upstream source.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: packaging
+spec: SC-100
+upstream: null
+
+entries:
+  - id: container/mcpack
+    status: stub
+  - id: container/mcaddon
+    status: stub
+    notes: >-
+      Nesting is not normalised in practice; discovery recursively searches for manifest.json at any depth.
+  - id: container/mcworld
+    status: unsupported
+    fidelity: >-
+      World containers are recognised and their embedded packs are ingested, but level.dat and the LevelDB
+      db/ directory are skipped, so importing a Bedrock world is not possible.
+  - id: container/directory
+    status: stub
+    notes: >-
+      Unpacked pack on disk, for development.
+  - id: manifest/format_version_1
+    status: stub
+    notes: >-
+      Skin packs.
+  - id: manifest/format_version_2
+    status: stub
+    notes: >-
+      The overwhelmingly common case.
+  - id: manifest/format_version_3
+    status: stub
+    notes: >-
+      Preview since 1.21.110. SemVer strings instead of arrays, plus pack settings.
+  - id: manifest/module_resources
+    status: stub
+  - id: manifest/module_data
+    status: stub
+  - id: manifest/module_script
+    status: stub
+    notes: >-
+      entry field is universal in practice but absent from Mojang's published table.
+  - id: manifest/module_world_template
+    status: stub
+  - id: manifest/module_skin_pack
+    status: unsupported
+    fidelity: >-
+      Skin packs are recognised and skipped; Java has no player-model replacement surface that maps onto
+      Bedrock skin packs without a full player-render rewrite.
+  - id: manifest/dependencies_pack
+    status: stub
+    notes: >-
+      Cycles are permitted: a BP and its paired RP commonly depend on each other.
+  - id: manifest/dependencies_module
+    status: stub
+  - id: manifest/subpacks
+    status: stub
+    notes: >-
+      Selection is configured, never inferred from host RAM.
+  - id: manifest/capabilities
+    status: unsupported
+    fidelity: >-
+      chemistry, editorExtension, experimental_custom_ui, raytraced and pbr are recorded and reported;
+      none changes behaviour, so a pack relying on one renders or behaves as though the capability were
+      off.
+  - id: manifest/min_engine_version
+    status: stub
+    notes: >-
+      Never used to select parser behaviour - per-file format_version does that.
+  - id: texts/lang
+    status: stub
+  - id: texts/languages
+    status: stub

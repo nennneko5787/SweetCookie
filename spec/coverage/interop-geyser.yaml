@@ -1,0 +1,46 @@
+# Geyser does not support behavior packs and says so - which is the gap this project fills. Geyser
+# owns the Bedrock client's PRESENTATION; SweetCookie owns behaviour on the Java server.
+#
+# The highest-value, lowest-cost item here is serving the add-on's own resource pack half UNCHANGED:
+# a .mcaddon's RP is already exactly what a Bedrock client wants, so there is no conversion and no
+# fidelity loss.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: interop-geyser
+spec: SC-210
+upstream: null
+
+entries:
+  - id: geyser/resource_pack_serving
+    status: stub
+    notes: >-
+      ResourcePack.create(PackCodec.path(...)). Near-free and the biggest win.
+  - id: geyser/custom_items
+    status: stub
+    notes: >-
+      NonVanillaCustomItemDefinition - our carrier has no vanilla base.
+  - id: geyser/custom_blocks
+    status: stub
+    notes: >-
+      Documented by Geyser as unstable; Mojang churns Bedrock block components.
+  - id: geyser/custom_entities
+    status: stub
+    notes: >-
+      @ApiStatus.Experimental as of Geyser 2.11.0.
+  - id: geyser/entity_properties
+    status: stub
+    notes: >-
+      Geyser caps these at 32 per type, 16 enum values and 32-character names; Bedrock definitions routinely
+      exceed that, so a selection rule and a drop diagnostic are needed.
+  - id: geyser/absent_degradation
+    status: stub
+    notes: >-
+      No-op bridge. A Bedrock-client problem must never become a Java-client problem.
+  - id: geyser/proxy_deployment
+    status: unsupported
+    fidelity: >-
+      Geyser running on a separate proxy cannot see server-side objects, so item, block and entity mirrors
+      are unavailable and Bedrock clients see the vanilla carriers; the resource pack can still be served
+      by other means.

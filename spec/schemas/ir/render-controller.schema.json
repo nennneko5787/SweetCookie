@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/render-controller.schema.json",
+  "title": "RenderControllerIr",
+  "description": "Chooses, PER FRAME and via Molang, which geometry, textures and materials an entity renders with, which bones are visible, and its tinting. SC-180 section 6. This is Bedrock's answer to Java blockstate JSON plus EntityRenderer subclassing, and it is fully dynamic — there is no static equivalent to precompute.",
+
+  "type": "object",
+  "required": ["identifier", "geometry", "materials", "textures"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": {
+      "description": "The controller.render.<name> identifier as written.",
+      "type": "string"
+    },
+
+    "geometry": {
+      "description": "A Molang expression yielding an alias such as 'Geometry.default', or an Array.* index expression resolved against `arrays.geometries`.",
+      "$ref": "common.schema.json#/$defs/molangExpr"
+    },
+
+    "materials": {
+      "description": "Ordered bone-pattern to material-alias mappings. The pattern '*' matches all bones; later entries override earlier ones for matching bones.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bonePattern", "material"],
+        "additionalProperties": false,
+        "properties": {
+          "bonePattern": { "type": "string" },
+          "material": { "$ref": "common.schema.json#/$defs/molangExpr" }
+        }
+      }
+    },
+
+    "textures": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/molangExpr" }
+    },
+
+    "partVisibility": {
+      "description": "Ordered bone-pattern to Molang-condition mappings. Later entries override earlier ones.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bonePattern", "visible"],
+        "additionalProperties": false,
+        "properties": {
+          "bonePattern": { "type": "string" },
+          "visible": { "$ref": "common.schema.json#/$defs/molangExpr" }
+        }
+      }
+    },
+
+    "color": { "$ref": "#/$defs/colorExpr" },
+    "overlayColor": { "$ref": "#/$defs/colorExpr" },
+    "onFireColor": { "$ref": "#/$defs/colorExpr" },
+    "isHurtColor": { "$ref": "#/$defs/colorExpr" },
+
+    "uvAnim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/molangFloat" }, "minItems": 2, "maxItems": 2 },
+        "scale":  { "type": "array", "items": { "$ref": "common.schema.json#/$defs/molangFloat" }, "minItems": 2, "maxItems": 2 }
+      }
+    },
+
+    "lightColorMultiplier": { "$ref": "common.schema.json#/$defs/molangFloat" },
+    "ignoreLighting": { "type": "boolean", "default": false },
+    "filterLighting": { "type": "boolean", "default": false },
+
+    "arrays": {
+      "description": "Named arrays indexed by Molang expressions — how variant selection works. Indices are floored and wrap, matching Bedrock, so an out-of-range index is not an error.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "textures":   { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+        "geometries": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+        "materials":  { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } }
+      }
+    },
+
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+  },
+
+  "$defs": {
+    "colorExpr": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "r": { "$ref": "common.schema.json#/$defs/molangFloat" },
+        "g": { "$ref": "common.schema.json#/$defs/molangFloat" },
+        "b": { "$ref": "common.schema.json#/$defs/molangFloat" },
+        "a": { "$ref": "common.schema.json#/$defs/molangFloat" }
+      }
+    }
+  }
+}

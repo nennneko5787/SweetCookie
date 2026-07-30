@@ -1,0 +1,38 @@
+# The requirement: a client running SweetCookie behaves IDENTICALLY whether or not its Minecraft
+# version matches the server's.
+#
+# This is achieved by giving Via nothing to get wrong - custom content never occupies a vanilla
+# network registry identifier (ADR-0003). The normative test is an EQUIVALENCE test, not a smoke
+# test: the same scenario runs natively and through Via, and the client state traces must be
+# byte-identical.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: interop-viaversion
+spec: SC-270
+upstream: null
+
+entries:
+  - id: via/block_equivalence
+    status: stub
+  - id: via/item_equivalence
+    status: stub
+  - id: via/entity_equivalence
+    status: stub
+  - id: via/handshake
+    status: stub
+  - id: via/pack_transfer
+    status: stub
+  - id: via/carrier_set_validity
+    status: stub
+    notes: >-
+      Every carrier must exist in every supported protocol version; asserted at build time.
+  - id: via/no_registry_sync
+    status: stub
+    notes: >-
+      Nothing custom appears in vanilla dynamic-registry sync, which is what makes kicks impossible.
+  - id: via/no_synched_entity_data
+    status: stub
+    notes: >-
+      Custom entity state never uses SynchedEntityData, which removes metadata index drift entirely.

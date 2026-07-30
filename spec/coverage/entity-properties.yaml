@@ -1,0 +1,93 @@
+# Typed entity properties (description.properties) plus the 49 flag-like components.
+#
+# Properties are queryable as q.property(), settable by events, and mirrored to Geyser subject to its
+# caps of 32 per type, 16 enum values and 32-character names. They are synced over SweetCookie's own
+# sideband, NEVER SynchedEntityData (constitution rule 6) - which is what removes the entire class of
+# ViaVersion metadata-index failures.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: entity-properties
+spec: SC-160
+upstream: null
+
+entries:
+  - id: property/bool
+    status: stub
+  - id: property/int
+    status: stub
+  - id: property/float
+    status: stub
+  - id: property/enum
+    status: stub
+    notes: >-
+      Geyser caps enum members at 16 with 32-character names.
+  - id: "minecraft:can_climb"
+    status: stub
+  - id: "minecraft:can_fly"
+    status: stub
+  - id: "minecraft:can_power_jump"
+    status: stub
+  - id: "minecraft:is_baby"
+    status: stub
+  - id: "minecraft:is_charged"
+    status: stub
+  - id: "minecraft:is_chested"
+    status: stub
+  - id: "minecraft:is_dyeable"
+    status: stub
+  - id: "minecraft:is_hidden_when_invisible"
+    status: stub
+  - id: "minecraft:is_ignited"
+    status: stub
+  - id: "minecraft:is_illager_captain"
+    status: stub
+  - id: "minecraft:is_saddled"
+    status: stub
+  - id: "minecraft:is_shaking"
+    status: stub
+  - id: "minecraft:is_sheared"
+    status: stub
+  - id: "minecraft:is_stackable"
+    status: stub
+  - id: "minecraft:is_stunned"
+    status: stub
+  - id: "minecraft:is_tamed"
+    status: stub
+  - id: "minecraft:variant"
+    status: stub
+  - id: "minecraft:mark_variant"
+    status: stub
+  - id: "minecraft:skin_id"
+    status: stub
+  - id: "minecraft:color"
+    status: stub
+  - id: "minecraft:color2"
+    status: stub
+  - id: "minecraft:push_through"
+    status: stub
+  - id: "minecraft:walk_animation_speed"
+    status: stub
+  - id: "minecraft:floats_in_liquid"
+    status: stub
+  - id: "minecraft:flying_speed"
+    status: stub
+  - id: "minecraft:friction_modifier"
+    status: stub
+  - id: "minecraft:ground_offset"
+    status: stub
+  - id: "minecraft:input_ground_controlled"
+    status: stub
+  - id: "minecraft:nameable"
+    status: stub
+  - id: "minecraft:persistent"
+    status: stub
+  - id: "minecraft:preferred_path"
+    status: stub
+  - id: "minecraft:scale_by_age"
+    status: stub
+  - id: "minecraft:sound_volume"
+    status: stub
+  - id: "minecraft:water_movement"
+    status: stub

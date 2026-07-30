@@ -1,0 +1,149 @@
+# 120 components. SEEDED PARTIALLY from research - run `./gradlew fetchUpstreamMetadata
+# specUpstreamDiff` to discover the rest. Missing entries are REPORTED, not silently absent, which is
+# the point of the mechanism (constitution rule 9).
+#
+# Scope control matters more here than anywhere: implementing these in alphabetical order is how this
+# project dies. The acceptance add-ons decide the order.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: entity-components
+spec: SC-160
+upstream:
+  source: "metadata/doc_modules/entities.json"
+  pointer: "/data_items/Entity Components"
+
+entries:
+  - id: "minecraft:movement.basic"
+    status: stub
+    notes: >-
+      Java MoveControl.
+  - id: "minecraft:movement.generic"
+    status: stub
+  - id: "minecraft:movement.fly"
+    status: stub
+  - id: "minecraft:movement.glide"
+    status: stub
+  - id: "minecraft:movement.hover"
+    status: stub
+  - id: "minecraft:movement.jump"
+    status: stub
+  - id: "minecraft:movement.skip"
+    status: stub
+  - id: "minecraft:movement.sway"
+    status: stub
+  - id: "minecraft:movement.amphibious"
+    status: stub
+  - id: "minecraft:navigation.walk"
+    status: stub
+    notes: >-
+      Java PathNavigation plus NodeEvaluator. Bedrock node evaluation differs; see SC-160 section 1.
+  - id: "minecraft:navigation.fly"
+    status: stub
+  - id: "minecraft:navigation.float"
+    status: stub
+  - id: "minecraft:navigation.climb"
+    status: stub
+  - id: "minecraft:navigation.generic"
+    status: stub
+  - id: "minecraft:navigation.hover"
+    status: stub
+  - id: "minecraft:navigation.swim"
+    status: stub
+  - id: "minecraft:physics"
+    status: stub
+    notes: >-
+      Bedrock gravity, drag and friction application order differ from Java. Not reproduced in 0.x.
+  - id: "minecraft:collision_box"
+    status: stub
+    notes: >-
+      Dynamic via getDimensions(Pose) override.
+  - id: "minecraft:pushable"
+    status: stub
+  - id: "minecraft:knockback_resistance"
+    status: stub
+  - id: "minecraft:custom_hit_test"
+    status: stub
+  - id: "minecraft:scale"
+    status: stub
+  - id: "minecraft:is_collidable"
+    status: stub
+  - id: "minecraft:health"
+    status: stub
+  - id: "minecraft:breathable"
+    status: stub
+  - id: "minecraft:damage_sensor"
+    status: stub
+    notes: >-
+      Uses the filter grammar.
+  - id: "minecraft:environment_sensor"
+    status: stub
+    notes: >-
+      Uses the filter grammar.
+  - id: "minecraft:hurt_on_condition"
+    status: stub
+  - id: "minecraft:fire_immune"
+    status: stub
+  - id: "minecraft:breedable"
+    status: stub
+  - id: "minecraft:tameable"
+    status: stub
+  - id: "minecraft:rideable"
+    status: stub
+  - id: "minecraft:leashable"
+    status: stub
+  - id: "minecraft:angry"
+    status: stub
+  - id: "minecraft:anger_level"
+    status: stub
+  - id: "minecraft:type_family"
+    status: stub
+    notes: >-
+      Bedrock's own grouping mechanism. Implemented by us, independent of Java entity tags - SC-120 section
+      5.2.
+  - id: "minecraft:inventory"
+    status: stub
+    notes: >-
+      container_type is a closed set in Bedrock; Java can define new ones.
+  - id: "minecraft:equipment"
+    status: stub
+  - id: "minecraft:equippable"
+    status: stub
+  - id: "minecraft:loot"
+    status: stub
+  - id: "minecraft:economy_trade_table"
+    status: stub
+  - id: "minecraft:trade_table"
+    status: stub
+  - id: "minecraft:ageable"
+    status: stub
+  - id: "minecraft:timer"
+    status: stub
+  - id: "minecraft:despawn"
+    status: stub
+  - id: "minecraft:transformation"
+    status: stub
+  - id: "minecraft:spawn_entity"
+    status: stub
+  - id: "minecraft:addrider"
+    status: stub
+  - id: "minecraft:area_attack"
+    status: stub
+  - id: "minecraft:block_sensor"
+    status: stub
+  - id: "minecraft:boss"
+    status: stub
+  - id: "minecraft:interact"
+    status: stub
+  - id: "minecraft:projectile"
+    status: stub
+  - id: "minecraft:explode"
+    status: stub
+  - id: "minecraft:burns_in_daylight"
+    status: stub
+  - id: "minecraft:conditional_bandwidth_optimization"
+    status: wontfix
+    fidelity: >-
+      A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by SweetCookie's
+      own sideband scheduling instead, so declaring it has no observable effect.

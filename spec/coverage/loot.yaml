@@ -1,0 +1,78 @@
+# Bedrock's loot format is a FORK of Java's PRE-1.13 format - not a subset, not a superset. Java has
+# since moved to namespaced, registry-driven loot with number providers. Direct conversion is not
+# possible; this is a real transform with real gaps.
+#
+# Emulating Bedrock-only functions is acceptable because Java's loot registry is data-driven.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: loot
+spec: SC-190
+upstream: null
+
+entries:
+  - id: loot/pools
+    status: stub
+  - id: loot/rolls
+    status: stub
+    notes: >-
+      Integer or {min,max}; Java uses a number provider.
+  - id: loot/tiers
+    status: stub
+  - id: function/set_count
+    status: stub
+  - id: function/set_damage
+    status: stub
+  - id: function/set_data
+    status: stub
+    notes: >-
+      Bedrock aux value. No direct Java equivalent.
+  - id: function/set_data_from_color_index
+    status: stub
+  - id: function/set_name
+    status: stub
+  - id: function/set_lore
+    status: stub
+  - id: function/set_actor_id
+    status: stub
+  - id: function/set_book_contents
+    status: stub
+  - id: function/enchant_random_gear
+    status: stub
+  - id: function/enchant_randomly
+    status: stub
+  - id: function/enchant_with_levels
+    status: stub
+  - id: function/enchant_book_for_trading
+    status: stub
+  - id: function/looting_enchant
+    status: stub
+  - id: function/specific_enchants
+    status: stub
+  - id: function/random_aux_value
+    status: stub
+  - id: function/random_dye
+    status: stub
+  - id: function/fill_container
+    status: stub
+  - id: function/furnace_smelt
+    status: stub
+  - id: function/trader_material_type
+    status: stub
+  - id: condition/random_chance
+    status: stub
+  - id: condition/random_chance_with_looting
+    status: stub
+  - id: condition/random_difficulty_chance
+    status: stub
+  - id: condition/killed_by_player
+    status: stub
+  - id: condition/killed_by_player_or_pets
+    status: stub
+  - id: condition/entity_properties
+    status: stub
+  - id: condition/has_mark_variant
+    status: stub
+  - id: condition/match_tool
+    status: stub

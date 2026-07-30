@@ -1,0 +1,36 @@
+# .mcstructure is little-endian NBT with a palette-plus-index layout and block_position_data for block
+# entities - a completely different format from Java's big-endian .nbt with a blocks[] list. Needs its
+# own reader.
+#
+# TODO(SC-110): whether structures enter the IR at all or stay opaque assets resolved at placement
+# time. Leaning opaque.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: structures
+spec: SC-190
+upstream: null
+
+entries:
+  - id: mcstructure/palette
+    status: stub
+  - id: mcstructure/block_position_data
+    status: stub
+  - id: mcstructure/entities
+    status: stub
+  - id: worldgen/jigsaw_structure_sets
+    status: unsupported
+    fidelity: >-
+      Data-driven jigsaw structures are parsed but not registered, so no custom structure is ever generated
+      and structure-locating commands cannot find one.
+  - id: worldgen/template_pools
+    status: unsupported
+    fidelity: >-
+      Data-driven jigsaw structures are parsed but not registered, so no custom structure is ever generated
+      and structure-locating commands cannot find one.
+  - id: worldgen/processors
+    status: unsupported
+    fidelity: >-
+      Data-driven jigsaw structures are parsed but not registered, so no custom structure is ever generated
+      and structure-locating commands cannot find one.

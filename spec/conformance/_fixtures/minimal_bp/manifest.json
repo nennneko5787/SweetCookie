@@ -1,0 +1,21 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "SweetCookie Conformance BP",
+    "description": "Minimal valid behaviour pack. Original content, authored for this project.",
+    "uuid": "5c00c1e0-0000-4000-8000-000000000001",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5c00c1e0-0000-4000-8000-000000000002",
+      "version": [1, 0, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["SweetCookie"],
+    "license": "MIT"
+  }
+}

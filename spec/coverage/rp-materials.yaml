@@ -1,0 +1,40 @@
+# .material files are JSON-ish with "child:parent" inheritance and named vertex and fragment shaders.
+#
+# CUSTOM SHADERS ARE WONTFIX. The mapping is from material STATES to Java render types; reimplementing
+# Bedrock's shader pipeline on Java's is not a compatibility layer, it is a graphics engine.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-materials
+spec: SC-180
+upstream: null
+
+entries:
+  - id: material/inheritance
+    status: stub
+  - id: material/states
+    status: stub
+    notes: >-
+      Blending, DisableCulling, DisableDepthWrite, EnableAlphaToCoverage, StencilWrite.
+  - id: material/depth_func
+    status: stub
+  - id: material/variants
+    status: stub
+  - id: material/defines
+    status: stub
+  - id: material/vertex_shader
+    status: wontfix
+    fidelity: >-
+      Bedrock names shader programs that do not exist on Java; a pack shipping custom shaders renders
+      with the nearest standard Java render type instead, so bespoke visual effects are absent.
+  - id: material/fragment_shader
+    status: wontfix
+    fidelity: >-
+      Bedrock names shader programs that do not exist on Java; a pack shipping custom shaders renders
+      with the nearest standard Java render type instead, so bespoke visual effects are absent.
+  - id: material/stencil_ops
+    status: wontfix
+    fidelity: >-
+      Stencil configuration has no exposed Java equivalent, so effects relying on stencil masking render
+      without the mask and may show geometry that Bedrock would have hidden.

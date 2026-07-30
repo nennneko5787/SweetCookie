@@ -1,0 +1,62 @@
+# A general skeletal keyframe system with MOLANG-VALUED keyframes, driven by finite state machines
+# with Molang transition conditions. Java has nothing comparable for entities - this is effectively a
+# second renderer.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-animations
+spec: SC-180
+upstream: null
+
+entries:
+  - id: animation/bones
+    status: stub
+  - id: animation/rotation
+    status: stub
+  - id: animation/position
+    status: stub
+  - id: animation/scale
+    status: stub
+  - id: animation/lerp_mode
+    status: stub
+    notes: >-
+      linear and catmullrom.
+  - id: animation/pre_post_keyframes
+    status: stub
+    notes: >-
+      Allows a discontinuity at one instant.
+  - id: animation/loop
+    status: stub
+  - id: animation/loop_delay
+    status: stub
+  - id: animation/start_delay
+    status: stub
+  - id: animation/anim_time_update
+    status: stub
+    notes: >-
+      Evaluated per frame; interaction with a variable frame rate is a fidelity concern.
+  - id: animation/blend_weight
+    status: stub
+  - id: animation/override_previous_animation
+    status: stub
+  - id: animation/particle_effects
+    status: stub
+  - id: animation/sound_effects
+    status: stub
+  - id: animation/timeline
+    status: stub
+  - id: animation_controller/states
+    status: stub
+  - id: animation_controller/transitions
+    status: stub
+  - id: animation_controller/blend_transition
+    status: stub
+  - id: animation_controller/on_entry
+    status: stub
+  - id: animation_controller/on_exit
+    status: stub
+  - id: animation_controller/particle_effects
+    status: stub
+  - id: animation_controller/sound_effects
+    status: stub

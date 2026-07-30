@@ -1,0 +1,30 @@
+# Java made villager trades data-driven at 26.1, but 1.21.11 has no equivalent. Since SC-220 section 5
+# forbids version-conditional BEHAVIOUR, the likely answer is to implement trading once ourselves so
+# both nodes behave identically, rather than using the data-driven path only where it exists.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: trading
+spec: SC-190
+upstream: null
+
+entries:
+  - id: trading/tiers
+    status: stub
+  - id: trading/trades
+    status: stub
+  - id: trading/wants
+    status: stub
+  - id: trading/gives
+    status: stub
+  - id: trading/reward_exp
+    status: stub
+  - id: trading/max_uses
+    status: stub
+  - id: trading/trader_exp
+    status: stub
+  - id: trading/total_exp_required
+    status: stub
+  - id: trading/groups
+    status: stub

@@ -1,0 +1,20 @@
+# Small, tractable, and the main reason many packs use scripting at all. IN SCOPE, unlike JSON UI.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: script-api-server-ui
+spec: SC-200
+upstream: null
+
+entries:
+  - id: "@minecraft/server-ui:ActionFormData"
+    status: stub
+  - id: "@minecraft/server-ui:ModalFormData"
+    status: stub
+  - id: "@minecraft/server-ui:MessageFormData"
+    status: stub
+  - id: "@minecraft/server-ui:FormResponse"
+    status: stub
+  - id: "@minecraft/server-ui:FormCancelationReason"
+    status: stub

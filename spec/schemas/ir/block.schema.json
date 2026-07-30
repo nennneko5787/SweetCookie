@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/block.schema.json",
+  "title": "BlockDefIr",
+  "description": "A Bedrock block definition. SC-150. Storage and slot binding are SC-120 section 6 and are not represented here — the IR describes the add-on, not the world.",
+
+  "type": "object",
+  "required": ["identifier", "states", "components", "permutations"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": { "$ref": "common.schema.json#/$defs/bedrockId" },
+
+    "menuCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": { "type": "string" },
+        "group": { "type": "string" },
+        "isHiddenInCommands": { "type": "boolean", "default": false }
+      }
+    },
+
+    "states": {
+      "description": "Declaration order is NORMATIVE — it determines the mixed-radix index encoding in SC-120 section 6.1, which is written into chunk storage. Reordering states is schema drift.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/state" }
+    },
+
+    "traits": {
+      "description": "Engine-provided automatic states, expanded into states before encoding and appended in the fixed order placement_direction, placement_position.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/trait" }
+    },
+
+    "components": {
+      "description": "The base component set. Keys are Bedrock component names; unrecognised ones are preserved here AND listed in unknown, because a later version may implement them.",
+      "type": "object"
+    },
+
+    "permutations": {
+      "description": "ORDERED. Later entries override earlier ones per component key. Conditions may only reference block state and property queries plus pure maths — no entity or world context — which is what allows pre-resolution per state index at bind time (SC-150 section 1).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/permutation" }
+    },
+
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" },
+
+    "vanillaFallback": {
+      "description": "The wire carrier, computed at translation time from material_instances colours and map_color. SC-270 section 4. Must exist in every supported protocol version.",
+      "type": ["string", "null"]
+    }
+  },
+
+  "$defs": {
+    "state": {
+      "type": "object",
+      "required": ["name", "type", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Namespaced, as Bedrock writes it, e.g. 'wizardry:charge'.",
+          "type": "string"
+        },
+        "type": { "enum": ["bool", "int", "string"] },
+        "values": {
+          "description": "AT MOST 16 — Bedrock's hard cap. The {min, max} shorthand is expanded here. Value order is normative for the same reason declaration order is.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": { "type": ["boolean", "integer", "string"] }
+        }
+      }
+    },
+
+    "trait": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "enum": ["minecraft:placement_direction", "minecraft:placement_position"] },
+        "enabledStates": {
+          "type": "array",
+          "items": {
+            "enum": ["minecraft:cardinal_direction", "minecraft:facing_direction",
+                     "minecraft:block_face", "minecraft:vertical_half"]
+          }
+        },
+        "yRotationOffset": { "type": "number", "default": 0 }
+      }
+    },
+
+    "permutation": {
+      "type": "object",
+      "required": ["condition", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "condition": { "$ref": "common.schema.json#/$defs/molangExpr" },
+        "components": { "type": "object" },
+        "provenance": { "$ref": "common.schema.json#/$defs/provenance" }
+      }
+    }
+  }
+}

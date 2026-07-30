@@ -1,0 +1,36 @@
+{
+  "_comment": "Declares 1.8.0 but is written in the MODERN shape. Structural sniffing must win.",
+  "format_version": "1.8.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.sc_lying_declaration",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1, 0]
+      },
+      "bones": [
+        {
+          "name": "sc_root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-4, 0, -4],
+              "size": [8, 8, 8],
+              "uv": {
+                "north": { "uv": [0, 0], "uv_size": [8, 8] },
+                "south": { "uv": [0, 0], "uv_size": [8, 8] },
+                "east":  { "uv": [0, 0], "uv_size": [8, 8] },
+                "west":  { "uv": [0, 0], "uv_size": [8, 8] },
+                "up":    { "uv": [0, 8], "uv_size": [8, 8] },
+                "down":  { "uv": [0, 8], "uv_size": [8, 8] }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

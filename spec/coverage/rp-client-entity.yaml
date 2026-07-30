@@ -1,0 +1,43 @@
+# The 15 sections of a client entity definition - the binding layer between an entity and its geometry, textures, animations and render controllers.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-client-entity
+spec: SC-180
+upstream: null
+
+entries:
+  - id: client_entity/materials
+    status: stub
+  - id: client_entity/textures
+    status: stub
+  - id: client_entity/geometry
+    status: stub
+  - id: client_entity/animations
+    status: stub
+  - id: client_entity/animation_controllers
+    status: stub
+  - id: client_entity/render_controllers
+    status: stub
+  - id: client_entity/scripts
+    status: stub
+    notes: >-
+      pre_animation, initialize, animate, scale, variables. Per-frame ordering is normative - SC-180 section
+      6.
+  - id: client_entity/particle_effects
+    status: stub
+  - id: client_entity/particle_emitters
+    status: stub
+  - id: client_entity/sound_effects
+    status: stub
+  - id: client_entity/locators
+    status: stub
+  - id: client_entity/spawn_egg
+    status: stub
+  - id: client_entity/enable_attachables
+    status: stub
+  - id: client_entity/hide_armor
+    status: stub
+  - id: client_entity/held_item_ignores_lighting
+    status: stub

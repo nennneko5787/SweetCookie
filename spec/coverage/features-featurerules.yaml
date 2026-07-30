@@ -1,0 +1,55 @@
+# DEFERRED BEYOND 0.x, as a whole.
+#
+# Bedrock has 26 feature types and a feature_rules scatter system with no Java equivalent; Java has a
+# noise router and density functions with no Bedrock equivalent. Terrain will not match, and
+# pretending otherwise would be worse than saying so. Packs using them load; the files produce one
+# diagnostic each.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: features-featurerules
+spec: SC-190
+upstream: null
+
+entries:
+  - id: "minecraft:aggregate_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:sequence_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:ore_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:scatter_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:single_block_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:structure_template_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: "minecraft:tree_feature"
+    status: unsupported
+    fidelity: >-
+      Worldgen features are parsed and reported but never placed, so a pack that adds custom ore, trees
+      or structures generates a world identical to one without it.
+  - id: feature_rules/distribution
+    status: unsupported
+    fidelity: >-
+      Feature rule scatter parameters have no Java placement-modifier equivalent, so no custom feature
+      is ever scheduled for generation regardless of its rule.

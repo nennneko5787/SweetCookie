@@ -1,0 +1,36 @@
+# Translated into Java atlas sources and .mcmeta animations, served from the virtual resource pack so that vanilla does the stitching.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-textures
+spec: SC-180
+upstream: null
+
+entries:
+  - id: terrain_texture.json
+    status: stub
+  - id: item_texture.json
+    status: stub
+    notes: >-
+      minecraft:icon names a KEY here, not a path.
+  - id: flipbook_textures.json
+    status: stub
+    notes: >-
+      Becomes a Java .mcmeta animation.
+  - id: texture_list.json
+    status: stub
+  - id: textures/tint_color
+    status: stub
+  - id: textures/overlay_color
+    status: stub
+  - id: textures/variants
+    status: stub
+    notes: >-
+      A texture_data entry may list several textures for random variation.
+  - id: texture_set.json
+    status: unsupported
+    fidelity: >-
+      PBR texture sets require the pbr capability and Bedrock's Vibrant Visuals pipeline; on Java the
+      base colour texture is used alone, so normal, height, metalness, emissive and roughness maps have
+      no effect.

@@ -1,0 +1,130 @@
+# 61 pure functions. The easiest part of Molang and the one that must be exactly right, because
+# everything else is built on it. All arithmetic is float (SC-000 section 7): folding in double and
+# narrowing later changes which branch a pack takes.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: molang-math
+spec: SC-130
+upstream: null
+
+entries:
+  - id: math.abs
+    status: stub
+  - id: math.acos
+    status: stub
+  - id: math.asin
+    status: stub
+  - id: math.atan
+    status: stub
+  - id: math.atan2
+    status: stub
+  - id: math.ceil
+    status: stub
+  - id: math.clamp
+    status: stub
+  - id: math.copy_sign
+    status: stub
+  - id: math.cos
+    status: stub
+  - id: math.die_roll
+    status: stub
+  - id: math.die_roll_integer
+    status: stub
+  - id: math.exp
+    status: stub
+  - id: math.floor
+    status: stub
+  - id: math.hermite_blend
+    status: stub
+  - id: math.lerp
+    status: stub
+  - id: math.lerprotate
+    status: stub
+  - id: math.ln
+    status: stub
+  - id: math.max
+    status: stub
+  - id: math.min
+    status: stub
+  - id: math.min_angle
+    status: stub
+  - id: math.mod
+    status: stub
+  - id: math.pi
+    status: stub
+  - id: math.pow
+    status: stub
+  - id: math.random
+    status: stub
+  - id: math.random_integer
+    status: stub
+  - id: math.round
+    status: stub
+  - id: math.sin
+    status: stub
+  - id: math.sqrt
+    status: stub
+  - id: math.trunc
+    status: stub
+  - id: math.ease_in_sine
+    status: stub
+  - id: math.ease_out_sine
+    status: stub
+  - id: math.ease_in_out_sine
+    status: stub
+  - id: math.ease_in_quad
+    status: stub
+  - id: math.ease_out_quad
+    status: stub
+  - id: math.ease_in_out_quad
+    status: stub
+  - id: math.ease_in_cubic
+    status: stub
+  - id: math.ease_out_cubic
+    status: stub
+  - id: math.ease_in_out_cubic
+    status: stub
+  - id: math.ease_in_quart
+    status: stub
+  - id: math.ease_out_quart
+    status: stub
+  - id: math.ease_in_out_quart
+    status: stub
+  - id: math.ease_in_quint
+    status: stub
+  - id: math.ease_out_quint
+    status: stub
+  - id: math.ease_in_out_quint
+    status: stub
+  - id: math.ease_in_expo
+    status: stub
+  - id: math.ease_out_expo
+    status: stub
+  - id: math.ease_in_out_expo
+    status: stub
+  - id: math.ease_in_circ
+    status: stub
+  - id: math.ease_out_circ
+    status: stub
+  - id: math.ease_in_out_circ
+    status: stub
+  - id: math.ease_in_back
+    status: stub
+  - id: math.ease_out_back
+    status: stub
+  - id: math.ease_in_out_back
+    status: stub
+  - id: math.ease_in_elastic
+    status: stub
+  - id: math.ease_out_elastic
+    status: stub
+  - id: math.ease_in_out_elastic
+    status: stub
+  - id: math.ease_in_bounce
+    status: stub
+  - id: math.ease_out_bounce
+    status: stub
+  - id: math.ease_in_out_bounce
+    status: stub

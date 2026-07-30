@@ -1,0 +1,48 @@
+# Spawn rules use their OWN condition components rather than the SC-140 filter grammar directly,
+# though several embed it. Bedrock's spawn density and herd semantics differ from Java's mob caps;
+# the divergence is recorded rather than approximated.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: spawn-rules
+spec: SC-190
+upstream: null
+
+entries:
+  - id: "minecraft:biome_filter"
+    status: stub
+    notes: >-
+      Embeds the filter grammar.
+  - id: "minecraft:brightness_filter"
+    status: stub
+  - id: "minecraft:height_filter"
+    status: stub
+  - id: "minecraft:difficulty_filter"
+    status: stub
+  - id: "minecraft:weight"
+    status: stub
+  - id: "minecraft:herd"
+    status: stub
+    notes: >-
+      Bedrock herd spawning has no Java counterpart.
+  - id: "minecraft:density_limit"
+    status: stub
+  - id: "minecraft:permute_type"
+    status: stub
+  - id: "minecraft:delay_filter"
+    status: stub
+  - id: "minecraft:world_age_filter"
+    status: stub
+  - id: "minecraft:mob_event_filter"
+    status: stub
+  - id: "minecraft:player_in_village_filter"
+    status: stub
+  - id: "minecraft:spawns_on_block_filter"
+    status: stub
+  - id: "minecraft:spawns_above_block_filter"
+    status: stub
+  - id: "minecraft:spawns_lava"
+    status: stub
+  - id: "minecraft:disallow_spawns_in_bubble"
+    status: stub

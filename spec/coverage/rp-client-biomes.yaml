@@ -1,0 +1,24 @@
+# Client-side biome appearance. biomes_client.json is deprecated upstream in favour of biomes/*.json.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-client-biomes
+spec: SC-180
+upstream: null
+
+entries:
+  - id: client_biome/fog
+    status: stub
+  - id: client_biome/water
+    status: stub
+  - id: client_biome/sky_color
+    status: stub
+  - id: client_biome/grass_color
+    status: stub
+  - id: client_biome/foliage_color
+    status: stub
+  - id: biomes_client.json
+    status: stub
+    notes: >-
+      Deprecated upstream; still present in real packs.

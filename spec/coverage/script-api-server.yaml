@@ -1,0 +1,76 @@
+# 439 exported classes in @minecraft/server 2.8.0. SEEDED PARTIALLY - the full member list is
+# generated from the .d.ts so the gap is VISIBLE rather than asserted.
+#
+# Only the core subset is in scope. Anything outside it throws a JS Error naming the member and its
+# coverage entry; silently returning undefined produces bugs a pack author cannot diagnose.
+#
+# Scripting ships as a SEPARATE OPTIONAL MOD (ADR-0005) and is sequenced last.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: script-api-server
+spec: SC-200
+upstream:
+  source: "metadata/script_modules/@minecraft/server.d.ts"
+  pointer: ""
+
+entries:
+  - id: "@minecraft/server:world"
+    status: stub
+  - id: "@minecraft/server:system"
+    status: stub
+    notes: >-
+      run, runTimeout, runInterval, runJob generator scheduling.
+  - id: "@minecraft/server:Entity"
+    status: stub
+  - id: "@minecraft/server:Player"
+    status: stub
+  - id: "@minecraft/server:Block"
+    status: stub
+    notes: >-
+      A handle that re-resolves on access, matching Bedrock.
+  - id: "@minecraft/server:Dimension"
+    status: stub
+  - id: "@minecraft/server:ItemStack"
+    status: stub
+  - id: "@minecraft/server:BlockComponentRegistry"
+    status: stub
+    notes: >-
+      High priority: modern add-ons increasingly put real behaviour here.
+  - id: "@minecraft/server:ItemComponentRegistry"
+    status: stub
+  - id: "@minecraft/server:CustomCommandRegistry"
+    status: stub
+  - id: "@minecraft/server:MolangVariableMap"
+    status: stub
+  - id: "@minecraft/server:beforeEvents"
+    status: stub
+  - id: "@minecraft/server:afterEvents"
+    status: stub
+    notes: >-
+      Ordering must follow Mojang's published engine-after-events-ordering table.
+  - id: "@minecraft/server:errors"
+    status: stub
+    notes: >-
+      44 error types. Packs catch them by name, so the class names are part of the contract.
+  - id: "@minecraft/server-net"
+    status: wontfix
+    fidelity: >-
+      HTTP access from untrusted pack code is a security boundary this project will not cross; scripts
+      calling it receive a thrown error naming the module rather than a network response.
+  - id: "@minecraft/server-admin"
+    status: wontfix
+    fidelity: >-
+      Secret and variable access from untrusted pack code is a security boundary this project will not
+      cross; scripts calling it receive a thrown error naming the module.
+  - id: "@minecraft/server-gametest"
+    status: unsupported
+    fidelity: >-
+      The gametest module targets Bedrock's own test harness, which has no counterpart here; scripts importing
+      it fail to load and the rest of the pack continues.
+  - id: "@minecraft/server-editor"
+    status: unsupported
+    fidelity: >-
+      The editor module targets Bedrock Editor, which does not exist on Java; scripts importing it fail
+      to load and the rest of the pack continues.

@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/pack.schema.json",
+  "title": "AddonIr",
+  "description": "The root of the intermediate representation. SC-110 section 8. Deterministic: the same pack files must produce a byte-identical canonical dump, including collection order (SC-110 section 10).",
+
+  "type": "object",
+  "required": ["packs", "diagnostics"],
+  "additionalProperties": false,
+
+  "properties": {
+    "packs": {
+      "description": "In resolved load order (SC-100 section 5). Order is authoritative and nothing downstream may re-derive it.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/packIr" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+    }
+  },
+
+  "$defs": {
+    "packIr": {
+      "type": "object",
+      "required": ["id", "header", "loadOrder"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "loadOrder": { "type": "integer", "minimum": 0 },
+        "header": { "$ref": "#/$defs/packHeader" },
+        "modules": { "type": "array", "items": { "$ref": "#/$defs/packModule" } },
+        "dependencies": { "type": "array", "items": { "$ref": "#/$defs/dependency" } },
+        "capabilities": {
+          "type": "array",
+          "items": { "enum": ["chemistry", "editorExtension", "experimental_custom_ui", "raytraced", "pbr"] }
+        },
+        "subpack": {
+          "description": "The selected subpack, if any. Selection is configured, never inferred from host memory (SC-100 section 7).",
+          "type": ["string", "null"]
+        },
+        "behavior": { "$ref": "#/$defs/behaviorIr" },
+        "resource": { "$ref": "#/$defs/resourceIr" },
+        "scripts": { "$ref": "#/$defs/scriptIr" },
+        "texts": {
+          "description": "Locale to key-value map, merged per SC-100 section 8.",
+          "type": "object",
+          "additionalProperties": { "type": "object", "additionalProperties": { "type": "string" } }
+        },
+        "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+      }
+    },
+
+    "packHeader": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "version": { "$ref": "common.schema.json#/$defs/semanticVersion" },
+        "minEngineVersion": { "$ref": "common.schema.json#/$defs/bedrockVersion" },
+        "baseGameVersion": { "$ref": "common.schema.json#/$defs/bedrockVersion" },
+        "packScope": { "enum": ["world", "global", "any"] },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "authors": { "type": "array", "items": { "type": "string" } },
+            "license": { "type": "string" },
+            "url": { "type": "string" },
+            "productType": { "type": "string" },
+            "generatedWith": {
+              "description": "Authoring tool. Genuinely useful in diagnostics, because tool bugs cluster.",
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+
+    "packModule": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["resources", "data", "script", "client_data", "world_template", "skin_pack"] },
+        "uuid": { "type": "string" },
+        "version": { "$ref": "common.schema.json#/$defs/semanticVersion" },
+        "description": { "type": "string" },
+        "entry": {
+          "description": "Script entry point. Not in Mojang's published field table but universal in practice; defaults to scripts/main.js with SCE-1022.",
+          "type": "string"
+        }
+      }
+    },
+
+    "dependency": {
+      "description": "Two disjoint shapes in one Bedrock array, distinguished by which key is present (SC-100 section 4.2).",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["packUuid", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "packUuid": { "type": "string" },
+            "version": { "$ref": "common.schema.json#/$defs/semanticVersion" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["moduleName", "versionString"],
+          "additionalProperties": false,
+          "properties": {
+            "moduleName": { "type": "string" },
+            "versionString": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "behaviorIr": {
+      "description": "Keyed by Bedrock identifier, except lootTables and functions, which Bedrock references by path.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entities": { "type": "object", "additionalProperties": { "$ref": "entity.schema.json" } },
+        "blocks": { "type": "object", "additionalProperties": { "$ref": "block.schema.json" } },
+        "items": { "type": "object", "additionalProperties": { "$ref": "item.schema.json" } },
+        "recipes": { "type": "object" },
+        "lootTables": { "type": "object" },
+        "trading": { "type": "object" },
+        "spawnRules": { "type": "object" },
+        "functions": { "type": "object" },
+        "serverAnimations": { "type": "object", "additionalProperties": { "$ref": "animation.schema.json" } },
+        "serverAnimControllers": { "type": "object" },
+        "biomes": { "type": "object" },
+        "features": { "type": "object" },
+        "featureRules": { "type": "object" },
+        "dialogue": { "type": "object" },
+        "cameras": { "type": "object" },
+        "aimAssist": { "type": "object" },
+        "itemCatalog": { "type": "object" },
+        "structures": { "type": "object" },
+        "voxelShapes": { "type": "object" }
+      }
+    },
+
+    "resourceIr": {
+      "description": "Binary assets are NOT loaded here. The IR holds paths; the asset pipeline reads through the VFS on demand (SC-110 section 8.2).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientEntities": { "type": "object" },
+        "geometries": { "type": "object", "additionalProperties": { "$ref": "geometry.schema.json" } },
+        "renderControllers": { "type": "object", "additionalProperties": { "$ref": "render-controller.schema.json" } },
+        "animations": { "type": "object", "additionalProperties": { "$ref": "animation.schema.json" } },
+        "animControllers": { "type": "object" },
+        "particles": { "type": "object" },
+        "attachables": { "type": "object" },
+        "materials": { "type": "object" },
+        "textureAtlases": { "type": "object" },
+        "sounds": { "type": "object" },
+        "fogs": { "type": "object" },
+        "clientBiomes": { "type": "object" },
+        "ui": { "type": "object" },
+        "fonts": { "type": "object" }
+      }
+    },
+
+    "scriptIr": {
+      "description": "No JavaScript is parsed in core/format — that needs a JS engine, which core must not depend on (SC-110 section 8.3).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entry": { "type": "string" },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "version"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" },
+              "supported": { "type": "boolean" }
+            }
+          }
+        },
+        "sources": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

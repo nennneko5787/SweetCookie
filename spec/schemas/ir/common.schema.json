@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/common.schema.json",
+  "title": "IR shared value types",
+  "description": "Shared definitions for the SweetCookie intermediate representation. Normative half of SC-110 section 6. These schemas describe the CANONICAL JSON DUMP of the IR (SC-000 section 6), which is what golden tests compare — not an on-disk format the mod reads.",
+
+  "$defs": {
+    "bedrockId": {
+      "description": "Namespaced Bedrock identifier. Namespace defaults to 'minecraft' when the source omitted it; the IR always stores it explicitly. Original case preserved; comparison is case-insensitive.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+:[A-Za-z0-9_./-]+$"
+    },
+
+    "logicalId": {
+      "description": "The derived Java identifier. SC-120 section 3.",
+      "type": "string",
+      "pattern": "^sweetcookie:[a-z0-9_.-]+$"
+    },
+
+    "semanticVersion": {
+      "type": "object",
+      "required": ["major", "minor", "patch"],
+      "additionalProperties": false,
+      "properties": {
+        "major": { "type": "integer", "minimum": 0 },
+        "minor": { "type": "integer", "minimum": 0 },
+        "patch": { "type": "integer", "minimum": 0 },
+        "prerelease": { "type": "string" },
+        "build": { "type": "string" }
+      }
+    },
+
+    "bedrockVersion": {
+      "description": "Engine or format version, creator-facing form.",
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+){1,3}$"
+    },
+
+    "provenance": {
+      "description": "Where an IR node came from. Mandatory on everything reachable from a pack — SC-110 section 4. A diagnostic without it is useless to an author with forty packs installed.",
+      "type": "object",
+      "required": ["pack", "path", "jsonPointer", "declaredVersion", "effectiveVersion", "lossy"],
+      "additionalProperties": false,
+      "properties": {
+        "pack": { "type": "string", "format": "uuid" },
+        "path": { "description": "VFS path within the pack.", "type": "string" },
+        "jsonPointer": { "description": "RFC 6901 position within the file.", "type": "string" },
+        "declaredVersion": {
+          "description": "format_version as written. May disagree with effectiveVersion when structural sniffing overrode it (SC-110 section 3.1).",
+          "type": ["string", "null"]
+        },
+        "effectiveVersion": { "type": "string" },
+        "lossy": {
+          "description": "True when an upgrade or clamp discarded information.",
+          "type": "boolean"
+        }
+      }
+    },
+
+    "unknown": {
+      "description": "Keys the parser did not recognise, verbatim. SC-110 section 5. Present on every IR record that models a JSON object; empty is normal.",
+      "type": "object"
+    },
+
+    "molangExpr": {
+      "description": "A parsed Molang expression. NEVER a raw string in the IR (SC-110 section 7). The dump form records the source for diffability plus whether it folded to a constant.",
+      "type": "object",
+      "required": ["source", "constant"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "constant": {
+          "description": "The folded value when the expression is constant, else null. Folding uses float arithmetic (SC-000 section 7).",
+          "type": ["number", "null"]
+        },
+        "queries": {
+          "description": "Query identifiers this expression references, for static pre-binding (SC-130 section 5).",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "parseError": {
+          "description": "Present when parsing failed. The expression then evaluates to 0, matching Bedrock, and SCE-1040 was emitted.",
+          "type": "string"
+        }
+      }
+    },
+
+    "molangFloat": {
+      "description": "A field that Bedrock allows to be either a constant or an expression.",
+      "oneOf": [
+        { "type": "number" },
+        { "$ref": "#/$defs/molangExpr" }
+      ]
+    },
+
+    "vec3f": {
+      "description": "Bedrock axis conventions, preserved unconverted. Conversion happens in the renderer (SC-110 section 6.1).",
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+
+    "vec2f": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+
+    "molangVec3": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/molangFloat" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+
+    "rangeF": {
+      "description": "Bedrock's [min, max] or scalar shorthand. A scalar normalises to [v, v].",
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    },
+
+    "rangeI": {
+      "type": "object",
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "integer" },
+        "max": { "type": "integer" }
+      }
+    },
+
+    "ticks": {
+      "description": "Integral ticks. Seconds are converted at parse time by round(s * 20) unless the domain says otherwise (SC-000 section 8).",
+      "type": "integer"
+    },
+
+    "texturePath": {
+      "description": "Pack-relative texture reference WITHOUT extension, as Bedrock writes it.",
+      "type": "string"
+    },
+
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "severity", "messageKey"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "integer", "minimum": 1000, "maximum": 6999 },
+        "severity": { "enum": ["ERROR", "WARNING", "INFO"] },
+        "messageKey": { "type": "string" },
+        "args": { "type": "array" },
+        "where": { "$ref": "#/$defs/provenance" },
+        "featureId": { "type": "string" },
+        "occurrences": { "type": "integer", "minimum": 1, "default": 1 }
+      }
+    }
+  }
+}

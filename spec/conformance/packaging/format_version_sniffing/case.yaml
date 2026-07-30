@@ -1,0 +1,44 @@
+# A worked example of a conformance case. See spec/conformance/README.md.
+#
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: packaging/format_version_sniffing
+tier: T0
+spec: SC-110
+
+features:
+  - geometry/family_1_8
+  - geometry/family_modern
+
+description: >-
+  A geometry file that DECLARES format_version 1.8.0 but is written in the modern
+  `minecraft:geometry` shape must be parsed as modern, and vice versa. Real authoring tools have
+  shipped this mismatch for years, so trusting the declared version means silently failing to load
+  a large fraction of community models — the bones parse as empty and the entity renders as nothing
+  at all, with no error a pack author could act on.
+
+pack:
+  extends: minimal_rp
+  dir: pack
+
+diagnostics:
+  expected:
+    - SCE-1031          # declared format_version contradicts the file's structure
+  forbidden:
+    - SCE-1030          # must NOT fall back to the lowest registered parser
+  exhaustive: true
+
+expect:
+  ir: expected/ir.json
+  diagnostics: expected/diagnostics.json
+
+assert:
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].sourceFamily
+    equals: modern
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].bones
+    contains: sc_root
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].sourceFamily
+    equals: legacy_1_8
+  # Box UV expands to per-face UV at parse time, because the reverse is not expressible (SC-180 §3).
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.north
+    absent: false

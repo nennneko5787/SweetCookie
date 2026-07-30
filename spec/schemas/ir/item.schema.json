@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/item.schema.json",
+  "title": "ItemDefIr",
+  "description": "A Bedrock item definition, 44 components. SC-170. Mojang rewrote the shape at 1.20.50, moving all behaviour under components; the IR models the modern shape and older files upgrade into it (SC-110 section 3.2). Registration is SC-120 section 4: one carrier Item, identity in a data component.",
+
+  "type": "object",
+  "required": ["identifier", "components"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": { "$ref": "common.schema.json#/$defs/bedrockId" },
+
+    "menuCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": { "type": "string" },
+        "group": { "type": "string" },
+        "isHiddenInCommands": { "type": "boolean", "default": false }
+      }
+    },
+
+    "components": {
+      "description": "Keys are Bedrock component names. Component availability is gated by format_version upstream (minecraft:compostable needs 1.21.60, minecraft:cooldown needs 1.20.10); a component used below its gate is SCE-2040 and is kept, because Bedrock's own enforcement is inconsistent.",
+      "type": "object"
+    },
+
+    "legacy": {
+      "description": "Fields from the pre-1.20.50 shape that have no modern equivalent, preserved so an upgrade transform is auditable.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "renderOffsets": { "type": "object" },
+        "category": { "type": "string" },
+        "maxDamage": { "type": "integer" },
+        "stackedByData": { "type": "boolean" }
+      }
+    },
+
+    "attachable": {
+      "description": "Resolved reference to the attachable definition that gives this item a 3D held or worn model. Attachables live in the resource pack but belong to the item (SC-170 section 1).",
+      "type": ["string", "null"]
+    },
+
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" },
+
+    "vanillaFallback": {
+      "description": "Wire carrier item. SC-270 section 4. Distinct from the SERVER-side carrier, which is always sweetcookie:item.",
+      "type": ["string", "null"]
+    }
+  }
+}

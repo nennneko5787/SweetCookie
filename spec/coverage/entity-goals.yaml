@@ -1,0 +1,138 @@
+# 171 goals. SEEDED PARTIALLY from research - `specUpstreamDiff` discovers the rest.
+#
+# Every goal becomes a Java Goal produced by a factory keyed on the component name. Priorities agree
+# between the games: lower numbers run first. The goal set is REBUILT whenever component groups
+# change, at a tick boundary, never mid-iteration.
+#
+# The generated table lives in docs/compatibility/entity-goals.md, not here.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: entity-goals
+spec: SC-160
+upstream:
+  source: "metadata/doc_modules/entities.json"
+  pointer: "/data_items/AI Goals"
+
+entries:
+  - id: "minecraft:behavior.melee_attack"
+    status: stub
+  - id: "minecraft:behavior.ranged_attack"
+    status: stub
+  - id: "minecraft:behavior.delayed_attack"
+    status: stub
+  - id: "minecraft:behavior.charge_attack"
+    status: stub
+  - id: "minecraft:behavior.nearest_attackable_target"
+    status: stub
+  - id: "minecraft:behavior.hurt_by_target"
+    status: stub
+  - id: "minecraft:behavior.random_stroll"
+    status: stub
+  - id: "minecraft:behavior.random_look_around"
+    status: stub
+  - id: "minecraft:behavior.look_at_player"
+    status: stub
+  - id: "minecraft:behavior.look_at_target"
+    status: stub
+  - id: "minecraft:behavior.float"
+    status: stub
+  - id: "minecraft:behavior.panic"
+    status: stub
+  - id: "minecraft:behavior.tempt"
+    status: stub
+  - id: "minecraft:behavior.follow_parent"
+    status: stub
+  - id: "minecraft:behavior.follow_owner"
+    status: stub
+  - id: "minecraft:behavior.breed"
+    status: stub
+  - id: "minecraft:behavior.mount_pathing"
+    status: stub
+  - id: "minecraft:behavior.avoid_mob_type"
+    status: stub
+  - id: "minecraft:behavior.avoid_block"
+    status: stub
+  - id: "minecraft:behavior.eat_block"
+    status: stub
+  - id: "minecraft:behavior.eat_carried_item"
+    status: stub
+  - id: "minecraft:behavior.admire_item"
+    status: stub
+  - id: "minecraft:behavior.barter"
+    status: stub
+  - id: "minecraft:behavior.break_door"
+    status: stub
+  - id: "minecraft:behavior.open_door"
+    status: stub
+  - id: "minecraft:behavior.celebrate"
+    status: stub
+  - id: "minecraft:behavior.circle_around_anchor"
+    status: stub
+  - id: "minecraft:behavior.controlled_by_player"
+    status: stub
+  - id: "minecraft:behavior.croak"
+    status: stub
+  - id: "minecraft:behavior.dig"
+    status: stub
+  - id: "minecraft:behavior.random_swim"
+    status: stub
+  - id: "minecraft:behavior.random_fly"
+    status: stub
+  - id: "minecraft:behavior.random_hover"
+    status: stub
+  - id: "minecraft:behavior.stay_while_sitting"
+    status: stub
+  - id: "minecraft:behavior.sneeze"
+    status: stub
+  - id: "minecraft:behavior.summon_entity"
+    status: stub
+  - id: "minecraft:behavior.send_event"
+    status: stub
+  - id: "minecraft:behavior.pickup_items"
+    status: stub
+  - id: "minecraft:behavior.drop_item_for"
+    status: stub
+  - id: "minecraft:behavior.hide"
+    status: stub
+  - id: "minecraft:behavior.flee_sun"
+    status: stub
+  - id: "minecraft:behavior.restrict_sun"
+    status: stub
+  - id: "minecraft:behavior.move_towards_target"
+    status: stub
+  - id: "minecraft:behavior.move_to_water"
+    status: stub
+  - id: "minecraft:behavior.move_to_land"
+    status: stub
+  - id: "minecraft:behavior.move_to_lava"
+    status: stub
+  - id: "minecraft:behavior.move_to_village"
+    status: stub
+  - id: "minecraft:behavior.stalk_and_pounce_on_target"
+    status: stub
+  - id: "minecraft:behavior.swim_wander"
+    status: stub
+  - id: "minecraft:behavior.knockback_roar"
+    status: stub
+  - id: "minecraft:behavior.roar"
+    status: stub
+  - id: "minecraft:behavior.rise_to_liquid_level"
+    status: stub
+  - id: "minecraft:behavior.dragonchargeplayer"
+    status: stub
+  - id: "minecraft:behavior.dragonflaming"
+    status: stub
+  - id: "minecraft:behavior.dragonholdingpattern"
+    status: stub
+  - id: "minecraft:behavior.dragonlanding"
+    status: stub
+  - id: "minecraft:behavior.dragonscanning"
+    status: stub
+  - id: "minecraft:behavior.dragonstrafeplayer"
+    status: stub
+  - id: "minecraft:behavior.dragontakeoff"
+    status: stub
+  - id: "minecraft:behavior.dragondeath"
+    status: stub

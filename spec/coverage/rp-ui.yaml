@@ -1,0 +1,32 @@
+# WONTFIX FOR 0.x, as a whole.
+#
+# JSON UI is a complete data-driven UI engine with hundreds of undocumented engine-provided bindings,
+# and Mojang is itself migrating away from it toward Ore UI. Reimplementing it would be a larger
+# project than the rest of the renderer, for a feature whose upstream is being retired.
+#
+# @minecraft/server-ui's forms are a much smaller, tractable surface and ARE in scope - see
+# script-api-server-ui.yaml.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-ui
+spec: SC-180
+upstream: null
+
+entries:
+  - id: json_ui/screens
+    status: wontfix
+    fidelity: >-
+      JSON UI files are recognised and ignored, so a pack that replaces or adds a screen shows the vanilla
+      Java screen instead and any custom layout, artwork or controls are absent.
+  - id: json_ui/modifications
+    status: wontfix
+    fidelity: >-
+      Patching vanilla Bedrock screens has no Java target, so modifications are ignored entirely and the
+      vanilla Java screen is unchanged.
+  - id: json_ui/bindings
+    status: wontfix
+    fidelity: >-
+      The engine-provided binding namespace is undocumented and Bedrock-specific, so no bound value is
+      available and nothing that depends on one renders.

@@ -1,0 +1,14 @@
+{
+  "$comment": "PLACEHOLDER. Populated by `./gradlew updateUpstreamLock`, which is a deliberate manual act (spec/upstream/fetch.md). The commit and hashes below are zeroed because no fetch has run yet; the build must refuse to generate from an unpinned snapshot rather than silently pulling a moving ref. Validated against spec/schemas/upstream-lock.schema.json.",
+
+  "repository": "https://github.com/Mojang/bedrock-samples",
+  "license": "NOASSERTION",
+  "ref": "main",
+  "commit": "0000000000000000000000000000000000000000",
+  "fetchedAt": "1970-01-01T00:00:00Z",
+
+  "targetEngineVersion": "1.26.30",
+  "publicVersion": "26.3",
+
+  "files": []
+}

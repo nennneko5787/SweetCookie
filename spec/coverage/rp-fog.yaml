@@ -1,0 +1,17 @@
+# Bedrock fog volumes and distance fog. Java fog is far less configurable.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-fog
+spec: SC-180
+upstream: null
+
+entries:
+  - id: fog/distance
+    status: stub
+  - id: fog/volumetric
+    status: unsupported
+    fidelity: >-
+      Java has no volumetric fog surface, so a pack defining fog density volumes renders with ordinary
+      distance fog and the intended atmospheric effect is absent.

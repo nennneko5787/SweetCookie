@@ -1,0 +1,213 @@
+# minecraft:block components, triggers and event responses — SC-150
+#
+# 32 components + 7 trigger components + 15 event responses = 54 entries.
+# Storage and slot binding are SC-120 section 6; this shard covers behaviour and appearance only.
+#
+# Blocks are the ONLY content needing reserved registry slots, because block identity is written
+# into chunk palettes as a name plus property values (ADR-0007).
+
+domain: block-components
+spec: SC-150
+upstream:
+  source: "metadata/doc_modules/blocks.json"
+  pointer: "/data_items"
+
+entries:
+  # ── Shape and collision ────────────────────────────────────────────────────
+  - id: minecraft:collision_box
+    status: stub
+    notes: >-
+      Bedrock is a single AABB from origin+size, capped at 1.875 blocks and required to start inside
+      the block. Java VoxelShape is a union, so widening is easy. The new BP shapes/ folder may
+      supersede this.
+
+  - id: minecraft:selection_box
+    status: stub
+
+  - id: minecraft:geometry
+    status: stub
+    notes: >-
+      References an RP entity-style bone/cube model, plus bone_visibility (Molang) and culling.
+      Decides the Path A / Path B render split in SC-150 section 5.
+
+  - id: minecraft:unit_cube
+    status: stub
+    notes: The trivial case, and the one that transpiles to a Java model most cleanly.
+
+  - id: minecraft:transformation
+    status: stub
+    notes: Rotation, scale and translation applied to the model. Applied at bake for Path A.
+
+  # ── Appearance ─────────────────────────────────────────────────────────────
+  - id: minecraft:material_instances
+    status: stub
+    notes: >-
+      Maps face names to texture plus render_method, face_dimming, ambient_occlusion, tint_method
+      and isotropic. render_method maps imperfectly onto Java RenderType.
+
+  - id: minecraft:map_color
+    status: stub
+    notes: Also feeds the wire carrier choice in SC-270 section 4.
+
+  - id: minecraft:display_name
+    status: stub
+
+  - id: minecraft:item_visual
+    status: stub
+    notes: Overrides how the block looks as an item.
+
+  - id: minecraft:destruction_particles
+    status: stub
+
+  # ── Mining and destruction ─────────────────────────────────────────────────
+  - id: minecraft:destructible_by_mining
+    status: stub
+    notes: >-
+      Bedrock uses SECONDS with per-item overrides; Java uses hardness plus tool tiers plus mining
+      speed. Not a linear conversion — see SC-150.
+
+  - id: minecraft:destructible_by_explosion
+    status: stub
+
+  - id: minecraft:loot
+    status: stub
+    notes: Path reference to a loot table. Depends on SC-190.
+
+  # ── Light ──────────────────────────────────────────────────────────────────
+  - id: minecraft:light_emission
+    status: stub
+
+  - id: minecraft:light_dampening
+    status: stub
+
+  # ── Physical properties ────────────────────────────────────────────────────
+  - id: minecraft:friction
+    status: stub
+
+  - id: minecraft:flammable
+    status: stub
+
+  - id: minecraft:movable
+    status: stub
+    notes: Piston push behaviour. Java PushReaction.
+
+  - id: minecraft:replaceable
+    status: stub
+
+  - id: minecraft:breathability
+    status: stub
+
+  - id: minecraft:liquid_detection
+    status: stub
+
+  - id: minecraft:precipitation_interactions
+    status: stub
+
+  # ── Placement and support ──────────────────────────────────────────────────
+  - id: minecraft:placement_filter
+    status: stub
+    notes: Java canSurvive. Uses the filter grammar, so it depends on SC-140.
+
+  - id: minecraft:support
+    status: stub
+
+  - id: minecraft:connection_rule
+    status: stub
+    notes: Fence/pane style connection. Interacts with traits and permutations.
+
+  - id: minecraft:chest_obstruction
+    status: stub
+
+  # ── Redstone ───────────────────────────────────────────────────────────────
+  - id: minecraft:redstone_conductivity
+    status: stub
+
+  - id: minecraft:redstone_consumer
+    status: stub
+
+  # ── Ticking ────────────────────────────────────────────────────────────────
+  - id: minecraft:queued_ticking
+    status: stub
+
+  - id: minecraft:random_ticking
+    status: stub
+
+  # ── Other ──────────────────────────────────────────────────────────────────
+  - id: minecraft:crafting_table
+    status: stub
+
+  - id: minecraft:custom_components
+    status: stub
+    notes: Script-registered custom components. Depends on SC-200.
+
+  # ── Trigger components (7) ─────────────────────────────────────────────────
+  - id: minecraft:block/on_fall_on
+    status: stub
+
+  - id: minecraft:block/on_interact
+    status: stub
+
+  - id: minecraft:block/on_placed
+    status: stub
+
+  - id: minecraft:block/on_player_destroyed
+    status: stub
+
+  - id: minecraft:block/on_player_placing
+    status: stub
+
+  - id: minecraft:block/on_step_off
+    status: stub
+
+  - id: minecraft:block/on_step_on
+    status: stub
+
+  # ── Event responses (15) ───────────────────────────────────────────────────
+  - id: minecraft:block/event/add_mob_effect
+    status: stub
+
+  - id: minecraft:block/event/damage
+    status: stub
+
+  - id: minecraft:block/event/decrement_stack
+    status: stub
+
+  - id: minecraft:block/event/die
+    status: stub
+
+  - id: minecraft:block/event/play_effect
+    status: stub
+
+  - id: minecraft:block/event/play_sound
+    status: stub
+
+  - id: minecraft:block/event/remove_mob_effect
+    status: stub
+
+  - id: minecraft:block/event/run_command
+    status: stub
+    notes: >-
+      Executes a BEDROCK command string, which is not a Java command. SC-190 governs translation;
+      unsupported commands are refused rather than approximated. Permission level is an open
+      security decision (SC-260 section 6).
+
+  - id: minecraft:block/event/set_block
+    status: stub
+
+  - id: minecraft:block/event/set_block_at_pos
+    status: stub
+
+  - id: minecraft:block/event/set_block_state
+    status: stub
+
+  - id: minecraft:block/event/spawn_loot
+    status: stub
+
+  - id: minecraft:block/event/swing
+    status: stub
+
+  - id: minecraft:block/event/teleport
+    status: stub
+
+  - id: minecraft:block/event/transform_item
+    status: stub

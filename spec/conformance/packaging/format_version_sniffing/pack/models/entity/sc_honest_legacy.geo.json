@@ -1,0 +1,24 @@
+{
+  "_comment": "Genuine 1.8.0 shape: top-level geometry.* keys, box UV. Must parse as legacy, and its box UV must expand to per-face UV in the IR.",
+  "format_version": "1.8.0",
+  "geometry.sc_honest_legacy": {
+    "texturewidth": 16,
+    "textureheight": 16,
+    "visible_bounds_width": 2,
+    "visible_bounds_height": 2,
+    "visible_bounds_offset": [0, 1, 0],
+    "bones": [
+      {
+        "name": "sc_root",
+        "pivot": [0, 0, 0],
+        "cubes": [
+          {
+            "origin": [-4, 0, -4],
+            "size": [8, 8, 8],
+            "uv": [0, 0]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/filter.schema.json",
+  "title": "Filter",
+  "description": "Bedrock's declarative predicate system, 106 tests. SC-140. NOT Molang — filters accept no expressions, only structured comparisons. Compiled at ingest into a typed predicate tree because filters run on the AI hot path.",
+
+  "$ref": "#/$defs/filter",
+
+  "$defs": {
+    "filter": {
+      "description": "A bare array in the source is implicitly all_of; the IR always normalises it to an explicit group.",
+      "oneOf": [
+        { "$ref": "#/$defs/test" },
+        { "$ref": "#/$defs/group" }
+      ]
+    },
+
+    "group": {
+      "type": "object",
+      "required": ["op", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "enum": ["all_of", "any_of", "none_of"] },
+        "children": {
+          "description": "Evaluated in declaration order with short-circuiting. Order is normative: packs are written assuming cheap tests come first (SC-140 section 2).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/filter" }
+        }
+      }
+    },
+
+    "test": {
+      "type": "object",
+      "required": ["test", "subject", "operator"],
+      "additionalProperties": false,
+      "properties": {
+        "test": {
+          "description": "One of the 106 test names, unnamespaced as Bedrock writes them. An unrecognised test is kept here and evaluates to false with one diagnostic per site (SC-140 section 2).",
+          "type": "string"
+        },
+        "known": {
+          "description": "False when the test name is not in the recognised set. Downstream uses this rather than re-checking.",
+          "type": "boolean",
+          "default": true
+        },
+        "subject": {
+          "description": "Defaults to 'self' when the source omitted it. A subject the evaluation context does not bind yields false.",
+          "enum": ["self", "target", "parent", "player", "other", "block", "damager", "none"]
+        },
+        "operator": {
+          "description": "Normalised: 'equals' becomes '==', 'not' becomes '!='. Defaults to '==' when omitted.",
+          "enum": ["==", "!=", "<", "<=", ">", ">="]
+        },
+        "domain": {
+          "description": "Test-specific qualifier, e.g. the state name for is_block or the property name for int_property.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Compared against the test's result. Type is test-specific; the IR preserves the source type rather than coercing.",
+          "type": ["string", "number", "boolean", "null", "array", "object"]
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+        "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+      }
+    }
+  }
+}

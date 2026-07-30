@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/molang-expr.schema.json",
+  "title": "MolangExpr AST dump",
+  "description": "The parsed form of a Molang expression. SC-130. Most IR consumers only need the summary form in common.schema.json#/$defs/molangExpr; this schema describes the full AST dump used by golden tests, so that a parser change shows up as a reviewable diff rather than a behavioural surprise.",
+
+  "$ref": "#/$defs/node",
+
+  "$defs": {
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/literal" },
+        { "$ref": "#/$defs/access" },
+        { "$ref": "#/$defs/unary" },
+        { "$ref": "#/$defs/binary" },
+        { "$ref": "#/$defs/ternary" },
+        { "$ref": "#/$defs/binaryIf" },
+        { "$ref": "#/$defs/coalesce" },
+        { "$ref": "#/$defs/call" },
+        { "$ref": "#/$defs/deref" },
+        { "$ref": "#/$defs/assign" },
+        { "$ref": "#/$defs/block" },
+        { "$ref": "#/$defs/loop" },
+        { "$ref": "#/$defs/forEach" },
+        { "$ref": "#/$defs/control" }
+      ]
+    },
+
+    "literal": {
+      "type": "object",
+      "required": ["k", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "literal" },
+        "value": {
+          "description": "Numbers are float (SC-000 section 7). Strings exist only for comparison.",
+          "type": ["number", "string"]
+        }
+      }
+    },
+
+    "access": {
+      "description": "A scope member: query.x, variable.x, temp.x, context.x, geometry.x, material.x, texture.x, array.x. Short forms q./v./t./c. are normalised to the long form.",
+      "type": "object",
+      "required": ["k", "scope", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "access" },
+        "scope": { "enum": ["query", "variable", "temp", "context", "geometry", "material", "texture", "array"] },
+        "name": {
+          "description": "Lowercased — Molang is case-insensitive outside string literals.",
+          "type": "string"
+        },
+        "queryId": {
+          "description": "Interned integer identifier for query scope, for fast dispatch (SC-130 section 6).",
+          "type": "integer"
+        }
+      }
+    },
+
+    "unary": {
+      "type": "object",
+      "required": ["k", "op", "operand"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "unary" },
+        "op": { "enum": ["!", "-"] },
+        "operand": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "binary": {
+      "type": "object",
+      "required": ["k", "op", "left", "right"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "binary" },
+        "op": { "enum": ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&&", "||"] },
+        "left": { "$ref": "#/$defs/node" },
+        "right": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "ternary": {
+      "type": "object",
+      "required": ["k", "cond", "then", "else"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "ternary" },
+        "cond": { "$ref": "#/$defs/node" },
+        "then": { "$ref": "#/$defs/node" },
+        "else": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "binaryIf": {
+      "description": "Molang's `a ? b` with no else branch, which yields 0 when false. Distinct from ternary because the missing branch is not the same as an explicit 0 for future diagnostics.",
+      "type": "object",
+      "required": ["k", "cond", "then"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "binaryIf" },
+        "cond": { "$ref": "#/$defs/node" },
+        "then": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "coalesce": {
+      "type": "object",
+      "required": ["k", "left", "right"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "coalesce" },
+        "left": { "$ref": "#/$defs/node" },
+        "right": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "call": {
+      "type": "object",
+      "required": ["k", "scope", "name", "args"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "call" },
+        "scope": { "enum": ["query", "math"] },
+        "name": { "type": "string" },
+        "queryId": { "type": "integer" },
+        "args": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+
+    "deref": {
+      "description": "The -> operator, e.g. q.get_nearby_entities(...)->q.health. The right side evaluates in the left side's entity context.",
+      "type": "object",
+      "required": ["k", "subject", "member"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "deref" },
+        "subject": { "$ref": "#/$defs/node" },
+        "member": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "assign": {
+      "description": "Only variable. and temp. are assignable.",
+      "type": "object",
+      "required": ["k", "target", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "assign" },
+        "target": { "$ref": "#/$defs/access" },
+        "value": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "block": {
+      "description": "A statement sequence. A complex Molang expression must end with a return; one that does not is SCE-1041 and yields 0.",
+      "type": "object",
+      "required": ["k", "statements"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "block" },
+        "statements": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "returns": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "loop": {
+      "description": "loop(count, {...}). Iteration count is capped by SC-260 section 3 — an unbounded loop hangs a frame.",
+      "type": "object",
+      "required": ["k", "count", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "loop" },
+        "count": { "$ref": "#/$defs/node" },
+        "body": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "forEach": {
+      "type": "object",
+      "required": ["k", "var", "array", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "const": "forEach" },
+        "var": { "$ref": "#/$defs/access" },
+        "array": { "$ref": "#/$defs/node" },
+        "body": { "$ref": "#/$defs/node" }
+      }
+    },
+
+    "control": {
+      "type": "object",
+      "required": ["k"],
+      "additionalProperties": false,
+      "properties": {
+        "k": { "enum": ["break", "continue", "return"] },
+        "value": { "$ref": "#/$defs/node" }
+      }
+    }
+  }
+}

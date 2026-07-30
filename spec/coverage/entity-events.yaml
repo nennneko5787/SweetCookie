@@ -1,0 +1,68 @@
+# The component-group state machine. Bedrock events add and remove component groups on a live entity,
+# which is the mechanism with no Java analogue at all - Java's EntityType is a fixed registry and its
+# behaviour is compiled.
+#
+# Application order, re-entrancy and the recursion bound are TODO(SC-160): Bedrock's behaviour is
+# undocumented and needs observation, not inference.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: entity-events
+spec: SC-160
+upstream: null
+
+entries:
+  - id: event/add
+    status: stub
+    notes: >-
+      Supports Bedrock's %50 percentage-chance suffix, normalised to a 0..1 probability.
+  - id: event/remove
+    status: stub
+  - id: event/sequence
+    status: stub
+  - id: event/randomize
+    status: stub
+    notes: >-
+      Weighted choice; weights normalise at parse time.
+  - id: event/filters
+    status: stub
+  - id: event/set_property
+    status: stub
+  - id: event/trigger
+    status: stub
+  - id: event/queue_command
+    status: stub
+    notes: >-
+      Bedrock command string; SC-190 governs translation and unsupported commands are refused rather than
+      approximated.
+  - id: event/emit_vibration
+    status: stub
+  - id: "minecraft:entity_born"
+    status: stub
+  - id: "minecraft:entity_spawned"
+    status: stub
+  - id: "minecraft:entity_transformed"
+    status: stub
+  - id: "minecraft:on_prime"
+    status: stub
+  - id: trigger/on_death
+    status: stub
+  - id: trigger/on_hurt
+    status: stub
+  - id: trigger/on_hurt_by_player
+    status: stub
+  - id: trigger/on_ignite
+    status: stub
+  - id: trigger/on_friendly_anger
+    status: stub
+  - id: trigger/on_start_landing
+    status: stub
+  - id: trigger/on_start_takeoff
+    status: stub
+  - id: trigger/on_target_acquired
+    status: stub
+  - id: trigger/on_target_escape
+    status: stub
+  - id: trigger/on_wake_with_owner
+    status: stub

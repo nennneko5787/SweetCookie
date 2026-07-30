@@ -1,0 +1,22 @@
+# Translated into the virtual resource pack.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: rp-lang-font
+spec: SC-180
+upstream: null
+
+entries:
+  - id: texts/lang_files
+    status: stub
+  - id: font/glyph_pages
+    status: stub
+    notes: >-
+      256x256 atlases in a 16x16 grid.
+  - id: font/default8
+    status: stub
+  - id: font/glyph_sizes
+    status: stub
+    notes: >-
+      Binary width table.

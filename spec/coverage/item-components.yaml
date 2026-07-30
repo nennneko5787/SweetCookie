@@ -1,0 +1,201 @@
+# minecraft:item components — SC-170
+#
+# The 44 components of the post-1.20.50 item shape, from the 1.26.30 schema.
+# Registration is SC-120 section 4: ONE carrier Item, identity in minecraft:custom_data.
+# Almost everything here maps to a Java DATA COMPONENT, i.e. per stack, which is why items
+# hot-plug with zero per-item registrations.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand — specReport promotes it. Constitution rule 9.
+
+domain: item-components
+spec: SC-170
+upstream:
+  source: "metadata/json_schemas/server/item/1.26.30/Item Components.json"
+  pointer: "/properties"
+
+entries:
+  # ── Stack identity and size ────────────────────────────────────────────────
+  - id: minecraft:max_stack_size
+    status: stub
+    bedrockSince: "1.20.50"
+    notes: Java minecraft:max_stack_size. Per-stack since 1.20.5, which is what makes the carrier design work.
+
+  - id: minecraft:stacked_by_data
+    status: stub
+    notes: Legacy aux/damage-value stacking. Java has no aux value; custom_data equality already separates distinct items.
+
+  - id: minecraft:should_despawn
+    status: stub
+    notes: Java ItemEntity lifetime.
+
+  # ── Durability and repair ──────────────────────────────────────────────────
+  - id: minecraft:durability
+    status: stub
+    notes: Java minecraft:max_damage plus minecraft:damage.
+
+  - id: minecraft:repairable
+    status: stub
+    notes: Java minecraft:repairable. Bedrock lists repair items with a per-item repair amount expression.
+
+  - id: minecraft:damage_absorption
+    status: stub
+
+  - id: minecraft:durability_sensor
+    status: stub
+    notes: Fires events at durability thresholds. No Java counterpart; needs a behaviour hook.
+
+  # ── Combat and tools ───────────────────────────────────────────────────────
+  - id: minecraft:damage
+    status: stub
+    notes: Java attribute modifier on the stack.
+
+  - id: minecraft:digger
+    status: stub
+    notes: >-
+      Bedrock lists per-block destroy speeds; Java uses minecraft:tool with rules over block tags.
+      Not a mechanical conversion — see SC-170.
+
+  - id: minecraft:kinetic_weapon
+    status: stub
+    bedrockSince: "1.21.100"
+
+  - id: minecraft:piercing_weapon
+    status: stub
+    bedrockSince: "1.21.100"
+
+  - id: minecraft:swing_duration
+    status: stub
+
+  - id: minecraft:swing_sounds
+    status: stub
+
+  - id: minecraft:shooter
+    status: stub
+    notes: Ranged weapon definition. Behaviour hook on use.
+
+  - id: minecraft:projectile
+    status: stub
+    notes: Makes the item a projectile when fired. Behaviour hook.
+
+  - id: minecraft:throwable
+    status: stub
+    notes: Behaviour hook on use.
+
+  # ── Consumption ────────────────────────────────────────────────────────────
+  - id: minecraft:food
+    status: stub
+    notes: Java minecraft:food plus minecraft:consumable.
+
+  - id: minecraft:use_animation
+    status: stub
+    notes: Java minecraft:consumable animation field.
+
+  - id: minecraft:use_modifiers
+    status: stub
+    notes: Use duration and movement modifier. Partly minecraft:consumable, partly a behaviour hook.
+
+  - id: minecraft:cooldown
+    status: stub
+    bedrockSince: "1.20.10"
+    notes: Java minecraft:use_cooldown.
+
+  - id: minecraft:fuel
+    status: stub
+
+  - id: minecraft:compostable
+    status: stub
+    bedrockSince: "1.21.60"
+
+  # ── Placement ──────────────────────────────────────────────────────────────
+  - id: minecraft:block_placer
+    status: stub
+    notes: Behaviour hook on useOn. The main way an add-on item places a custom block.
+
+  - id: minecraft:entity_placer
+    status: stub
+
+  # ── Wearing and holding ────────────────────────────────────────────────────
+  - id: minecraft:wearable
+    status: stub
+    notes: Java minecraft:equippable.
+
+  - id: minecraft:hand_equipped
+    status: stub
+    notes: Whether the item renders as a tool in hand. Interacts with attachables.
+
+  - id: minecraft:allow_off_hand
+    status: stub
+
+  # ── Enchanting ─────────────────────────────────────────────────────────────
+  - id: minecraft:enchantable
+    status: stub
+    notes: Java minecraft:enchantable.
+
+  - id: minecraft:glint
+    status: stub
+    notes: Java minecraft:enchantment_glint_override.
+
+  # ── Display ────────────────────────────────────────────────────────────────
+  - id: minecraft:display_name
+    status: stub
+    notes: Java minecraft:item_name. May be a .lang key.
+
+  - id: minecraft:icon
+    status: stub
+    notes: >-
+      Names a key in item_texture.json, not a path. Becomes a generated Java items/ model definition
+      referenced by minecraft:item_model.
+
+  - id: minecraft:rarity
+    status: stub
+
+  - id: minecraft:hover_text_color
+    status: stub
+
+  - id: minecraft:interact_button
+    status: stub
+    notes: Touch-control interaction label. No Java surface; likely wontfix once assessed.
+
+  # ── Storage ────────────────────────────────────────────────────────────────
+  - id: minecraft:storage_item
+    status: stub
+    notes: Java minecraft:bundle_contents where the shape fits.
+
+  - id: minecraft:storage_weight_limit
+    status: stub
+
+  - id: minecraft:storage_weight_modifier
+    status: stub
+
+  - id: minecraft:bundle_interaction
+    status: stub
+
+  # ── World interaction ──────────────────────────────────────────────────────
+  - id: minecraft:liquid_clipped
+    status: stub
+
+  - id: minecraft:fire_resistant
+    status: stub
+    notes: Java minecraft:damage_resistant with the is_fire tag.
+
+  - id: minecraft:can_destroy_in_creative
+    status: stub
+
+  - id: minecraft:dyeable
+    status: stub
+    notes: Java minecraft:dyed_color.
+
+  - id: minecraft:record
+    status: stub
+    notes: Java minecraft:jukebox_playable.
+
+  - id: minecraft:tags
+    status: stub
+    notes: >-
+      Bedrock item tags are ad-hoc strings; Java tags are registry-backed and bind to Item, which is
+      one shared carrier here. Tag membership must therefore be evaluated by SweetCookie, not vanilla.
+
+  - id: minecraft:custom_components
+    status: stub
+    notes: Script-registered custom components. Depends on SC-200.

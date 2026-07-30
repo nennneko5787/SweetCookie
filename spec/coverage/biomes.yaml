@@ -1,0 +1,30 @@
+# Deferred with the rest of worldgen. See features-featurerules.yaml.
+#
+# Status meanings: spec/normative/SC-000-conventions.md section 3.
+# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+
+domain: biomes
+spec: SC-190
+upstream: null
+
+entries:
+  - id: "minecraft:climate"
+    status: unsupported
+    fidelity: >-
+      Custom server biomes are parsed but not registered, so world generation and biome-dependent behaviour
+      proceed exactly as if the pack were absent.
+  - id: "minecraft:overworld_height"
+    status: unsupported
+    fidelity: >-
+      Custom server biomes are parsed but not registered, so world generation and biome-dependent behaviour
+      proceed exactly as if the pack were absent.
+  - id: "minecraft:surface_parameters"
+    status: unsupported
+    fidelity: >-
+      Custom server biomes are parsed but not registered, so world generation and biome-dependent behaviour
+      proceed exactly as if the pack were absent.
+  - id: "minecraft:tags"
+    status: unsupported
+    fidelity: >-
+      Custom server biomes are parsed but not registered, so world generation and biome-dependent behaviour
+      proceed exactly as if the pack were absent.

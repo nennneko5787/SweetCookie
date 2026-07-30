@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/animation.schema.json",
+  "title": "AnimationIr",
+  "description": "A Bedrock skeletal animation. SC-180 section 4. A general keyframe system over named bones with MOLANG-VALUED keyframes — Java has no entity equivalent. Also used for server-side animations, which are the same format with a restricted Molang query set.",
+
+  "type": "object",
+  "required": ["identifier", "bones"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identifier": {
+      "description": "The animation.<name> identifier as written.",
+      "type": "string"
+    },
+    "loop": {
+      "description": "false, true, or 'hold_on_last_frame'. Normalised from Bedrock's mixed boolean/string field.",
+      "enum": ["none", "loop", "hold_on_last_frame"]
+    },
+    "loopDelay": { "$ref": "common.schema.json#/$defs/molangFloat" },
+    "startDelay": { "$ref": "common.schema.json#/$defs/molangFloat" },
+    "animationLength": {
+      "description": "Seconds. Absent means derived from the last keyframe.",
+      "type": ["number", "null"]
+    },
+    "animTimeUpdate": {
+      "description": "Molang driving the animation clock. Evaluated PER FRAME, so its interaction with a variable frame rate is a fidelity concern (SC-180 section 4).",
+      "$ref": "common.schema.json#/$defs/molangExpr"
+    },
+    "blendWeight": { "$ref": "common.schema.json#/$defs/molangFloat" },
+    "overridePreviousAnimation": { "type": "boolean", "default": false },
+
+    "bones": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/boneTracks" }
+    },
+
+    "particleEffects": {
+      "description": "Time-keyed effect triggers. Keys are times in seconds, as written.",
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/particleEffect" } }
+    },
+    "soundEffects": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "object" } }
+    },
+    "timeline": {
+      "description": "Time-keyed Molang or command strings.",
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+
+    "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+    "unknown": { "$ref": "common.schema.json#/$defs/unknown" }
+  },
+
+  "$defs": {
+    "boneTracks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rotation": { "$ref": "#/$defs/track" },
+        "position": { "$ref": "#/$defs/track" },
+        "scale": { "$ref": "#/$defs/track" },
+        "relativeTo": { "type": "object" }
+      }
+    },
+
+    "track": {
+      "description": "Either a constant vector or a keyframe sequence. Bedrock writes both shapes for the same field; the IR keeps them distinct because a constant needs no sampling.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "constant" },
+            "value": { "$ref": "common.schema.json#/$defs/molangVec3" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "keyframes"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "keyframed" },
+            "keyframes": {
+              "description": "Sorted ascending by time. Duplicate times are SCE-2050 and the later wins.",
+              "type": "array",
+              "items": { "$ref": "#/$defs/keyframe" }
+            }
+          }
+        }
+      ]
+    },
+
+    "keyframe": {
+      "type": "object",
+      "required": ["time"],
+      "additionalProperties": false,
+      "properties": {
+        "time": { "type": "number", "minimum": 0 },
+        "pre": {
+          "description": "Value approaching this time. Bedrock's pre/post pair allows a discontinuity at one instant; when only one is written both take the same value.",
+          "$ref": "common.schema.json#/$defs/molangVec3"
+        },
+        "post": { "$ref": "common.schema.json#/$defs/molangVec3" },
+        "lerpMode": { "enum": ["linear", "catmullrom"], "default": "linear" }
+      }
+    },
+
+    "particleEffect": {
+      "type": "object",
+      "required": ["effect"],
+      "additionalProperties": false,
+      "properties": {
+        "effect": { "type": "string" },
+        "locator": { "type": "string" },
+        "preEffectScript": { "$ref": "common.schema.json#/$defs/molangExpr" },
+        "bindToActor": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}
