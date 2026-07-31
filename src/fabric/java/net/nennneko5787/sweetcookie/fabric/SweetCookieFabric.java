@@ -19,6 +19,6 @@ public final class SweetCookieFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        SweetCookie.init("fabric");
+        SweetCookie.init();
     }
 }

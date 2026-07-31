@@ -1,6 +1,8 @@
 package net.nennneko5787.sweetcookie;
 
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
+import net.nennneko5787.sweetcookie.platform.PlatformInfo;
+import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
 
 /**
@@ -15,6 +17,7 @@ public final class SweetCookie {
 
     public static final String MOD_ID = "sweetcookie";
 
+    private static PlatformInfo platform;
     private static BlockPool blockPool;
 
     private SweetCookie() {
@@ -27,16 +30,29 @@ public final class SweetCookie {
      * (constitution rule 7, ADR-0007), so add-ons attach and detach per world afterwards without
      * touching a registry again.
      */
-    public static void init(String loaderName) {
+    public static void init() {
+        // Resolved once, eagerly, into a field (SC-230 §2 rule 3). A missing provider fails here
+        // rather than at world load, which is the far worse place to discover one.
+        platform = Services.load(PlatformInfo.class);
+
         // TODO(SC-120 §6.2): the effective pool is the element-wise maximum of the configured
-        // default, every world's ledger and the installed packs. Config and ledger loading are not
-        // wired yet, so this registers the default. SlotPool.grownTo is the operation that will do
-        // it, and it exists and is tested.
+        // default, every world's ledger and the installed packs. Config and ledger loading need
+        // LifecycleHooks, which is not written yet, so this registers the default.
+        // SlotPool.grownTo is the operation that will do it, and it exists and is tested.
         blockPool = BlockPool.register(SlotPool.DEFAULT);
 
-        System.out.println("[SweetCookie] " + loaderName + " init: registered "
+        System.out.println("[SweetCookie] " + platform.loaderName() + " "
+                + platform.loaderVersion() + " (" + platform.side() + "): registered "
                 + blockPool.size() + " pool blocks, "
                 + blockPool.pool().totalStates() + " block states");
+    }
+
+    /** The resolved platform service. */
+    public static PlatformInfo platform() {
+        if (platform == null) {
+            throw new IllegalStateException("platform services are resolved during mod init");
+        }
+        return platform;
     }
 
     /**

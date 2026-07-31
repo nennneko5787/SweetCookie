@@ -15,6 +15,6 @@ import net.nennneko5787.sweetcookie.SweetCookie;
 public final class SweetCookieNeoForge {
 
     public SweetCookieNeoForge() {
-        SweetCookie.init("neoforge");
+        SweetCookie.init();
     }
 }
