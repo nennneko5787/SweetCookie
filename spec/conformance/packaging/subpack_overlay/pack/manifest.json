@@ -1,0 +1,20 @@
+{
+  "format_version": 2,
+  "header": {
+    "uuid": "5c000021-0000-4000-8000-000000000021",
+    "name": "SweetCookie Conformance: subpacks",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0],
+    "subpacks": [
+      { "folder_name": "sd", "name": "Standard", "memory_tier": 0 },
+      { "folder_name": "hd", "name": "High", "memory_tier": 4 }
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "5c000021-0000-4000-8000-000000000121",
+      "version": [1, 0, 0]
+    }
+  ]
+}

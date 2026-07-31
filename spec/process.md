@@ -118,7 +118,7 @@ note becomes mandatory.**
 | `specValidate` | a coverage or conformance file violates its schema |
 | `specUpstreamDiff` | upstream has a feature ID the ledger does not, and it is not in `spec/upstream/allowlist-missing.yaml` |
 | `specImplCheck` | a non-`stub` entry names a class that does not exist or lacks `@SpecImpl`; or an `@SpecImpl` names a feature ID with no entry |
-| `specConformance` | an `implemented` or `partial` entry has no conformance case |
+| `specConformance` | a case claims to prove a feature with no coverage entry, or an entry above `stub` relies on a case that did not run or did not pass. It runs the corpus first, so there is no path through it that reports success without evidence |
 | `specReport` | `docs/compatibility/**` differs from what the ledger implies |
 | `specLanguage` | CJK appears in `spec/**` outside `ja/`, `features/` and fenced code blocks |
 | `adrIndex` | `spec/adr/index.md` is stale, or an ADR links to one that does not exist |

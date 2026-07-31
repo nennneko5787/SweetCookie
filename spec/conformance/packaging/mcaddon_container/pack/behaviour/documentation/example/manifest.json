@@ -1,0 +1,16 @@
+{
+  "format_version": 2,
+  "header": {
+    "uuid": "5c0000ff-0000-4000-8000-0000000000ff",
+    "name": "A sample manifest shipped as documentation. It must NOT become a pack.",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5c0000ff-0000-4000-8000-000000000fff",
+      "version": [1, 0, 0]
+    }
+  ]
+}

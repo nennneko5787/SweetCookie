@@ -1,5 +1,6 @@
 import net.nennneko5787.sweetcookie.gradle.AdrIndexTask
 import net.nennneko5787.sweetcookie.gradle.FetchUpstreamTask
+import net.nennneko5787.sweetcookie.gradle.SpecConformanceTask
 import net.nennneko5787.sweetcookie.gradle.SpecLanguageTask
 import net.nennneko5787.sweetcookie.gradle.SpecLinkTask
 import net.nennneko5787.sweetcookie.gradle.SpecReportTask
@@ -74,6 +75,20 @@ val specUpstreamDiff = tasks.register<SpecUpstreamDiffTask>("specUpstreamDiff") 
     mustRunAfter(fetchUpstreamMetadata)
 }
 
+// Runs the corpus and then checks the ledger against what actually ran. The dependency on the
+// included build is the point: a check that reads a stale results file, or none, would report
+// success without evidence.
+val specConformance = tasks.register<SpecConformanceTask>("specConformance") {
+    group = "specification"
+    description = "Run the conformance corpus and verify every ledger reference to it."
+    specDir.set(specDirectory)
+    resultsFile.set(
+        layout.projectDirectory.file("core/testkit/build/conformance-results.json")
+    )
+    dependsOn(gradle.includedBuild("core").task(":testkit:test"))
+    mustRunAfter(specValidate)
+}
+
 val specReport = tasks.register<SpecReportTask>("specReport") {
     group = "specification"
     description = "Check docs/compatibility/** against the ledger. Pass --write to regenerate."
@@ -85,5 +100,8 @@ val specReport = tasks.register<SpecReportTask>("specReport") {
 tasks.register("specAll") {
     group = "specification"
     description = "Every specification check. What CI gates on."
-    dependsOn(specValidate, specLanguage, adrIndex, specLinks, specUpstreamDiff, specReport)
+    dependsOn(
+        specValidate, specLanguage, adrIndex, specLinks, specConformance, specUpstreamDiff,
+        specReport,
+    )
 }

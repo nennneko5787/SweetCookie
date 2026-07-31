@@ -3,6 +3,10 @@
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+#
+# Entries here sit at `partial` rather than at `implemented` because every one of them has a real,
+# stated divergence from Bedrock - extraction limits, configured subpack tiers, inert capabilities,
+# a min_engine_version that never refuses. None of them is waiting on paperwork.
 
 domain: packaging
 spec: SC-100
@@ -11,8 +15,25 @@ upstream: null
 entries:
   - id: container/mcpack
     status: stub
+    notes: >-
+      Read and indexed, but no conformance case loads one yet: packaging/mcaddon_container covers the
+      .mcaddon shape only, and a case must not claim a container it does not exercise.
   - id: container/mcaddon
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.pack.PackDiscovery
+    conformance: [packaging/mcaddon_container]
+    fields:
+      packs_at_root: ok
+      packs_in_subdirectories: ok
+      nested_archives: ok
+      nested_manifest_ignored: ok
+      symlink_entries: missing
+    fidelity: >-
+      Extraction limits refuse an add-on that Bedrock loads: over 512 MiB decompressed, more than
+      65,536 entries, any single entry over 64 MiB, or any entry compressing better than 200:1. Two
+      entries whose paths differ only in case resolve to the first in archive order, where Bedrock's
+      extraction leaves the last one written on disk.
+    diagnostics: [SCE-1001, SCE-1003, SCE-1004, SCE-1005, SCE-1006, SCE-1007, SCE-1008, SCE-1009, SCE-1010]
     notes: >-
       Nesting is not normalised in practice; discovery recursively searches for manifest.json at any depth.
   - id: container/mcworld
@@ -21,27 +42,99 @@ entries:
       World containers are recognised and their embedded packs are ingested, but level.dat and the LevelDB
       db/ directory are skipped, so importing a Bedrock world is not possible.
   - id: container/directory
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.pack.PackDiscovery
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      discovery: ok
+      deterministic_order: ok
+      hot_reload_on_file_change: missing
+    fidelity: >-
+      An unpacked pack is re-read only when /sweetcookie reload runs. Bedrock re-reads its
+      development_*_packs whenever a file changes, so an edit made with the game running has no
+      effect here until the command is issued.
     notes: >-
       Unpacked pack on disk, for development.
   - id: manifest/format_version_1
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      header: ok
+      modules: ok
+      version_arrays: ok
+    fidelity: >-
+      A format 1 manifest parses and the pack appears in the add-on list, but its skin_pack module
+      contributes nothing, so the pack is visible and empty where Bedrock would offer skins.
     notes: >-
       Skin packs.
   - id: manifest/format_version_2
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      header: ok
+      modules: ok
+      dependencies: ok
+      metadata: ok
+      subpacks: ok
+      pack_scope: ignored
+      lock_template_options: ignored
+      allow_random_seed: ignored
+    fidelity: >-
+      pack_scope is recorded and never enforced, so a pack declaring world scope is offered
+      globally as well. lock_template_options and allow_random_seed are read and discarded, so a
+      world template that forbids reconfiguring its options does not forbid it here.
     notes: >-
       The overwhelmingly common case.
   - id: manifest/format_version_3
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      semver_strings: ok
+      header: ok
+      modules: ok
+      settings: missing
+    fidelity: >-
+      The pack `settings` block that format 3 introduces is not parsed, so an author-defined setting
+      never appears in any screen and the pack behaves as though every one of them were left at its
+      default value.
     notes: >-
       Preview since 1.21.110. SemVer strings instead of arrays, plus pack settings.
   - id: manifest/module_resources
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      recognised: ok
+      files_addressable: ok
+    fidelity: >-
+      The module is recognised and the pack's files become addressable, but nothing consumes them
+      yet, so a resource pack activates cleanly and changes nothing a player can see.
   - id: manifest/module_data
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      recognised: ok
+      files_addressable: ok
+      client_data_alias: ok
+    fidelity: >-
+      The module is recognised and the pack's files become addressable, but no behaviour-pack
+      content is translated yet, so a behaviour pack activates cleanly and no entity, block or item
+      it defines exists in the world.
   - id: manifest/module_script
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      entry: ok
+      language: ok
+      recognised: ok
+    fidelity: >-
+      The entry point is recorded and no JavaScript is executed, so a pack whose behaviour lives
+      entirely in scripts loads, reports itself as active, and does nothing at all.
     notes: >-
       entry field is universal in practice but absent from Mojang's published table.
   - id: manifest/module_world_template
@@ -52,13 +145,45 @@ entries:
       Skin packs are recognised and skipped; Java has no player-model replacement surface that maps onto
       Bedrock skin packs without a full player-render rewrite.
   - id: manifest/dependencies_pack
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.pack.AddonLoader
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      uuid: ok
+      version: ok
+      cycles: ok
+      missing_dependency_blocks_activation: wontfix
+    fidelity: >-
+      A dependency on a pack that is not loaded is a warning and the dependent pack still activates.
+      Bedrock marks such a pack as broken and refuses to turn it on, so a user sees content here that
+      Bedrock would have hidden entirely.
+    diagnostics: [SCE-2003, SCE-2004]
     notes: >-
       Cycles are permitted: a BP and its paired RP commonly depend on each other.
   - id: manifest/dependencies_module
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.pack.AddonLoader
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      module_name: ok
+      version: partial
+    fidelity: >-
+      A script module is accepted or refused by name alone. The requested version is recorded and
+      never compared, so a pack asking for @minecraft/server 3.0.0 is treated exactly like one
+      asking for 1.0.0 and receives no warning that the API it expects is not the one present.
+    diagnostics: [SCE-2005]
   - id: manifest/subpacks
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.pack.SubpackSelection
+    conformance: [packaging/subpack_overlay]
+    fields:
+      folder_name: ok
+      name: ok
+      memory_tier: partial
+    fidelity: >-
+      The active tier comes from configuration and defaults to the highest the pack offers. Bedrock
+      chooses it from the device's available memory, so a low-memory client that Bedrock would give
+      the SD variant receives the HD one here.
     notes: >-
       Selection is configured, never inferred from host RAM.
   - id: manifest/capabilities
@@ -67,11 +192,44 @@ entries:
       chemistry, editorExtension, experimental_custom_ui, raytraced and pbr are recorded and reported;
       none changes behaviour, so a pack relying on one renders or behaves as though the capability were
       off.
+    diagnostics: [SCE-2001]
   - id: manifest/min_engine_version
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.manifest.ManifestParser
+    conformance: [packaging/manifest_normalisation]
+    fields:
+      array_form: ok
+      string_form: ok
+      absent_defaults_to_1_16_0: ok
+      refuses_newer_packs: wontfix
+    fidelity: >-
+      A pack whose min_engine_version exceeds the engine SweetCookie targets activates anyway, with a
+      warning. Bedrock refuses to activate it, so a pack authored for a newer Bedrock runs here with
+      whatever of it this build happens to understand.
+    diagnostics: [SCE-1028, SCE-2002]
     notes: >-
       Never used to select parser behaviour - per-file format_version does that.
   - id: texts/lang
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.text.Localisation
+    conformance: [packaging/texts_lang]
+    fields:
+      first_equals_splits: ok
+      double_hash_comments: ok
+      trailing_hash_kept: ok
+      cross_pack_resolution: missing
+    fidelity: >-
+      Keys resolve within one pack only. Bedrock resolves a key against every active pack, so a
+      translation that one pack of an add-on supplies for another pack's key shows as the raw key
+      here instead of the translated text.
   - id: texts/languages
-    status: stub
+    status: partial
+    impl: net.nennneko5787.sweetcookie.core.format.text.Localisation
+    conformance: [packaging/texts_lang]
+    fields:
+      declared_order: ok
+      authoritative: wontfix
+    fidelity: >-
+      languages.json is treated as a hint rather than as the list. Every .lang file present is
+      loaded, so a locale the author deliberately left out of languages.json is still offered to
+      players.

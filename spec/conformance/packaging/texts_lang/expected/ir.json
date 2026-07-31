@@ -1,0 +1,58 @@
+{
+  "diagnostics": [],
+  "packs": [
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": [
+        "manifest.json",
+        "texts/de_DE.lang",
+        "texts/en_US.lang",
+        "texts/languages.json"
+      ],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "pack.description",
+        "minEngineVersion": "1.21.0",
+        "name": "pack.name",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c000031-0000-4000-8000-000000000031",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        }
+      ],
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {
+          "de_DE": {
+            "pack.name": "Zauberei"
+          },
+          "en_US": {
+            "item.sc_conformance.wand": "Wand = of Power",
+            "pack.description": "A conformance fixture.",
+            "pack.name": "Wizardry",
+            "ui.sc_conformance.slot": "Slot #1"
+          }
+        },
+        "languages": [
+          "en_US",
+          "de_DE"
+        ]
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

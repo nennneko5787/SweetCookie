@@ -27,7 +27,7 @@ import net.nennneko5787.sweetcookie.core.format.pack.VfsPath;
  * @param byLocale  locale to entries, in the order the pack listed them
  * @param languages {@code texts/languages.json}, or the locales found on disk when it is absent
  */
-@SpecImpl("SC-100")
+@SpecImpl({"SC-100", "SC-100#texts/lang", "SC-100#texts/languages"})
 public record Localisation(Map<String, Map<String, String>> byLocale, List<String> languages) {
 
     /** The locale used when a pack ships no matching one. Bedrock's own default. */

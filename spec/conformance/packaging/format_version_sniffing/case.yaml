@@ -4,7 +4,16 @@
 
 id: packaging/format_version_sniffing
 tier: T0
-spec: SC-110
+# SC-180, not SC-110. The rule being tested is SC-110 §3.1's structural sniffing, but the features
+# proved are geometry families, and SC-110 §3.1 itself says the sniffing rules for a content kind
+# live in that kind's domain document. `specConformance` caught this the first time it ran: the
+# (spec, feature) pair is the unique key, and `SC-110#geometry/family_1_8` names nothing.
+spec: SC-180
+
+skip: >-
+  SC-110's geometry IR does not exist yet, so `ir.packs[0].resource.geometries` addresses nothing.
+  This case was written before the implementation, which is the intended order; specValidate reports
+  it on every run so it cannot be forgotten. Remove this key when SC-180 lands geometry parsing.
 
 features:
   - geometry/family_1_8

@@ -45,6 +45,54 @@ public final class CanonicalJson {
         return sb.toString();
     }
 
+    /**
+     * The same content, indented, for a file a human has to review.
+     *
+     * <p>Rule 3 — no insignificant whitespace — exists so that hashing and comparison are exact. It
+     * is wrong for a conformance golden: a one-line file makes {@code git diff} useless, and the
+     * whole reason goldens are canonical is that their diffs should be readable. So goldens are
+     * stored in this form and <b>compared after canonicalising both sides</b>, which keeps the
+     * comparison exact while leaving the file reviewable. Key order and number spelling are
+     * identical to {@link #write}.
+     */
+    public static String pretty(JsonValue value) {
+        StringBuilder sb = new StringBuilder();
+        prettyTo(sb, value, 0);
+        return sb.append('\n').toString();
+    }
+
+    private static void prettyTo(StringBuilder sb, JsonValue value, int depth) {
+        String indent = "  ".repeat(depth + 1);
+        String closing = "  ".repeat(depth);
+        switch (value) {
+            case JsonObject o when o.isEmpty() -> sb.append("{}");
+            case JsonObject o -> {
+                List<String> keys = new ArrayList<>(o.keys());
+                keys.sort(KEY_ORDER);
+                sb.append("{\n");
+                for (int i = 0; i < keys.size(); i++) {
+                    sb.append(indent);
+                    string(sb, keys.get(i));
+                    sb.append(": ");
+                    prettyTo(sb, o.members().get(keys.get(i)), depth + 1);
+                    sb.append(i + 1 < keys.size() ? ",\n" : "\n");
+                }
+                sb.append(closing).append('}');
+            }
+            case JsonArray a when a.isEmpty() -> sb.append("[]");
+            case JsonArray a -> {
+                sb.append("[\n");
+                for (int i = 0; i < a.size(); i++) {
+                    sb.append(indent);
+                    prettyTo(sb, a.values().get(i), depth + 1);
+                    sb.append(i + 1 < a.size() ? ",\n" : "\n");
+                }
+                sb.append(closing).append(']');
+            }
+            default -> writeTo(sb, value);
+        }
+    }
+
     private static void writeTo(StringBuilder sb, JsonValue value) {
         switch (value) {
             case JsonObject o -> {

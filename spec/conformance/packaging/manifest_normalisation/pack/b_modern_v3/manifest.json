@@ -1,0 +1,29 @@
+{
+  "format_version": 3,
+  "header": {
+    "uuid": "5c000002-0000-4000-8000-000000000002",
+    "name": "SweetCookie Conformance: modern",
+    "description": "A format_version 3 pack. Versions are SemVer strings, not arrays.",
+    "version": "2.1.0",
+    "min_engine_version": "1.21.30"
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5c000002-0000-4000-8000-000000000021",
+      "version": "2.1.0"
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "5c000002-0000-4000-8000-000000000022",
+      "version": "2.1.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server-net",
+      "version": "1.0.0"
+    }
+  ]
+}

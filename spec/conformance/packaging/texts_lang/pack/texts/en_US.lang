@@ -1,0 +1,7 @@
+## SweetCookie conformance corpus. Original content.
+## This line and the one above must be ignored entirely.
+pack.name=Wizardry
+pack.description=A conformance fixture.
+item.sc_conformance.wand=Wand = of Power
+ui.sc_conformance.slot=Slot #1
+##sc_conformance.commented=this key must not exist

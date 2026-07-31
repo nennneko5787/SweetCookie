@@ -231,6 +231,13 @@ the ceiling defaulting to the highest tier the pack offers.
 Subpack selection is part of the virtual file system (§9), not a copy: files are resolved through an
 overlay so that reloading with a different selection needs no re-extraction.
 
+**Once a variant is selected, `subpacks/` itself is hidden from the resolved view.** It is a
+container, not content, and every variant that was *not* selected is still inside it. A pack
+declaring subpacks and leaving the tree visible would have its unselected variants walked as ordinary
+assets — `subpacks/sd/textures/a.png` registered alongside the `textures/a.png` the player was
+actually meant to receive. A pack that declares no subpacks is unaffected, because it has no such
+directory.
+
 ## 8. `texts/` and localisation
 
 `texts/<locale>.lang` files are key/value with `##` comments, and `texts/languages.json` lists the

@@ -1,0 +1,67 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: packaging/manifest_normalisation
+tier: T0
+spec: SC-100
+
+features:
+  - container/directory
+  - manifest/format_version_1
+  - manifest/format_version_2
+  - manifest/format_version_3
+  - manifest/module_resources
+  - manifest/module_data
+  - manifest/module_script
+  - manifest/dependencies_pack
+  - manifest/dependencies_module
+  - manifest/min_engine_version
+
+description: >-
+  Three packs declaring `format_version` 1, 2 and 3 must normalise into one shape, and nothing
+  downstream may be able to tell which shape a pack was written in. Format 1 and 2 write versions as
+  `[major, minor, patch]` and format 3 writes SemVer strings; if that difference survived into the
+  IR, every consumer would need two code paths and the one exercised less would rot. A pack whose
+  `min_engine_version` is newer than the engine we target still loads, because refusing would make
+  the mod useless the day Bedrock ships an update.
+
+pack:
+  dir: pack
+  container: directory
+
+diagnostics:
+  expected:
+    - SCE-1022          # the script module declares no `entry`
+    - SCE-1028          # the skin pack declares no min_engine_version
+    - SCE-2005          # @minecraft/server-net is outside SC-200's supported set
+  forbidden:
+    - SCE-1020          # every format_version here is recognised
+    - SCE-1024          # every version in this corpus is well formed
+    - SCE-1025          # every uuid here is well formed
+    - SCE-1029          # nothing here is unusable
+  exhaustive: true
+
+expect:
+  ir: expected/ir.json
+  diagnostics: expected/diagnostics.json
+
+assert:
+  # The array form and the SemVer-string form land on the same normalised spelling.
+  - that: ir.packs[0].header.version
+    equals: 1.0.0
+  - that: ir.packs[1].header.version
+    equals: 2.1.0
+  - that: ir.packs[0].header.minEngineVersion
+    equals: 1.21.0
+  - that: ir.packs[1].header.minEngineVersion
+    equals: 1.21.30
+  # A script module with no `entry` gets Bedrock's universal default rather than being dropped.
+  - that: ir.packs[1].modules[1].entry
+    equals: scripts/main.js
+  # The two dependency shapes share one array and must not be confused for each other.
+  - that: ir.packs[0].dependencies[0].kind
+    equals: pack
+  - that: ir.packs[1].dependencies[0].kind
+    equals: module
+  # A skin pack is recognised rather than rejected, so that it can be reported as unsupported.
+  - that: ir.packs[2].modules[0].type
+    equals: SKIN_PACK

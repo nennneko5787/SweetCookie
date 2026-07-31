@@ -22,7 +22,7 @@ import net.nennneko5787.sweetcookie.core.format.manifest.SubpackDecl;
  * @param selected  the active one, or empty when the pack declares none
  * @param ceiling   the configured tier ceiling that produced {@code selected}
  */
-@SpecImpl("SC-100")
+@SpecImpl({"SC-100", "SC-100#manifest/subpacks"})
 public record SubpackSelection(
         List<SubpackDecl> available, Optional<SubpackDecl> selected, int ceiling) {
 
@@ -52,14 +52,28 @@ public record SubpackSelection(
         return new SubpackSelection(available, chosen, limit);
     }
 
+    /** Where variants live. Hidden from the resolved view once one has been selected. */
+    public static final String SUBPACK_ROOT = "subpacks";
+
     /**
-     * Lays the selected subpack over {@code root}, remapped to root-relative.
+     * Lays the selected subpack over {@code root}, remapped to root-relative, and hides
+     * {@code subpacks/}.
      *
      * <p>An overlay rather than a copy, so that reselecting a tier costs nothing.
+     *
+     * <p>Hiding {@code subpacks/} matters as much as the overlay does. Once a variant is selected,
+     * that tree is not content — every variant that was <em>not</em> selected is still in it, and an
+     * asset walk that saw them would register {@code subpacks/sd/textures/a.png} alongside the
+     * {@code textures/a.png} the player was actually meant to get. A pack declaring no subpacks is
+     * unaffected, because it has no such directory to hide.
      */
     public PackVfs applyTo(PackVfs root) {
+        if (available.isEmpty()) {
+            return root;
+        }
+        PackVfs withoutVariants = new ExcludingVfs(root, SUBPACK_ROOT);
         return selected
-                .map(subpack -> LayeredVfs.over(root.rooted(subpack.path()), root))
-                .orElse(root);
+                .map(subpack -> LayeredVfs.over(root.rooted(subpack.path()), withoutVariants))
+                .orElse(withoutVariants);
     }
 }

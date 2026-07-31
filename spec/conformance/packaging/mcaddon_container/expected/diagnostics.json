@@ -1,0 +1,9 @@
+[
+  {
+    "code": "SCE-1010",
+    "count": 1,
+    "messageKey": "sweetcookie.diagnostic.pack.nested_manifest",
+    "path": "pack.mcaddon",
+    "severity": "INFO"
+  }
+]

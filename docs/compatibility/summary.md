@@ -27,7 +27,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [molang-math](molang-math.md) | SC-130 | 61 | 0 | 0 | 61 | 0 | 0 |
 | [molang-queries](molang-queries.md) | SC-130 | 319 | 0 | 0 | 319 | 0 | 0 |
 | [molang-syntax](molang-syntax.md) | SC-130 | 15 | 0 | 0 | 15 | 0 | 0 |
-| [packaging](packaging.md) | SC-100 | 19 | 0 | 0 | 16 | 3 | 0 |
+| [packaging](packaging.md) | SC-100 | 19 | 0 | 14 | 2 | 3 | 0 |
 | [recipes](recipes.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
 | [rp-animations](rp-animations.md) | SC-180 | 22 | 0 | 0 | 22 | 0 | 0 |
 | [rp-attachables](rp-attachables.md) | SC-170 | 9 | 0 | 0 | 9 | 0 | 0 |
@@ -47,7 +47,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [spawn-rules](spawn-rules.md) | SC-190 | 16 | 0 | 0 | 16 | 0 | 0 |
 | [structures](structures.md) | SC-190 | 6 | 0 | 0 | 3 | 3 | 0 |
 | [trading](trading.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
-| **total** | | **1359** | **0** | **0** | **1324** | **25** | **10** |
+| **total** | | **1359** | **0** | **14** | **1310** | **25** | **10** |
 
 ## How to read this
 

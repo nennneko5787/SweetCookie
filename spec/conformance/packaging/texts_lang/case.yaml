@@ -1,0 +1,43 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: packaging/texts_lang
+tier: T0
+spec: SC-100
+
+features:
+  - texts/lang
+  - texts/languages
+
+description: >-
+  A `.lang` file splits on its FIRST `=`, keeps a trailing `#` as part of the value, and ignores
+  lines beginning `##`. Treating `#` as an end-of-line comment is what a properties parser does, and
+  it would silently truncate any translation containing a hash — which is most translations that
+  mention a number. A locale present on disk but missing from `languages.json` must still load,
+  because `languages.json` is a convenience and the files are the fact.
+
+pack:
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1029
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  - that: ir.packs[0].texts.entries['en_US']['item.sc_conformance.wand']
+    equals: Wand = of Power
+  # Quoted, because YAML *does* treat ` #` as a comment. Unquoted, this expectation read `Slot`
+  # and the case failed against correct behaviour - the same hash problem one layer up.
+  - that: ir.packs[0].texts.entries['en_US']['ui.sc_conformance.slot']
+    equals: "Slot #1"
+  - that: ir.packs[0].texts.entries['en_US']['sc_conformance.commented']
+    absent: true
+  # de_DE ships a .lang file and is absent from languages.json. The file wins.
+  - that: ir.packs[0].texts.languages
+    contains: de_DE
+  - that: ir.packs[0].texts.entries['de_DE']['pack.name']
+    equals: Zauberei

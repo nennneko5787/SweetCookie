@@ -1,0 +1,28 @@
+{
+  "format_version": 2,
+  "header": {
+    "uuid": "5c000001-0000-4000-8000-000000000001",
+    "name": "SweetCookie Conformance: classic",
+    "description": "A format_version 2 pack providing both halves. Original content.",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "5c000001-0000-4000-8000-000000000011",
+      "version": [1, 0, 0]
+    },
+    {
+      "type": "data",
+      "uuid": "5c000001-0000-4000-8000-000000000012",
+      "version": [1, 0, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "5c000002-0000-4000-8000-000000000002",
+      "version": [2, 0, 0]
+    }
+  ]
+}

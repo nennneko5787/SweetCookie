@@ -26,7 +26,7 @@ import net.nennneko5787.sweetcookie.core.format.value.Provenance;
  * ignored — otherwise a pack that ships a sample manifest as documentation, which several popular
  * ones do, would be detected as two packs, one of them nonsense.
  */
-@SpecImpl("SC-100")
+@SpecImpl({"SC-100", "SC-100#container/mcaddon", "SC-100#container/directory"})
 public final class PackDiscovery {
 
     /** A pack root, with the container VFS it was found in. */

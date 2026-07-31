@@ -13,6 +13,9 @@ fabric-loader    = "0.19.3"
 # core/ dependencies. These must never pull in Minecraft — ADR-0001.
 mocha            = "3.0.1"
 junit            = "5.11.4"
+# core/testkit only, to read spec/conformance/**/case.yaml. Deliberately NOT a dependency of
+# core/format: SC-110 §2.1 keeps the parser on its own JSON facade and nothing else.
+snakeyaml        = "2.3"
 
 # compileOnly interop. Never redistributed; see NOTICE.
 geyser-api       = "2.11.0-SNAPSHOT"
@@ -23,6 +26,7 @@ mocha           = { module = "team.unnamed:mocha",                 version.ref =
 junit-bom       = { module = "org.junit:junit-bom",                version.ref = "junit" }
 junit-jupiter   = { module = "org.junit.jupiter:junit-jupiter" }
 junit-launcher  = { module = "org.junit.platform:junit-platform-launcher" }
+snakeyaml       = { module = "org.yaml:snakeyaml",                 version.ref = "snakeyaml" }
 geyser-api      = { module = "org.geysermc.geyser:api",            version.ref = "geyser-api" }
 viaversion-api  = { module = "com.viaversion:viaversion-api",      version.ref = "viaversion-api" }
 

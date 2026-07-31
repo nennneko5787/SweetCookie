@@ -1,0 +1,89 @@
+{
+  "diagnostics": [
+    {
+      "code": "SCE-1010",
+      "count": 1,
+      "messageKey": "sweetcookie.diagnostic.pack.nested_manifest",
+      "path": "pack.mcaddon",
+      "severity": "INFO"
+    }
+  ],
+  "packs": [
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": [
+        "documentation/example/manifest.json",
+        "entities/sc_conformance_probe.json",
+        "manifest.json"
+      ],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance: nested behaviour pack",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c000011-0000-4000-8000-000000000011",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        }
+      ],
+      "source": "pack.mcaddon!behaviour",
+      "sourceKind": "MCADDON",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    },
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": [
+        "manifest.json"
+      ],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance: deeply nested resource pack",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c000012-0000-4000-8000-000000000012",
+      "loadOrder": 1,
+      "modules": [
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        }
+      ],
+      "source": "pack.mcaddon!deeply/nested/resources",
+      "sourceKind": "MCADDON",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

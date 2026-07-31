@@ -1,0 +1,165 @@
+{
+  "diagnostics": [
+    {
+      "at": "/modules/1",
+      "code": "SCE-1022",
+      "count": 1,
+      "messageKey": "sweetcookie.diagnostic.manifest.script_entry_defaulted",
+      "path": "pack!b_modern_v3/manifest.json",
+      "severity": "WARNING"
+    },
+    {
+      "at": "/header",
+      "code": "SCE-1028",
+      "count": 1,
+      "messageKey": "sweetcookie.diagnostic.manifest.no_min_engine_version",
+      "path": "pack!c_skin_v1/manifest.json",
+      "severity": "INFO"
+    },
+    {
+      "code": "SCE-2005",
+      "count": 1,
+      "messageKey": "sweetcookie.diagnostic.pack.script_module_unsupported",
+      "pack": "5c000002-0000-4000-8000-000000000002",
+      "path": "manifest.json",
+      "severity": "WARNING"
+    }
+  ],
+  "packs": [
+    {
+      "capabilities": [],
+      "dependencies": [
+        {
+          "kind": "pack",
+          "uuid": "5c000002-0000-4000-8000-000000000002",
+          "version": "2.0.0"
+        }
+      ],
+      "files": [
+        "manifest.json"
+      ],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "A format_version 2 pack providing both halves. Original content.",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance: classic",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c000001-0000-4000-8000-000000000001",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        },
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        }
+      ],
+      "source": "pack!a_classic_v2",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    },
+    {
+      "capabilities": [],
+      "dependencies": [
+        {
+          "kind": "module",
+          "moduleName": "@minecraft/server-net",
+          "version": "1.0.0"
+        }
+      ],
+      "files": [
+        "manifest.json"
+      ],
+      "formatVersion": 3,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "A format_version 3 pack. Versions are SemVer strings, not arrays.",
+        "minEngineVersion": "1.21.30",
+        "name": "SweetCookie Conformance: modern",
+        "scope": "ANY",
+        "version": "2.1.0"
+      },
+      "id": "5c000002-0000-4000-8000-000000000002",
+      "loadOrder": 1,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "2.1.0"
+        },
+        {
+          "declaredType": "script",
+          "entry": "scripts/main.js",
+          "language": "javascript",
+          "type": "SCRIPT",
+          "version": "2.1.0"
+        }
+      ],
+      "source": "pack!b_modern_v3",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    },
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": [
+        "manifest.json"
+      ],
+      "formatVersion": 1,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "",
+        "minEngineVersion": "1.16.0",
+        "name": "SweetCookie Conformance: skins",
+        "scope": "ANY",
+        "version": "3.0.0"
+      },
+      "id": "5c000003-0000-4000-8000-000000000003",
+      "loadOrder": 2,
+      "modules": [
+        {
+          "declaredType": "skin_pack",
+          "type": "SKIN_PACK",
+          "version": "3.0.0"
+        }
+      ],
+      "source": "pack!c_skin_v1",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

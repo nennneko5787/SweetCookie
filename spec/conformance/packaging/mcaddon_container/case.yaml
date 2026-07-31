@@ -1,0 +1,46 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: packaging/mcaddon_container
+tier: T0
+spec: SC-100
+
+features:
+  - container/mcaddon
+  # `container/mcpack` is deliberately NOT claimed here. This case loads an .mcaddon; a case that
+  # listed a feature it does not exercise is how a corpus starts over-claiming.
+
+description: >-
+  An `.mcaddon` holding several packs at different depths must yield all of them, and each pack's
+  files must be addressable from that pack's own root rather than from the archive's. Real add-ons
+  put packs at the root, in one subdirectory each, or several levels down, so a loader that assumed a
+  layout would silently find nothing in a large fraction of published content. A `manifest.json`
+  underneath an already-discovered pack is that pack's documentation, not a second pack.
+
+pack:
+  dir: pack
+  container: mcaddon
+
+diagnostics:
+  expected:
+    - SCE-1010          # the sample manifest inside the behaviour pack is ignored
+  forbidden:
+    - SCE-1001          # nothing here escapes the root
+    - SCE-1009          # no two entries collide case-insensitively
+    - SCE-1029
+  exhaustive: true
+
+expect:
+  ir: expected/ir.json
+  diagnostics: expected/diagnostics.json
+
+assert:
+  # Two packs, not three: the sample manifest under the behaviour pack must not start one.
+  - that: ir.packs[1].id
+    equals: 5c000012-0000-4000-8000-000000000012
+  - that: ir.packs[2]
+    absent: true
+  # Files are addressed from the pack root, so nothing downstream needs to know the archive layout.
+  - that: ir.packs[0].files
+    contains: entities/sc_conformance_probe.json
+  - that: ir.packs[0].sourceKind
+    equals: MCADDON

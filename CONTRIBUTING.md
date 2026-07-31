@@ -65,7 +65,9 @@ or out of scope; see [`spec/process.md`](spec/process.md).
 4. Implement, annotated `@SpecImpl("SC-nnn#<feature>")`.
 5. Update the coverage entry — `impl`, `fields`, `fidelity`. **Never write `status: implemented`
    yourself**; `specReport` promotes it when the tests pass.
-6. `./gradlew specAll && ./gradlew --project-dir core build`
+6. `./gradlew specAll && ./gradlew --project-dir core build`. `specAll` runs the conformance corpus
+   as part of `specConformance`. If a golden legitimately changed, regenerate it with
+   `./gradlew --project-dir core :testkit:test -Dsweetcookie.accept=true` and **read the diff**.
 7. **If you moved, renamed or removed anything public in `core/`, also run
    `./gradlew chiseledCompile`.** `core` is a separate build (`includeBuild`), so its own `build`
    task cannot see the Minecraft nodes that consume it — a moved class compiles clean locally and

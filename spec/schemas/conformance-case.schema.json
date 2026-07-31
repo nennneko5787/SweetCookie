@@ -44,6 +44,11 @@
           "description": "Directory relative to the case, containing a pack tree. Defaults to 'pack'.",
           "type": "string"
         },
+        "container": {
+          "description": "How the tree is presented to the loader. 'directory' hands it over unpacked; the others zip it first, so that a case claiming to prove a container feature actually exercises that container rather than a directory that looks like one.",
+          "enum": ["directory", "mcpack", "mcaddon", "mcworld"],
+          "default": "directory"
+        },
         "extends": {
           "description": "A fixture under spec/conformance/_fixtures/ to layer this pack on top of.",
           "type": "string",
@@ -115,6 +120,9 @@
           "that": { "type": "string", "minLength": 3 },
           "equals": {},
           "contains": {},
+          "notContains": {
+            "description": "The mirror of 'contains', and the mirror of the 'forbidden' diagnostic list. Something that must NOT appear is the class of regression that otherwise goes unnoticed for months."
+          },
           "matches": { "type": "string" },
           "absent": { "type": "boolean" }
         }

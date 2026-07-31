@@ -1,0 +1,55 @@
+{
+  "diagnostics": [],
+  "packs": [
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": [
+        "textures/a.png",
+        "manifest.json",
+        "textures/root_only.png"
+      ],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance: subpacks",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c000021-0000-4000-8000-000000000021",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        }
+      ],
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [
+          {
+            "folderName": "sd",
+            "memoryTier": 0,
+            "name": "Standard"
+          },
+          {
+            "folderName": "hd",
+            "memoryTier": 4,
+            "name": "High"
+          }
+        ],
+        "ceiling": 4,
+        "selected": "hd"
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

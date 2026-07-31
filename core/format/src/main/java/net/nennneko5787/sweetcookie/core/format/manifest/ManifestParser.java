@@ -34,7 +34,16 @@ import net.nennneko5787.sweetcookie.core.format.value.SemanticVersion;
  * {@code format_version} is {@code SCE-1020} and parsing continues as version 2 — Mojang's history
  * here is of additive change, and refusing would make the mod useless the day Bedrock ships one.
  */
-@SpecImpl("SC-100")
+@SpecImpl({
+        "SC-100",
+        "SC-100#manifest/format_version_1",
+        "SC-100#manifest/format_version_2",
+        "SC-100#manifest/format_version_3",
+        "SC-100#manifest/module_resources",
+        "SC-100#manifest/module_data",
+        "SC-100#manifest/module_script",
+        "SC-100#manifest/min_engine_version",
+})
 public final class ManifestParser {
 
     private ManifestParser() {

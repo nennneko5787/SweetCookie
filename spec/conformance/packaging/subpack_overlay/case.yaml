@@ -1,0 +1,45 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: packaging/subpack_overlay
+tier: T0
+spec: SC-100
+
+features:
+  - manifest/subpacks
+
+description: >-
+  The selected subpack must shadow same-path files in the pack root, and a file the subpack does not
+  provide must still resolve to the root's copy. If the overlay replaced the root wholesale instead
+  of layering over it, a pack shipping only high-resolution block textures in its HD subpack would
+  lose every item texture the moment HD was selected. With no configured ceiling the highest tier
+  offered is chosen, which is what an author who shipped an HD variant intended.
+
+pack:
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1009          # subpacks/hd/textures/a.png and textures/a.png are different paths
+    - SCE-1029
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  - that: ir.packs[0].subpack.selected
+    equals: hd
+  - that: ir.packs[0].subpack.ceiling
+    equals: 4
+  # The overlaid file wins, and the root file the subpack does not provide survives.
+  - that: ir.packs[0].files
+    contains: textures/a.png
+  - that: ir.packs[0].files
+    contains: textures/root_only.png
+  # Once a variant is selected, subpacks/ is a container rather than content. Leaving it visible
+  # would have an asset walk register the UNSELECTED sd variant alongside the selected hd one.
+  - that: ir.packs[0].files
+    notContains: subpacks/sd/textures/a.png
+  - that: ir.packs[0].files
+    notContains: subpacks/hd/textures/a.png

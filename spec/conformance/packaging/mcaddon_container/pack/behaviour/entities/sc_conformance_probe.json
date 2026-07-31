@@ -1,0 +1,11 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "sc_conformance:probe",
+      "is_spawnable": false,
+      "is_summonable": true
+    },
+    "components": {}
+  }
+}

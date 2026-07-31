@@ -32,7 +32,11 @@ import net.nennneko5787.sweetcookie.core.format.value.Provenance;
  * <p>Failure never propagates past the pack it belongs to. An unreadable archive, a manifest with no
  * UUID, a compression bomb: each removes one pack and leaves the others alone.
  */
-@SpecImpl("SC-100")
+@SpecImpl({
+        "SC-100",
+        "SC-100#manifest/dependencies_pack",
+        "SC-100#manifest/dependencies_module",
+})
 public final class AddonLoader {
 
     private AddonLoader() {

@@ -7,22 +7,22 @@ Ledger: [`spec/coverage/packaging.yaml`](../../spec/coverage/packaging.yaml)
 
 | Feature | Status | Notes |
 |---|---|---|
-| `container/mcpack` | stub |  |
-| `container/mcaddon` | stub | Nesting is not normalised in practice; discovery recursively searches for manifest.json at any depth. |
+| `container/mcpack` | stub | Read and indexed, but no conformance case loads one yet: packaging/mcaddon_container covers the .mcaddon shape only, and a case must not claim a container it does not exercise. |
+| `container/mcaddon` | partial | Extraction limits refuse an add-on that Bedrock loads: over 512 MiB decompressed, more than 65,536 entries, any single entry over 64 MiB, or any entry compressing better than 200:1. Two entries whose paths differ only in case resolve to the first in archive order, where Bedrock's extraction leaves the last one written on disk. |
 | `container/mcworld` | unsupported | World containers are recognised and their embedded packs are ingested, but level.dat and the LevelDB db/ directory are skipped, so importing a Bedrock world is not possible. |
-| `container/directory` | stub | Unpacked pack on disk, for development. |
-| `manifest/format_version_1` | stub | Skin packs. |
-| `manifest/format_version_2` | stub | The overwhelmingly common case. |
-| `manifest/format_version_3` | stub | Preview since 1.21.110. SemVer strings instead of arrays, plus pack settings. |
-| `manifest/module_resources` | stub |  |
-| `manifest/module_data` | stub |  |
-| `manifest/module_script` | stub | entry field is universal in practice but absent from Mojang's published table. |
+| `container/directory` | partial | An unpacked pack is re-read only when /sweetcookie reload runs. Bedrock re-reads its development_*_packs whenever a file changes, so an edit made with the game running has no effect here until the command is issued. |
+| `manifest/format_version_1` | partial | A format 1 manifest parses and the pack appears in the add-on list, but its skin_pack module contributes nothing, so the pack is visible and empty where Bedrock would offer skins. |
+| `manifest/format_version_2` | partial | pack_scope is recorded and never enforced, so a pack declaring world scope is offered globally as well. lock_template_options and allow_random_seed are read and discarded, so a world template that forbids reconfiguring its options does not forbid it here. |
+| `manifest/format_version_3` | partial | The pack `settings` block that format 3 introduces is not parsed, so an author-defined setting never appears in any screen and the pack behaves as though every one of them were left at its default value. |
+| `manifest/module_resources` | partial | The module is recognised and the pack's files become addressable, but nothing consumes them yet, so a resource pack activates cleanly and changes nothing a player can see. |
+| `manifest/module_data` | partial | The module is recognised and the pack's files become addressable, but no behaviour-pack content is translated yet, so a behaviour pack activates cleanly and no entity, block or item it defines exists in the world. |
+| `manifest/module_script` | partial | The entry point is recorded and no JavaScript is executed, so a pack whose behaviour lives entirely in scripts loads, reports itself as active, and does nothing at all. |
 | `manifest/module_world_template` | stub |  |
 | `manifest/module_skin_pack` | unsupported | Skin packs are recognised and skipped; Java has no player-model replacement surface that maps onto Bedrock skin packs without a full player-render rewrite. |
-| `manifest/dependencies_pack` | stub | Cycles are permitted: a BP and its paired RP commonly depend on each other. |
-| `manifest/dependencies_module` | stub |  |
-| `manifest/subpacks` | stub | Selection is configured, never inferred from host RAM. |
+| `manifest/dependencies_pack` | partial | A dependency on a pack that is not loaded is a warning and the dependent pack still activates. Bedrock marks such a pack as broken and refuses to turn it on, so a user sees content here that Bedrock would have hidden entirely. |
+| `manifest/dependencies_module` | partial | A script module is accepted or refused by name alone. The requested version is recorded and never compared, so a pack asking for @minecraft/server 3.0.0 is treated exactly like one asking for 1.0.0 and receives no warning that the API it expects is not the one present. |
+| `manifest/subpacks` | partial | The active tier comes from configuration and defaults to the highest the pack offers. Bedrock chooses it from the device's available memory, so a low-memory client that Bedrock would give the SD variant receives the HD one here. |
 | `manifest/capabilities` | unsupported | chemistry, editorExtension, experimental_custom_ui, raytraced and pbr are recorded and reported; none changes behaviour, so a pack relying on one renders or behaves as though the capability were off. |
-| `manifest/min_engine_version` | stub | Never used to select parser behaviour - per-file format_version does that. |
-| `texts/lang` | stub |  |
-| `texts/languages` | stub |  |
+| `manifest/min_engine_version` | partial | A pack whose min_engine_version exceeds the engine SweetCookie targets activates anyway, with a warning. Bedrock refuses to activate it, so a pack authored for a newer Bedrock runs here with whatever of it this build happens to understand. |
+| `texts/lang` | partial | Keys resolve within one pack only. Bedrock resolves a key against every active pack, so a translation that one pack of an add-on supplies for another pack's key shows as the raw key here instead of the translated text. |
+| `texts/languages` | partial | languages.json is treated as a hint rather than as the list. Every .lang file present is loaded, so a locale the author deliberately left out of languages.json is still offered to players. |
