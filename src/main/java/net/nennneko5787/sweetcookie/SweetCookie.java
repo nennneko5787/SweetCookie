@@ -1,10 +1,13 @@
 package net.nennneko5787.sweetcookie;
 
+import net.nennneko5787.sweetcookie.core.registry.PoolSizing;
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
 import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
+import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
+import net.nennneko5787.sweetcookie.runtime.registry.LedgerScan;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
 
 /**
@@ -21,6 +24,7 @@ public final class SweetCookie {
 
     private static PlatformInfo platform;
     private static LifecycleHooks lifecycle;
+    private static SweetCookieConfig config;
     private static BlockPool blockPool;
 
     private SweetCookie() {
@@ -32,24 +36,54 @@ public final class SweetCookie {
      * <p>Everything registered here is anonymous. Not one Bedrock feature gets a registry entry
      * (constitution rule 7, ADR-0007), so add-ons attach and detach per world afterwards without
      * touching a registry again.
+     *
+     * <p>The order is forced rather than chosen. The pool's <b>size</b> depends on what every world
+     * in the instance already uses, and the registry freezes moments later — so the ledgers have to
+     * be read before any world exists to ask (SC-120 §6.2), from files rather than from the game.
      */
     public static void init() {
-        // Resolved once, eagerly, into a field (SC-230 §2 rule 3). A missing provider fails here
+        // Resolved once, eagerly, into fields (SC-230 §2 rule 3). A missing provider fails here
         // rather than at world load, which is the far worse place to discover one.
         platform = Services.load(PlatformInfo.class);
         lifecycle = Services.load(LifecycleHooks.class);
 
-        // TODO(SC-120 §6.2): the effective pool is the element-wise maximum of the configured
-        // default, every world's ledger and the installed packs. Config and ledger loading need
-        // LifecycleHooks, which is not written yet, so this registers the default.
-        // SlotPool.grownTo is the operation that will do it, and it exists and is tested.
-        blockPool = BlockPool.register(SlotPool.DEFAULT);
-        WorldLedger.install(lifecycle, SlotPool.DEFAULT);
+        config = SweetCookieConfig.load(platform.configDirectory());
+        PoolSizing.Result sizing = PoolSizing.effective(
+                config.pool(), LedgerScan.requirements(platform.gameDirectory()));
+
+        SlotPool effective = switch (sizing) {
+            case PoolSizing.Result.Register register -> {
+                register.growth().forEach(growth -> System.out.println(
+                        "[SweetCookie] block pool grown for an existing world: " + growth.advice()));
+                yield register.pool();
+            }
+            case PoolSizing.Result.Refuse refuse -> {
+                // SCE-4013. blockPoolAutoGrow is off, so an operator pinned the palette size and
+                // wants to be told rather than accommodated. The game still starts: the worlds that
+                // fit are unaffected, and the one that does not reports its own exhaustion when it
+                // loads, naming the content it could not bind.
+                refuse.shortfall().forEach(growth -> System.out.println(
+                        "[SweetCookie] SCE-4013 a saved world needs more than the pinned block pool: "
+                                + growth.advice()));
+                yield config.pool().configured();
+            }
+        };
+
+        blockPool = BlockPool.register(effective);
+        WorldLedger.install(lifecycle, effective);
 
         System.out.println("[SweetCookie] " + platform.loaderName() + " "
                 + platform.loaderVersion() + " (" + platform.side() + "): registered "
                 + blockPool.size() + " pool blocks, "
-                + blockPool.pool().totalStates() + " block states");
+                + effective.totalStates() + " block states");
+    }
+
+    /** The loaded configuration. */
+    public static SweetCookieConfig config() {
+        if (config == null) {
+            throw new IllegalStateException("the config is loaded during mod init");
+        }
+        return config;
     }
 
     /** The resolved platform service. */
