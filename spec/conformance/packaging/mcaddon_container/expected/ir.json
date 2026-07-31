@@ -10,6 +10,9 @@
   ],
   "packs": [
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["documentation/example/manifest.json","entities/sc_conformance_probe.json","manifest.json"],
@@ -48,6 +51,9 @@
       "unknownCapabilities": []
     },
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["manifest.json"],

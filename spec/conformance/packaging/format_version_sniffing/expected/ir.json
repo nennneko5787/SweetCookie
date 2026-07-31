@@ -11,6 +11,9 @@
   ],
   "packs": [
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["manifest.json","models/entity/sc_honest_legacy.geo.json","models/entity/sc_lying_declaration.geo.json"],

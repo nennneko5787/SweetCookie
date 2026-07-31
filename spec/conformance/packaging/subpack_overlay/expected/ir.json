@@ -2,6 +2,9 @@
   "diagnostics": [],
   "packs": [
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["textures/a.png","manifest.json","textures/root_only.png"],

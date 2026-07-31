@@ -27,6 +27,9 @@
   ],
   "packs": [
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [
         {
@@ -76,6 +79,9 @@
       "unknownCapabilities": []
     },
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [
         {
@@ -127,6 +133,9 @@
       "unknownCapabilities": []
     },
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["manifest.json"],

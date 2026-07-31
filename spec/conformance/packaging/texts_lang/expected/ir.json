@@ -2,6 +2,9 @@
   "diagnostics": [],
   "packs": [
     {
+      "behavior": {
+        "blocks": {}
+      },
       "capabilities": [],
       "dependencies": [],
       "files": ["manifest.json","texts/de_DE.lang","texts/en_US.lang","texts/languages.json"],

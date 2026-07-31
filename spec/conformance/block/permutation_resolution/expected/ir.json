@@ -1,0 +1,118 @@
+{
+  "diagnostics": [],
+  "packs": [
+    {
+      "behavior": {
+        "blocks": {
+          "sc_conformance:lamp": {
+            "components": ["minecraft:friction","minecraft:destructible_by_explosion"],
+            "identifier": "sc_conformance:lamp",
+            "menuCategory": "construction",
+            "permutations": [
+              {
+                "components": ["minecraft:light_emission"],
+                "condition": "query.block_state('sc:level') > 1"
+              },
+              {
+                "components": ["minecraft:light_emission","minecraft:map_color"],
+                "condition": "query.block_state('sc:level') == 3"
+              },
+              {
+                "components": ["minecraft:collision_box"],
+                "condition": "query.block_state('sc:kind') == 'tall'"
+              }
+            ],
+            "resolved": [
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:collision_box"],
+              ["minecraft:friction","minecraft:destructible_by_explosion","minecraft:light_emission","minecraft:map_color","minecraft:collision_box"]
+            ],
+            "stateCount": 32,
+            "states": [
+              {
+                "kind": "INTEGER",
+                "name": "sc:level",
+                "values": ["0","1","2","3"]
+              },
+              {
+                "kind": "STRING",
+                "name": "sc:kind",
+                "values": ["short","tall"]
+              },
+              {
+                "kind": "STRING",
+                "name": "minecraft:cardinal_direction",
+                "values": ["south","west","north","east"]
+              }
+            ]
+          }
+        }
+      },
+      "capabilities": [],
+      "dependencies": [],
+      "files": ["blocks/sc_conformance_lamp.json","manifest.json"],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "Minimal valid behaviour pack. Original content, authored for this project.",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance BP",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c00c1e0-0000-4000-8000-000000000001",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        }
+      ],
+      "resource": {
+        "geometries": {}
+      },
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

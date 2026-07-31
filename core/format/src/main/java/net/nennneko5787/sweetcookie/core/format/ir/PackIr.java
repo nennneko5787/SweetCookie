@@ -12,10 +12,11 @@ import net.nennneko5787.sweetcookie.core.format.value.PackId;
  * {@code LoadedPack} holding a {@code Manifest}.
  *
  * @param source   the pack this was parsed from, with its VFS and manifest
+ * @param behavior the behavior-pack half
  * @param resource the resource-pack half
  */
 @SpecImpl("SC-110")
-public record PackIr(LoadedPack source, ResourceIr resource) {
+public record PackIr(LoadedPack source, BehaviorIr behavior, ResourceIr resource) {
 
     public PackId id() {
         return source.id();

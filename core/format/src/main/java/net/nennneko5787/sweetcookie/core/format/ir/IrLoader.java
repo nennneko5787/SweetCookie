@@ -9,8 +9,11 @@ import java.util.Optional;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.format.diag.Diagnostics;
 import net.nennneko5787.sweetcookie.core.format.diag.FormatDiagnostics;
+import net.nennneko5787.sweetcookie.core.format.ir.block.BlockDefIr;
+import net.nennneko5787.sweetcookie.core.format.ir.block.BlockFiles;
 import net.nennneko5787.sweetcookie.core.format.ir.geometry.GeometryFiles;
 import net.nennneko5787.sweetcookie.core.format.ir.geometry.GeometryIr;
+import net.nennneko5787.sweetcookie.core.format.value.BedrockId;
 import net.nennneko5787.sweetcookie.core.format.json.Json;
 import net.nennneko5787.sweetcookie.core.format.json.JsonObject;
 import net.nennneko5787.sweetcookie.core.format.pack.ByteSource;
@@ -50,12 +53,39 @@ public final class IrLoader {
         Diagnostics into = new Diagnostics();
         List<PackIr> packs = new ArrayList<>();
         for (LoadedPack pack : addon.packs()) {
-            packs.add(new PackIr(pack, resources(pack, into)));
+            packs.add(new PackIr(pack, behavior(pack, into), resources(pack, into)));
         }
         // SC-100's diagnostics first, then SC-110's: the order a user reads them in matches the
         // order the failures happened in, and a manifest problem explains a parse problem far more
         // often than the reverse.
         return new AddonIr(packs, addon.diagnostics().merge(into.snapshot()));
+    }
+
+    /** Where Bedrock looks for block definitions. */
+    private static final String BLOCKS_ROOT = "blocks";
+
+    private static BehaviorIr behavior(LoadedPack pack, Diagnostics into) {
+        if (!pack.manifest().hasBehavior()) {
+            return BehaviorIr.EMPTY;
+        }
+        Map<BedrockId, BlockDefIr> blocks = new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(BLOCKS_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            Optional<JsonObject> root = read(pack, path, where, into);
+            if (root.isEmpty()) {
+                continue;
+            }
+            for (BlockDefIr block : BlockFiles.parse(root.get(), where, into)) {
+                if (blocks.put(block.identifier(), block) != null) {
+                    into.report(IrDiagnostics.FIELD_MALFORMED.at(
+                            where, "identifier", "duplicate " + block.identifier()));
+                }
+            }
+        }
+        return new BehaviorIr(blocks);
     }
 
     private static ResourceIr resources(LoadedPack pack, Diagnostics into) {

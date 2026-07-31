@@ -31,8 +31,26 @@ public final class MolangStrings {
     private MolangStrings() {
     }
 
+    private static final Map<Float, String> TEXTS = new ConcurrentHashMap<>();
+
     /** The identity of {@code text}, allocating one on first sight. Case-sensitive (SC-130 §2.1). */
     public static float intern(String text) {
-        return IDS.computeIfAbsent(text, ignored -> BASE - NEXT.getAndIncrement());
+        return IDS.computeIfAbsent(text, key -> {
+            float id = BASE - NEXT.getAndIncrement();
+            TEXTS.put(id, key);
+            return id;
+        });
+    }
+
+    /**
+     * The text an identity stands for, if it is one.
+     *
+     * <p>Needed because Molang passes strings to queries as arguments —
+     * {@code query.block_state('sc:level')} arrives at a binding as a {@code float}, and the binding
+     * has to get the name back to answer. Without this, every string-argument query would have to be
+     * special-cased in the compiler.
+     */
+    public static java.util.Optional<String> text(float id) {
+        return java.util.Optional.ofNullable(TEXTS.get(id));
     }
 }

@@ -45,6 +45,7 @@ public final class AddonIrJson {
         for (PackIr pack : addon.packs()) {
             Map<String, JsonValue> node =
                     new LinkedHashMap<>(LoadedAddonJson.pack(pack.source(), rewritePath).members());
+            node.put("behavior", behavior(pack.behavior()));
             node.put("resource", resource(pack.resource()));
             packs.add(new JsonObject(node));
         }
@@ -52,6 +53,44 @@ public final class AddonIrJson {
         root.put("packs", new JsonArray(packs));
         root.put("diagnostics", LoadedAddonJson.diagnostics(addon.diagnostics(), rewritePath));
         return new JsonObject(root);
+    }
+
+    private static JsonValue behavior(BehaviorIr behavior) {
+        Map<String, JsonValue> blocks = new LinkedHashMap<>();
+        behavior.blocks().forEach((id, block) -> blocks.put(id.toString(), block(block)));
+        return new JsonObject(Map.of("blocks", new JsonObject(blocks)));
+    }
+
+    private static JsonValue block(net.nennneko5787.sweetcookie.core.format.ir.block.BlockDefIr b) {
+        Map<String, JsonValue> node = new LinkedHashMap<>();
+        node.put("identifier", string(b.identifier().toString()));
+        if (!b.menuCategory().isEmpty()) {
+            node.put("menuCategory", string(b.menuCategory()));
+        }
+        node.put("states", new JsonArray(b.schema().states().stream()
+                .map(state -> (JsonValue) new JsonObject(Map.of(
+                        "name", string(state.name().toString()),
+                        "kind", string(state.kind().name()),
+                        "values", new JsonArray(state.values().stream()
+                                .map(AddonIrJson::string).toList()))))
+                .toList()));
+        node.put("stateCount", JsonNumber.of(b.schema().size()));
+        node.put("components", new JsonArray(b.components().keySet().stream()
+                .map(id -> string(id.toString())).toList()));
+        node.put("permutations", new JsonArray(b.permutations().stream()
+                .map(p -> (JsonValue) new JsonObject(Map.of(
+                        "condition", string(p.condition().source()),
+                        "components", new JsonArray(p.components().keySet().stream()
+                                .map(id -> string(id.toString())).toList()))))
+                .toList()));
+        // The resolved component set per state index: the thing SC-150 §3 actually computes, and
+        // the only part of a block a golden can check without a world.
+        node.put("resolved", new JsonArray(b.resolveAll().stream()
+                .map(resolved -> (JsonValue) new JsonArray(resolved.keySet().stream()
+                        .map(id -> string(id.toString())).toList()))
+                .toList()));
+        unknown(node, b.unknown());
+        return new JsonObject(node);
     }
 
     private static JsonValue resource(ResourceIr resource) {

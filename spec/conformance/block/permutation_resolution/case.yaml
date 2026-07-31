@@ -1,0 +1,67 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: block/permutation_resolution
+tier: T0
+spec: SC-150
+
+features:
+  - states/int
+  - states/string
+  - "minecraft:placement_direction"
+  - permutations/ordered_override
+  # `states/16_value_cap` is NOT claimed: no state here exceeds the cap, so this case proves
+  # nothing about it. The unit tests cover truncation.
+
+description: >-
+  Every state index must resolve to a fixed component set at bind time, with later permutations
+  overriding earlier ones per component key. If this were evaluated per block access instead, a
+  Molang expression would run inside every shape and collision lookup; if the override order were
+  reversed, a block would show its least specific appearance wherever two permutations matched. The
+  index is mixed-radix in declaration order and reaches chunk storage, so a change to the order of
+  `description.states` re-maps every block already placed in every world.
+
+pack:
+  extends: minimal_bp
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1035          # nothing here is malformed
+    - SCE-1036          # nothing required is missing
+    - SCE-1029
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  # Declared states first, trait states appended: enabling a trait must not shift the digits of
+  # states already encoded in placed blocks.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].states[0].name
+    equals: sc:level
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].states[1].name
+    equals: sc:kind
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].states[2].name
+    equals: minecraft:cardinal_direction
+  # 4 levels x 2 kinds x 4 directions.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].stateCount
+    equals: "32"
+
+  # Index 0 is level 0, kind short: no permutation matches, so the base set only.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[0]
+    notContains: minecraft:light_emission
+  # Index 2 is level 1 -- still below the threshold.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[1]
+    notContains: minecraft:light_emission
+  # Index 3 is level 3, kind short: both light permutations match and the later one wins.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[3]
+    contains: minecraft:light_emission
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[3]
+    contains: minecraft:map_color
+  # Index 4 is level 0, kind tall: the string-equality permutation matches and the numeric ones
+  # do not, which only works because a string state and a string literal intern to one identity.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[4]
+    contains: minecraft:collision_box
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lamp'].resolved[4]
+    notContains: minecraft:light_emission

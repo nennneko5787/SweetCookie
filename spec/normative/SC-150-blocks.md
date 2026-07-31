@@ -29,15 +29,60 @@ functions closing over that reference, so a reload changes behaviour without re-
 
 ## 2. States, traits and the index
 
-Sections to write:
+### 2.1 `description.states`
 
-- 2.1 `description.states`: `{"ns:name": [v1, …]}` and `{"values": {"min": 0, "max": 15}}`; the
-  16-value cap; permitted value types (bool, string, int).
-- 2.2 `description.traits`: `minecraft:placement_direction` (`cardinal_direction`,
-  `facing_direction`, `y_rotation_offset`) and `minecraft:placement_position` (`block_face`,
-  `vertical_half`). Expanded into states before encoding, appended in a fixed order (SC-120 §6.1).
-- 2.3 The mixed-radix index encoding, and why declaration order is normative.
-- 2.4 Behaviour when the product exceeds the largest size class.
+Two spellings, both normalising to an ordered value list:
+
+```jsonc
+{ "sc:kind":  ["short", "tall"] }                 // explicit
+{ "sc:level": { "values": { "min": 0, "max": 3 } } }  // range, integers only
+```
+
+Values may be booleans, integers or strings. They are held as **strings** whatever they were
+written as, because a state's values are only ever compared for equality and one type removes a
+three-way branch from every site that touches one; the original JSON type is kept alongside,
+because the Molang binding needs it (§3).
+
+**At most 16 values.** A state declaring more is truncated to 16 with `SCE-1035` rather than
+refused: truncating keeps the block usable and keeps the index stable for the values that fit,
+where refusing loses the block entirely.
+
+The **first declared value is the default** — for a freshly placed block, and for any lookup naming
+a value the state does not permit. Refusing the latter would mean one typo in one permutation cost
+the whole block, and Bedrock falls back too.
+
+### 2.2 `description.traits`
+
+Engine-provided state groups: `minecraft:placement_direction` (`cardinal_direction`,
+`facing_direction`, `y_rotation_offset`) and `minecraft:placement_position` (`block_face`,
+`vertical_half`). A trait is a state the engine fills in rather than the pack.
+
+Traits expand into ordinary states before the index is built, and are **appended after** the pack's
+own declared states. Appending rather than interleaving is what stops enabling a trait from shifting
+the digits of the states already encoded in placed blocks.
+
+Their value orders are fixed by the engine and are as load-bearing as a declared state's:
+
+| State | Values, in order |
+|---|---|
+| `minecraft:cardinal_direction` | `south`, `west`, `north`, `east` |
+| `minecraft:facing_direction`, `minecraft:block_face` | `down`, `up`, `south`, `west`, `north`, `east` |
+| `minecraft:vertical_half` | `bottom`, `top` |
+| `minecraft:y_rotation_offset` | `0`, `90`, `180`, `270` |
+
+### 2.3 The index
+
+State values are digits of a **mixed-radix number, least significant first in declaration order**.
+A block with `sc:lit` (2 values) then `sc:level` (4 values) encodes as
+`lit + 2 × level`, giving 8 indices.
+
+**Declaration order is normative and is part of the on-disk format.** The index appears in chunk
+storage and in the block ledger, so reordering a pack's `description.states` re-maps every block
+already placed in every world. That is why SC-120 makes a schema change a *detected* event with a
+re-mapping step rather than something that happens quietly.
+
+`TODO(SC-150)`: 2.4, behaviour when the product exceeds the largest size class. Needs SC-120 §6's
+pool to exist first.
 
 ## 3. Permutation resolution
 
@@ -52,8 +97,38 @@ for each state index i in 0 .. N-1:
     resolved[i] := components
 ```
 
-`TODO(SC-150)`: the exact truthiness rule for a non-boolean Molang result, and whether merging is
-per top-level component key or deeper. Bedrock's behaviour needs observation, not inference.
+**Truthiness is Molang's: any non-zero value, including negatives and fractions.** A condition
+written `q.block_state('level') - 1` means "level is not 1", and packs write it that way.
+
+**Merging is per top-level component key**, later permutation wins. A permutation setting
+`minecraft:collision_box` replaces the base one entirely rather than patching into it — the two are
+alternative shapes, not a shape and a delta.
+
+`TODO(SC-150)`: whether Bedrock ever merges *deeper* than the top level for any component. Nothing
+observed so far does, and this is the shape that matches every published pack read to date, but it
+is inference from content rather than from the engine.
+
+### 3.1 What a condition may read
+
+**Block state and pure maths. Nothing else** — no entity, no world, no time. That restriction is
+what makes the whole permutation set pre-resolvable per index at bind time; widening it would
+quietly turn a bind-time table into a Molang evaluation inside `getShape`.
+
+`query.block_state('ns:name')` and `query.block_property('ns:name')` are the same query. The state
+name arrives as an argument, which in a float-typed language means an interned identity (SC-130
+§2.1); the binding resolves it back. A state answers as a **number** when it is integral or boolean
+and as its own interned identity when it is a string, so that `> 2` and `== 'tall'` both mean what
+they look like.
+
+A query outside that set reads 0, matching Bedrock. It is also visible *before* it runs: the
+compiler records every referenced name, so a condition reaching for entity state is reportable at
+load rather than silently always-false.
+
+### 3.2 A condition that will not compile
+
+The permutation is **dropped**, with `SCE-1035` naming the position. It is not defaulted to
+always-matching or never-matching, because both are wrong and each silently changes what the block
+looks like in half its states.
 
 ## 4. The 32 components
 

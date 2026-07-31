@@ -17,16 +17,19 @@ entries:
     status: stub
   - id: states/int
     status: stub
+    conformance: [block/permutation_resolution]
     notes: >-
       Both the explicit list and the {min,max} shorthand.
   - id: states/string
     status: stub
+    conformance: [block/permutation_resolution]
   - id: states/16_value_cap
     status: stub
     notes: >-
       Bedrock's hard cap. Exceeding it is an authoring error we report rather than accommodate.
   - id: "minecraft:placement_direction"
     status: stub
+    conformance: [block/permutation_resolution]
     notes: >-
       Trait providing cardinal_direction, facing_direction and y_rotation_offset.
   - id: "minecraft:placement_position"
@@ -35,6 +38,7 @@ entries:
       Trait providing block_face and vertical_half.
   - id: permutations/ordered_override
     status: stub
+    conformance: [block/permutation_resolution]
     notes: >-
       Later permutations override earlier ones per component key. Pre-resolved per state index at bind
       time.
