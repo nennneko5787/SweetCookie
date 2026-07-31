@@ -1,4 +1,4 @@
-package net.nennneko5787.sweetcookie.core.format;
+package net.nennneko5787.sweetcookie.core.format.value;
 
 import java.util.Locale;
 import java.util.Objects;

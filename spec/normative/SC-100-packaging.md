@@ -270,7 +270,7 @@ version outside the supported range disables **that script module only**, with `
 ```java
 public record LoadedAddon(
     List<LoadedPack> packs,          // in resolved load order, §5
-    List<Diagnostic> diagnostics
+    DiagnosticLog diagnostics        // deduplicated, with occurrence counts — SC-240 §3
 ) {}
 
 public record LoadedPack(

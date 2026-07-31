@@ -54,7 +54,30 @@ having. The cost is one adapter per backend, which is small.
 
 JSON parsing accepts what Bedrock accepts, which is more than strict JSON: **trailing commas**,
 **`//` and `/* */` comments**, and unquoted control characters in strings. Real packs contain all
-three. Duplicate keys are an error (SC-000 §6). A BOM is stripped.
+three. Duplicate keys are an error (SC-000 §6). A BOM is stripped. Leading zeroes and a leading `+`
+on a number are accepted.
+
+An **unrecognised escape sequence is preserved verbatim**, backslash included. Dropping the
+backslash would silently rewrite a Windows path that reached a description field; dropping the pair
+would lose bytes. Preserving both cannot lose anything, which is the only property that matters for
+a construct nobody has a correct interpretation for.
+
+Nesting depth **MUST** be bounded. A few kilobytes of `[[[[…` overflows a recursive-descent parser,
+and a `StackOverflowError` thrown during world load is not recoverable in the way constitution rule
+1 requires. The default limit is 256, which is comfortably above JSON UI, the deepest real Bedrock
+content. Size limits are the archive layer's (SC-100 §3), where they abort before anything is read
+into memory.
+
+### 2.2 Diagnostics allocated by the JSON facade
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `SCE-1032` | ERROR | not readable as JSON; the file is skipped and the rest of the pack loads |
+| `SCE-1033` | ERROR | the same member name twice in one object (SC-000 §6.6) |
+| `SCE-1034` | ERROR | nested past the depth limit |
+
+All three carry the line and column, because "malformed JSON" without a position is a diagnostic the
+author cannot act on.
 
 ## 3. `format_version` normalisation
 

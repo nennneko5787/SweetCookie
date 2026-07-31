@@ -48,6 +48,25 @@ most once per key per load. A count accompanies it (`… and 412 more occurrence
 
 Emitting per occurrence would flood the log, and a flooded log is the same as no log.
 
+Deduplication happens **on report, not on read**. A collector that stored every occurrence and
+filtered later would not stop the allocation, which is the thing being prevented.
+
+The count is why the result of a load is not a bare `List<Diagnostic>`:
+
+```java
+public record DiagnosticLog(List<Occurrence> occurrences) {
+    public record Occurrence(Diagnostic diagnostic, int count) {}
+}
+```
+
+`DiagnosticLog.merge` **concatenates and does not re-deduplicate**. Two packs reporting the same
+code at different locations are two reports, and collapsing them would hide the second pack — which
+is exactly what provenance exists to prevent.
+
+Each specification document's codes are declared as constants in **one holder per module**, never
+written inline at the emitting site. §5 forbids reusing or renumbering a code, and that is only
+checkable if allocation happens somewhere a test can enumerate.
+
 ## 4. Surfaces
 
 | Surface | What appears |

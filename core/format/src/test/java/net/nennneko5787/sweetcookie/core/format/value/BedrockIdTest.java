@@ -1,4 +1,4 @@
-package net.nennneko5787.sweetcookie.core.format;
+package net.nennneko5787.sweetcookie.core.format.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
