@@ -66,6 +66,10 @@ or out of scope; see [`spec/process.md`](spec/process.md).
 5. Update the coverage entry — `impl`, `fields`, `fidelity`. **Never write `status: implemented`
    yourself**; `specReport` promotes it when the tests pass.
 6. `./gradlew specAll && ./gradlew --project-dir core build`
+7. **If you moved, renamed or removed anything public in `core/`, also run
+   `./gradlew chiseledCompile`.** `core` is a separate build (`includeBuild`), so its own `build`
+   task cannot see the Minecraft nodes that consume it — a moved class compiles clean locally and
+   breaks all four nodes in CI. That has already happened once, to `BedrockId`.
 
 ## Things that will get a change rejected
 

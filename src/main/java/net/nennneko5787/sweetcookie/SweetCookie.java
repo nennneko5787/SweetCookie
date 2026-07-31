@@ -1,6 +1,6 @@
 package net.nennneko5787.sweetcookie;
 
-import net.nennneko5787.sweetcookie.core.format.BedrockId;
+import net.nennneko5787.sweetcookie.core.format.value.BedrockId;
 
 /**
  * Shared entry point. Version- and loader-independent.
