@@ -1,13 +1,11 @@
 package net.nennneko5787.sweetcookie;
 
-import net.nennneko5787.sweetcookie.core.registry.PoolSizing;
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
 import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
-import net.nennneko5787.sweetcookie.runtime.registry.LedgerScan;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
 
 /**
@@ -36,10 +34,6 @@ public final class SweetCookie {
      * <p>Everything registered here is anonymous. Not one Bedrock feature gets a registry entry
      * (constitution rule 7, ADR-0007), so add-ons attach and detach per world afterwards without
      * touching a registry again.
-     *
-     * <p>The order is forced rather than chosen. The pool's <b>size</b> depends on what every world
-     * in the instance already uses, and the registry freezes moments later — so the ledgers have to
-     * be read before any world exists to ask (SC-120 §6.2), from files rather than from the game.
      */
     public static void init() {
         // Resolved once, eagerly, into fields (SC-230 §2 rule 3). A missing provider fails here
@@ -48,26 +42,13 @@ public final class SweetCookie {
         lifecycle = Services.load(LifecycleHooks.class);
 
         config = SweetCookieConfig.load(platform.configDirectory());
-        PoolSizing.Result sizing = PoolSizing.effective(
-                config.pool(), LedgerScan.requirements(platform.gameDirectory()));
 
-        SlotPool effective = switch (sizing) {
-            case PoolSizing.Result.Register register -> {
-                register.growth().forEach(growth -> System.out.println(
-                        "[SweetCookie] block pool grown for an existing world: " + growth.advice()));
-                yield register.pool();
-            }
-            case PoolSizing.Result.Refuse refuse -> {
-                // SCE-4013. blockPoolAutoGrow is off, so an operator pinned the palette size and
-                // wants to be told rather than accommodated. The game still starts: the worlds that
-                // fit are unaffected, and the one that does not reports its own exhaustion when it
-                // loads, naming the content it could not bind.
-                refuse.shortfall().forEach(growth -> System.out.println(
-                        "[SweetCookie] SCE-4013 a saved world needs more than the pinned block pool: "
-                                + growth.advice()));
-                yield config.pool().configured();
-            }
-        };
+        // The pool is exactly what the config says. It is NOT grown to fit the saved worlds:
+        // registration finishes here, before any world exists, so a pool sized from one world
+        // would charge every other world in the instance for it - permanently, in BlockState
+        // allocations and in palette width - and a world copied in later would still not fit.
+        // A world whose ledger needs more reports SCE-4013 when it loads, naming the config line.
+        SlotPool effective = config.pool();
 
         blockPool = BlockPool.register(effective);
         WorldLedger.install(lifecycle, effective);

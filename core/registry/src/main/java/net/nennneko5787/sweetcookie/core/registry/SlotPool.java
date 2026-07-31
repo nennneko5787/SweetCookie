@@ -74,24 +74,27 @@ public record SlotPool(Map<Integer, Integer> capacities) {
                 .sum();
     }
 
-    /**
-     * The element-wise maximum of this pool and {@code other}. SC-120 §6.2.
-     *
-     * <p>How {@code blockPoolAutoGrow} works: a world whose ledger needs more than the config says
-     * enlarges the pool rather than failing to load. With auto-grow off the caller compares instead
-     * and raises {@code SCE-4013}, which is the right behaviour for an operator who wants the
-     * palette size pinned.
-     */
-    public SlotPool grownTo(SlotPool other) {
-        Map<Integer, Integer> merged = new TreeMap<>(capacities);
-        other.capacities.forEach((sizeClass, count) ->
-                merged.merge(sizeClass, count, Math::max));
-        return new SlotPool(merged);
-    }
-
     /** True when every class of {@code required} fits inside this pool. */
     public boolean covers(SlotPool required) {
-        return required.capacities.entrySet().stream()
-                .allMatch(e -> capacity(e.getKey()) >= e.getValue());
+        return shortfallAgainst(required).isEmpty();
+    }
+
+    /**
+     * Which classes {@code required} needs more of than this pool has, and by how much.
+     *
+     * <p>Returns the numbers rather than a boolean because SC-120 §8.1 requires an operator to be
+     * told the class and the shortfall and the exact config line — a bare "does not fit" leaves them
+     * with no way forward.
+     *
+     * @return size class to the count {@code required} needs, for classes that do not fit
+     */
+    public Map<Integer, Integer> shortfallAgainst(SlotPool required) {
+        Map<Integer, Integer> short_ = new TreeMap<>();
+        required.capacities.forEach((sizeClass, count) -> {
+            if (capacity(sizeClass) < count) {
+                short_.put(sizeClass, count);
+            }
+        });
+        return Map.copyOf(short_);
     }
 }

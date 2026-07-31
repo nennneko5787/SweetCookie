@@ -11,11 +11,9 @@ import java.util.TreeMap;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.format.json.CanonicalJson;
 import net.nennneko5787.sweetcookie.core.format.json.Json;
-import net.nennneko5787.sweetcookie.core.format.json.JsonBool;
 import net.nennneko5787.sweetcookie.core.format.json.JsonNumber;
 import net.nennneko5787.sweetcookie.core.format.json.JsonObject;
 import net.nennneko5787.sweetcookie.core.format.json.JsonValue;
-import net.nennneko5787.sweetcookie.core.registry.PoolSizing;
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
 
 /**
@@ -29,12 +27,12 @@ import net.nennneko5787.sweetcookie.core.registry.SlotPool;
  * when a pool class fills up.
  */
 @SpecImpl("SC-120")
-public record SweetCookieConfig(PoolSizing.Config pool, OptionalInt subpackMemoryTierCeiling) {
+public record SweetCookieConfig(SlotPool pool, OptionalInt subpackMemoryTierCeiling) {
 
     public static final String FILE_NAME = "sweetcookie.json";
 
     public static final SweetCookieConfig DEFAULT =
-            new SweetCookieConfig(PoolSizing.Config.DEFAULT, OptionalInt.empty());
+            new SweetCookieConfig(SlotPool.DEFAULT, OptionalInt.empty());
 
     /**
      * Reads the config, writing the defaults when it is absent.
@@ -72,9 +70,7 @@ public record SweetCookieConfig(PoolSizing.Config pool, OptionalInt subpackMemor
                         count.asNumber().map(JsonNumber::intValue).orElse(0))));
 
         return new SweetCookieConfig(
-                new PoolSizing.Config(
-                        capacities.isEmpty() ? SlotPool.DEFAULT : new SlotPool(capacities),
-                        root.getBool("blockPoolAutoGrow").orElse(true)),
+                capacities.isEmpty() ? SlotPool.DEFAULT : new SlotPool(capacities),
                 root.getNumber("subpackMemoryTierCeiling")
                         .map(n -> OptionalInt.of(n.intValue()))
                         .orElse(OptionalInt.empty()));
@@ -84,12 +80,11 @@ public record SweetCookieConfig(PoolSizing.Config pool, OptionalInt subpackMemor
     public String render() {
         Map<String, JsonValue> blockPool = new TreeMap<>(
                 java.util.Comparator.comparingInt(Integer::parseInt));
-        pool.configured().capacities().forEach((sizeClass, count) ->
+        pool.capacities().forEach((sizeClass, count) ->
                 blockPool.put(String.valueOf(sizeClass), JsonNumber.of(count)));
 
         Map<String, JsonValue> root = new LinkedHashMap<>();
         root.put("blockPool", new JsonObject(blockPool));
-        root.put("blockPoolAutoGrow", JsonBool.of(pool.autoGrow()));
         // Null rather than absent: a key an operator can see is one they can change, and
         // SC-100 §7's ceiling is meaningless without knowing it exists.
         root.put("subpackMemoryTierCeiling", subpackMemoryTierCeiling.isPresent()

@@ -1,5 +1,6 @@
 package net.nennneko5787.sweetcookie.core.registry;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -219,14 +220,18 @@ class BlockLedgerTest {
 
     @Test
     @ProvesSpec("SC-120")
-    void growsElementWiseAndNeverShrinks() {
+    void namesTheClassAndTheCountWhenAWorldNeedsMoreThanIsRegistered() {
+        // SC-120 §6.2: the pool does not grow to fit a world. A world that needs more keeps its
+        // bindings and reports SCE-4013 with the numbers an operator has to put in the config -
+        // "does not fit" alone leaves them nothing to do.
         SlotPool required = new SlotPool(Map.of(1, 4096, 16, 1));
-        SlotPool grown = SlotPool.DEFAULT.grownTo(required);
-        assertEquals(4096, grown.capacity(1), "grows where the world needs more");
-        assertEquals(128, grown.capacity(16), "never shrinks below the default");
-        assertTrue(grown.covers(required));
-        assertTrue(!SlotPool.DEFAULT.covers(required),
-                "with auto-grow off this is the SCE-4013 case");
+
+        assertFalse(SlotPool.DEFAULT.covers(required));
+        assertEquals(Map.of(1, 4096), SlotPool.DEFAULT.shortfallAgainst(required),
+                "only the class that does not fit, with the count it needs");
+
+        assertTrue(SlotPool.DEFAULT.covers(new SlotPool(Map.of(16, 1))));
+        assertTrue(SlotPool.DEFAULT.shortfallAgainst(new SlotPool(Map.of(16, 1))).isEmpty());
     }
 
     @Test

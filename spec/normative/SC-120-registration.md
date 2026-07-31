@@ -251,9 +251,27 @@ states the same rule and the two must never diverge again.
 For scale, vanilla is roughly 1 100 blocks and 27 000 block states. Reserved slots cost palette
 space whether used or not; this default is the deliberate trade and it is configurable.
 
-The effective pool at startup is the **element-wise maximum** of: the configured default, what the
-ledger of every world in the instance requires, and what the currently installed packs require. It
-therefore grows automatically across restarts and never shrinks below what a saved world needs.
+**The pool is exactly what the config says.** It is not sized from the saved worlds, and it does not
+grow by itself.
+
+An earlier revision of this section made the effective pool the element-wise maximum of the config
+and every world's ledger. That was withdrawn, for three reasons:
+
+- **The cost is instance-wide and the demand is per world.** One heavily-modded save would enlarge
+  the palette for every other world in the instance — permanently for that session, in `BlockState`
+  allocations and in the width of the global block-state identifier space. A player with forty
+  vanilla saves and one add-on world would pay for the add-on world forty times.
+- **It does not actually close the hole.** Registration finishes during mod init, so a world
+  *copied in later* — a downloaded world, a restored backup — still would not fit, and the growth
+  was recomputed from the worlds present at boot rather than persisted, so deleting a world silently
+  shrank the pool again.
+- **It hid the decision.** Growth was reported in a log line during startup, which is not a surface
+  anybody reads.
+
+A world whose ledger references a slot outside the registered pool therefore loads, keeps those
+bindings (§6.3 rule 1 — a slot is never reused or recomputed), and reports `SCE-4013` naming the
+size class, the count needed and the config line. Raising `blockPool` and restarting restores those
+blocks exactly. Nothing is lost in the meantime; the blocks simply do not resolve.
 
 ### 6.3 Allocation and the ledger
 
@@ -394,22 +412,24 @@ an easier job than the server.
 {
   "blockPool": { "1": 1024, "2": 256, "4": 256, "8": 128, "16": 128, "32": 64,
                  "64": 64, "128": 32, "256": 32, "512": 16, "1024": 8, "4096": 4 },
-  "blockPoolAutoGrow": true,       // grow at startup to fit every world's ledger
   "subpackMemoryTierCeiling": null // SC-100 §7; null = highest the pack offers
 }
 ```
 
-`blockPoolAutoGrow` defaults on. Turning it off means a world whose ledger exceeds the config fails
-to load with `SCE-4013` rather than silently enlarging the pool — appropriate for a server operator
-who wants the palette size pinned.
+`blockPool` is the whole answer: there is no `blockPoolAutoGrow`, because there is no automatic
+growth to switch off (§6.2). A missing config file is written with these defaults, so the line
+`SCE-4013` and `SCE-4010` ask an operator to change is always present and always visible. A
+**malformed** config falls back to the defaults and is **not** overwritten — somebody who broke
+their JSON wants it back, not replaced.
 
 ## 11. Diagnostics allocated here
 
 `SCE-2020` vanilla entity tag cannot be granted · `SCE-2021` spawned entity retains its old spawn
 category · `SCE-3020` pool entity summoned without a Bedrock identity · `SCE-4001` identifier
 collision · `SCE-4010` pool class exhausted · `SCE-4011` schema drift, remapped · `SCE-4012` schema
-drift, reallocated · `SCE-4013` ledger exceeds pinned pool · `SCE-4014` ledger unreadable, backup
-used · `SCE-4015` chunk remapped against a newer ledger revision.
+drift, reallocated · `SCE-4013` a loaded world's ledger references slots outside the registered pool
+· `SCE-4014` ledger unreadable, backup used · `SCE-4015` chunk remapped against a newer ledger
+revision.
 
 ## 12. Testing contract
 
