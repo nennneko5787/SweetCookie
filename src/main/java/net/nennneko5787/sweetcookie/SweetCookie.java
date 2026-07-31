@@ -4,6 +4,7 @@ import net.nennneko5787.sweetcookie.core.registry.SlotPool;
 import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
+import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
@@ -24,6 +25,7 @@ public final class SweetCookie {
     private static LifecycleHooks lifecycle;
     private static SweetCookieConfig config;
     private static BlockPool blockPool;
+    private static AddonRegistry addons = AddonRegistry.empty();
 
     private SweetCookie() {
     }
@@ -57,6 +59,24 @@ public final class SweetCookie {
                 + platform.loaderVersion() + " (" + platform.side() + "): registered "
                 + blockPool.size() + " pool blocks, "
                 + effective.totalStates() + " block states");
+
+        // Installed, not activated (SC-120 §8). Scanned at server start rather than here because
+        // parsing an add-on folder is real work and mod init is on the path to the main menu; a
+        // dedicated server reaches its first server-start immediately anyway.
+        lifecycle.onServerStarting(scope -> {
+            addons = AddonRegistry.scan(platform.addonDirectory());
+            addons.describe().forEach(line -> System.out.println("[SweetCookie] " + line));
+        });
+    }
+
+    /**
+     * The installed add-ons.
+     *
+     * <p>Empty until a server has started. Scanning is what SC-280's management screen lists and
+     * what {@code /sweetcookie packs} will report.
+     */
+    public static AddonRegistry addons() {
+        return addons;
     }
 
     /** The loaded configuration. */

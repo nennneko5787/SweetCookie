@@ -57,6 +57,28 @@ construction and registration are per loader. Whether to depend on **Cloth Confi
 `TODO(SC-280)` — it is the Fabric convention and would save real work, but it is a third-party
 dependency on the client and would need its own NeoForge story.
 
+### 3.1 The version axis is the expensive one, not the loader axis
+
+Measured against both merged jars rather than assumed:
+
+| | 1.21.11 | 26.2 |
+|---|---|---|
+| screen drawing | `Screen.render(GuiGraphics, int, int, float)` | **`Screen.extractRenderState(GuiGraphicsExtractor, int, int, float)`** |
+| text | `GuiGraphics.drawCenteredString(...)` and friends | **absent from `GuiGraphics` entirely** |
+
+This is the same submission-based rewrite as the block and entity render path (ADR-0010), applied to
+the UI. It is **not** a rename: the two versions do not share a rendering model for screens, so a
+screen written against either cannot compile against the other.
+
+That is what makes §3's "version-free widget descriptions" load-bearing rather than tidy. The
+description layer — what rows exist, what each says, which are toggles — is version-free and testable
+headlessly (§7); a small per-version backend turns descriptions into pixels and lives in a
+per-version source directory (SC-220 §3), because the divergence is far past the five-line budget for
+a `//?` comment.
+
+**The description layer comes first, and is useful before any backend exists**: rendered as text it
+is exactly what §1's development loop needs — enable, watch it fail, read why.
+
 ## 4. Configuration file
 
 `config/sweetcookie.json`, the shape sketched in SC-120 §10.
