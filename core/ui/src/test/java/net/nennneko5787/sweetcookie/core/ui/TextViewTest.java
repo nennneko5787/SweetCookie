@@ -12,12 +12,12 @@ class TextViewTest {
 
     @Test
     void actionsArePrintedAsTheCommandsThatDoThem() {
-        // An operator on a dedicated server has no screen to press keys on. A list that says
-        // reordering exists without saying how to do it has told them nothing.
+        // A dedicated server has no screen at all - selection is a client screen (SC-280 5.2).
+        // A list that says reordering exists without saying how has told an operator nothing.
         ViewModel view = new ViewModel("packs", List.of(ViewModel.Section.of("enabled", List.of(
                 ViewModel.Row.of("wizardry", "1.2.0 - 3 blocks").with(List.of(
-                        new ViewModel.Action("disable", 'D', "sweetcookie disable wizardry"),
-                        new ViewModel.Action("lower priority", '[',
+                        new ViewModel.Action("disable", "sweetcookie disable wizardry"),
+                        new ViewModel.Action("lower priority",
                                 "sweetcookie order 1 wizardry")))))));
         assertTrue(TextView.render(view).contains(
                 "        /sweetcookie disable wizardry  /sweetcookie order 1 wizardry"),

@@ -3,9 +3,7 @@ package net.nennneko5787.sweetcookie.fabric;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import net.nennneko5787.sweetcookie.SweetCookie;
-import net.nennneko5787.sweetcookie.client.ui.ViewScreen;
-import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
-import net.nennneko5787.sweetcookie.runtime.ui.Views;
+import net.nennneko5787.sweetcookie.client.ui.AddonPackScreen;
 
 /**
  * Opens the add-on screen from ModMenu. SC-280 §3.
@@ -24,9 +22,7 @@ public final class SweetCookieModMenu implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        // A supplier, not a value: the screen rebuilds it every tick so that enabling a pack from
-        // the screen is visible on the screen.
-        return parent -> new ViewScreen(parent,
-                () -> Views.packs(SweetCookie.addons(), WorldActivation.known()));
+        // Minecraft own pack selection screen, with our add-ons in it (SC-280 section 5.2).
+        return AddonPackScreen::open;
     }
 }

@@ -1,7 +1,6 @@
 package net.nennneko5787.sweetcookie.core.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -9,15 +8,14 @@ import java.util.stream.Stream;
 import net.nennneko5787.sweetcookie.core.format.diag.Severity;
 import org.junit.jupiter.api.Test;
 
-/** SC-280 §7: the widget description is asserted as a line list rather than as a screenshot. */
+/** SC-280 §7.2: the widget description is asserted as a line list rather than as a screenshot. */
 class ViewLayoutTest {
 
-    private static ViewModel view(int packs) {
-        return new ViewModel("SweetCookie add-ons", List.of(ViewModel.Section.of(
-                "enabled in this world, lowest priority first (the last one wins)",
-                Stream.iterate(0, i -> i + 1).limit(packs)
-                        .map(i -> ViewModel.Row.of("pack " + i, "1.0.0 - 1 block").with(List.of(
-                                new ViewModel.Action("disable", 'D', "sweetcookie disable p" + i))))
+    private static ViewModel view(int rows) {
+        return new ViewModel("SweetCookie block pool", List.of(ViewModel.Section.of(
+                "ledger",
+                Stream.iterate(0, i -> i + 1).limit(rows)
+                        .map(i -> ViewModel.Row.of("pack " + i, "1.0.0 - 1 block"))
                         .toList())));
     }
 
@@ -26,60 +24,34 @@ class ViewLayoutTest {
     }
 
     @Test
-    void theSelectedRowIsMarkedAndTheOthersAreNot() {
-        List<String> lines = texts(ViewLayout.lay(view(3), 0, 1));
-        assertTrue(lines.contains("> pack 1"), lines.toString());
-        assertTrue(lines.contains("  pack 0"), lines.toString());
-        assertTrue(lines.contains("  pack 2"), lines.toString());
+    void everyRowIsDrawnUnderItsHeading() {
+        List<String> lines = texts(ViewLayout.lay(view(3), 0));
+        assertEquals(List.of("SweetCookie block pool", "ledger",
+                "pack 0", "1.0.0 - 1 block", "pack 1", "1.0.0 - 1 block",
+                "pack 2", "1.0.0 - 1 block"), lines);
     }
 
     @Test
-    void onlyTheSelectedRowPrintsItsKeys() {
-        // The keys sit under the thing they act on rather than in a legend, so exactly one row shows
-        // them. A legend has to be read and remembered; this is read where the eye already is.
-        assertEquals(1, texts(ViewLayout.lay(view(3), 0, 1)).stream()
-                .filter(line -> line.contains("[D] disable")).count());
+    void anEmptySectionIsSkippedRatherThanDrawnAsABareHeading() {
+        ViewModel view = new ViewModel("t", List.of(
+                ViewModel.Section.of("nothing here", List.of()),
+                ViewModel.Section.of("something", List.of(ViewModel.Row.of("a", "b")))));
+        assertTrue(texts(ViewLayout.lay(view, 0)).stream().noneMatch("nothing here"::equals));
     }
 
     @Test
-    void aViewWithNothingSelectedPrintsNoKeysAtAll() {
-        assertTrue(texts(ViewLayout.lay(view(3), 0, ViewLayout.NOTHING_SELECTED)).stream()
-                .noneMatch(line -> line.contains("[D]")));
+    void scrollingMovesEveryLineByTheSameAmount() {
+        List<ViewLayout.Line> unscrolled = ViewLayout.lay(view(4), 0);
+        List<ViewLayout.Line> scrolled = ViewLayout.lay(view(4), 30);
+        for (int i = 0; i < unscrolled.size(); i++) {
+            assertEquals(unscrolled.get(i).y() - 30, scrolled.get(i).y());
+        }
     }
 
     @Test
-    void theSelectedRowIsDrawnInTheSelectedColour() {
-        List<ViewLayout.Line> lines = ViewLayout.lay(view(2), 0, 0);
-        int selected = lines.stream().filter(l -> l.text().equals("> pack 0"))
-                .findFirst().orElseThrow().argb();
-        int other = lines.stream().filter(l -> l.text().equals("  pack 1"))
-                .findFirst().orElseThrow().argb();
-        assertNotEquals(selected, other);
-    }
-
-    @Test
-    void aSelectionBelowTheFoldScrollsIntoView() {
-        // The bug this prevents: arrow keys walk the selection off the bottom edge and the screen
-        // looks like it stopped responding.
-        ViewModel view = view(40);
-        int screenHeight = 200;
-        int scroll = ViewLayout.scrollTo(view, 39, screenHeight, 0);
-        int y = ViewLayout.lay(view, scroll, 39).stream()
-                .filter(line -> line.text().startsWith("> ")).findFirst().orElseThrow().y();
-        assertTrue(y >= 0 && y <= screenHeight, "selected row at y=" + y);
-    }
-
-    @Test
-    void aSelectionAlreadyOnScreenDoesNotMoveTheList() {
-        // Scrolling by the least it can: a selection moving one row must not throw the whole list
-        // to a new position and cost the user their place.
-        assertEquals(0, ViewLayout.scrollTo(view(40), 1, 400, 0));
-    }
-
-    @Test
-    void aSelectionAboveTheFoldScrollsBackUp() {
-        ViewModel view = view(40);
-        assertTrue(ViewLayout.scrollTo(view, 0, 200, 500) < 500);
+    void heightCoversTheLastLineSoABackendCanBoundItsScrolling() {
+        List<ViewLayout.Line> lines = ViewLayout.lay(view(6), 0);
+        assertTrue(ViewLayout.height(view(6)) > lines.get(lines.size() - 1).y());
     }
 
     @Test
@@ -90,5 +62,19 @@ class ViewLayoutTest {
         ViewLayout.Line note = ViewLayout.lay(view, 0).stream()
                 .filter(line -> line.text().startsWith("SCE-1001")).findFirst().orElseThrow();
         assertEquals(0xFFFF6B6B, note.argb());
+    }
+
+    @Test
+    void aRowsBadgeColoursItsLabel() {
+        ViewModel view = new ViewModel("t", List.of(ViewModel.Section.of("s", List.of(
+                ViewModel.Row.of("warned", "1.0.0", Severity.WARNING, List.of()),
+                ViewModel.Row.of("plain", "1.0.0")))));
+        List<ViewLayout.Line> lines = ViewLayout.lay(view, 0);
+        int warned = lines.stream().filter(l -> l.text().equals("warned"))
+                .findFirst().orElseThrow().argb();
+        int plain = lines.stream().filter(l -> l.text().equals("plain"))
+                .findFirst().orElseThrow().argb();
+        assertEquals(0xFFFFC66B, warned);
+        assertEquals(0xFFDDDDDD, plain);
     }
 }

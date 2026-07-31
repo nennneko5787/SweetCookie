@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("java")
     id("net.neoforged.moddev")
 }
@@ -60,6 +60,10 @@ dependencies {
 
 tasks.withType<JavaCompile>().configureEach {
     options.release = javaVersion
+    // Deprecation warnings are on because they found a real one: NeoForge deprecates
+    // Pack.Metadata's canonical constructor and Fabric does not, which is a loader divergence
+    // worth being told about rather than one to discover from a removal.
+    options.compilerArgs.add("-Xlint:deprecation")
     options.encoding = "UTF-8"
 }
 
@@ -67,3 +71,4 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.named("createMinecraftArtifacts") {
     dependsOn(tasks.named("stonecutterGenerate"))
 }
+

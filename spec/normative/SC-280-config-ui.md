@@ -132,47 +132,63 @@ loses on all three counts. Each is a requirement, not a preference:
 | **what a pack contains** | a name and an icon | counts of what the pack provides, per pack |
 | **why a pack is doing nothing** | silent | a severity badge on the row and its diagnostics quoted in full underneath |
 
-### 5.2 Reordering is dragging
+### 5.2 Selection is Minecraft's own pack screen
 
-**Packs are reordered by dragging them**, and enabled and disabled by dragging them between the two
-sections. That is what Java Edition does and what anyone opening this screen will reach for; a pack
-list that had to be reordered some other way would be the surprising one.
+**`PackSelectionScreen` is constructed directly, with the add-ons in it.** Not a copy of it, not
+something that resembles it: available and selected columns, arrow buttons on hover, the search box,
+the pack folder button, drag-and-drop — all of it is the screen the game ships, because it *is* that
+screen.
 
-What is **not** inherited is that screen's silence. Three requirements, each fixing something it
-leaves the user to work out:
+This is normative, and it settles the interaction question completely: **nothing about selecting an
+add-on can drift from selecting a resource pack, because there is no second implementation to
+drift.** A user already knows how to use it, it gains every improvement Mojang makes to it, and the
+work is a `PackRepository` rather than a list widget.
 
-- **the landing point is shown while the button is still down.** An insertion mark sits where the
-  pack will go. Java Edition answers this only by the pack physically moving after the drop, so a
-  drag that lands wrong has to be undone before it can be understood;
-- **dropping into the other section enables or disables.** The two lists mean what they look like
-  they mean, so dragging is the whole interaction rather than half of one;
-- **the result is stated in words** — the pack's new position and the count it is out of — because a
-  list whose winning end is only implied is what §5.1 is about.
+Two earlier revisions of this section specified a bespoke list — first keyboard-driven, then
+drag-driven. Both were wrong for the same reason: they re-derived behaviour that shipped with the
+game, and a pack list that had to be operated some other way is the surprising one.
 
-Two rules follow from those:
+What the mod supplies is therefore only the data and the parts vanilla leaves blank:
 
-- **a drop must land where the mark promised.** Reordering removes the pack before reinserting it, so
-  an index measured against the list as drawn is one too high whenever the pack moves downwards.
-  Landing one place short of the mark reads as the screen ignoring the drop;
-- **a drop that changes nothing sends nothing.** A nudged mouse must not report a reorder.
+- **the title carries the precedence rule.** It is the one string this screen takes from us, and
+  Java Edition's own pack screen never says which end of the selected column wins (§5.1). Vanilla
+  displays the highest priority at the **top**, so the title says so;
+- **the description says what the pack provides**, and, in red, what is wrong with it. §5.1's second
+  and third points, in the two lines vanilla already draws under a pack's name;
+- **`PackCompatibility` is not repurposed** to mean "this pack has errors". Its values render as
+  "made for a newer/older version of Minecraft", which is a false statement about a Bedrock pack
+  that failed to parse.
 
-Keyboard equivalents are provided for every drag: arrows move a selection, one labelled key per
-action acts on it, and the keys are drawn under the selected row rather than in a legend. These are
-not a second mechanism — both produce the same `/sweetcookie` command (§7.1) — and they are what
-makes the screen usable on a list longer than itself, and without a mouse. Two further rules:
+#### 5.2.1 Committing is a diff
 
-- **the selection must never leave the screen** — the list scrolls to follow it, by the least it can;
-- **an action that cannot apply is not offered** — the last pack has no "raise", rather than a
-  "raise" that does nothing. A key that does nothing is a key a user presses twice before concluding
-  the screen is broken.
+The screen hands back a whole selection; every management operation is a command (§7.1). The
+translation **must be a diff**, not a replay:
+
+- closing the screen unchanged sends nothing and writes nothing;
+- moving one pack sends one command.
+
+Replaying the list would put two lines of chat in front of a user per installed pack, and rewrite
+the activation file once per step for changes nobody made.
+
+The plan's steps are **disables, then enables, then moves**, and each move's position is counted
+against the list as it will be by then. Disabling first shortens the list every later position is
+measured against; enabling before moving means a newly enabled pack is present when its position is
+set. Getting the order wrong lands packs one place out.
+
+Because `getSelectedIds()` is lowest-priority-first — the same direction as the activation file —
+no conversion happens anywhere. **This direction is verified against the jar, not assumed**: the
+screen's model reverses on the way in and again on commit, and reading it backwards would silently
+invert every user's overrides.
 
 ### 5.3 A client that is not running the world says so
 
 Activation is world state, and a client connected to a remote server has not been told it. Such a
 client **must not render the installed list as though everything were disabled** — that is a
-confident wrong answer. It shows what is installed on its own disk, says the server decides which of
-them this world uses, and offers no enable/disable controls until SC-270 §9's handshake gives it the
-real answer.
+confident wrong answer, and committing it would enable packs against a list nobody had seen.
+
+So such a client does not get the selection screen at all. It gets a read-only view listing what is
+installed on its own disk and saying the server decides which of them this world uses, until
+SC-270 §9's handshake gives it the real answer.
 
 ## 6. Client-side pack acceptance
 
@@ -209,13 +225,28 @@ exists.
 The screen **rebuilds its description on a timer, not after sending**. The command is answered on
 another thread; redrawing immediately shows the state the action was about to change.
 
-### 7.2 Where the description layer lives
+### 7.2 What is testable, and where it lives
 
-Everything above the pixels — what rows exist, what each says, which can be acted on, where the lines
-go, what the keys do — is in `core/` and is Minecraft-free. Only the call that turns a laid-out line
-into pixels is per version (§3.1).
+The selection screen itself is not ours to test — it is the game's, and it is exercised every time
+anyone opens the resource-pack list. What **is** ours is the diff from a selection to a set of
+commands (§5.2.1), and that lives in `core/` with no Minecraft in it: plain JUnit, in seconds, and
+every case asserts that applying the plan actually reaches the requested order rather than only that
+the steps look right.
 
-This is what the testing contract above requires rather than merely permits: 26.2 replaced the screen
-rendering model outright, so a test that needed a `Screen` would have to be written twice and run on
-a client. The line list and the key handling are plain JUnit, in seconds, covering both versions at
-once.
+The remaining description layer — the pool view, the ledger, the read-only list of §5.3 — is
+likewise `core/`, with only the call that turns a laid-out line into pixels per version (§3.1). 26.2
+replaced the screen rendering model outright, so anything that needed a `Screen` would have to be
+written twice and run on a client.
+
+### 7.3 The whole selection path is version-free
+
+Checked against both merged jars, signature by signature: `PackSelectionScreen`, `PackRepository`,
+`RepositorySource`, `Pack`, `PackLocationInfo`, `Pack.Metadata`, `PackSelectionConfig`, `PackSource`,
+`PackResources`, `IoSupplier`, `PackType`, `MetadataSectionType` — **identical on 1.21.11 and 26.2,
+constructors included.** None of it is behind §3.1's divergence, because the render rewrite went
+through `Screen`'s drawing and this path never draws.
+
+One loader divergence exists and is not a version one: **NeoForge adds a fifth component to
+`Pack.Metadata` and deprecates the canonical constructor**; Fabric has only the four-argument form.
+The four-argument form is therefore used on both and its warning suppressed at the single call site.
+Deprecation warnings are enabled on both loaders' buildscripts, because this is what turned that up.
