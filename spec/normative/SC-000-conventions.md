@@ -116,8 +116,12 @@ Conformance goldens are canonical JSON so that a diff is meaningful.
 Molang is float-typed and so is much of the Bedrock format. Unless a document says otherwise:
 
 - Bedrock numeric fields parse into **`float`** (IEEE-754 binary32) in the IR, matching the engine.
-- Comparisons of Molang results use `float` semantics, including its rounding. Do **not** widen to
-  `double` "for accuracy" — it changes which branch a pack takes.
+- Molang expressions **yield** `float`, and constant folding at parse time is done in `float`.
+  Widening "for accuracy" changes which branch a pack takes, so nothing here does it deliberately.
+- **Exception, stated:** arithmetic *inside* one Molang expression is evaluated in `double`, because
+  the expression compiler is `double` end to end and replacing it would cost SC-250's frame budget.
+  ADR-0012 records the decision and SC-130 §2.6 the measurement. The observable effect is confined
+  to comparisons and discontinuous functions applied within about 2⁻²⁴ of a boundary.
 - Positions, rotations and pivots are `float`. World coordinates on the Java side are `double`;
   conversion happens at the boundary and is specified per site.
 - An integral Bedrock field that Java models as an integer is parsed as `float` and then narrowed

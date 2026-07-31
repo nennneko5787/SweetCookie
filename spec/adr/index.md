@@ -15,6 +15,7 @@
 | [0009](0009-hand-rolled-platform-services.md) | Platform abstraction is a hand-rolled `ServiceLoader` | accepted | SC-220, SC-230 | low |
 | [0010](0010-geometry-submission-needs-no-abstraction.md) | Geometry submission needs no version abstraction | accepted | SC-180, SC-220 | low |
 | [0011](0011-the-ledger-verifies-implemented.md) | The ledger verifies `implemented` rather than promoting it | accepted | SC-000, SC-240 | medium |
+| [0012](0012-molang-arithmetic-width.md) | Molang evaluates in `double`, and the divergence is stated | accepted | SC-000, SC-130, SC-250 | medium |
 
 ## Open decisions
 

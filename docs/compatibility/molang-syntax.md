@@ -7,8 +7,8 @@ Ledger: [`spec/coverage/molang-syntax.yaml`](../../spec/coverage/molang-syntax.y
 
 | Feature | Status | Notes |
 |---|---|---|
-| `syntax/arithmetic` | stub |  |
-| `syntax/comparison` | stub |  |
+| `syntax/arithmetic` | stub | ADR-0012: the chosen expression compiler evaluates in double throughout, so intermediate values inside one expression will be double-width and only the result narrows to float. Concretely 0.1 + 0.2 > 0.3 will be true here and is false on Bedrock. This becomes a `fidelity` note the moment the evaluator lands; it is recorded now so the decision is not rediscovered later. |
+| `syntax/comparison` | stub | Inherits the width divergence in syntax/arithmetic: a comparison whose operands land within about one part in sixteen million of each other can resolve the opposite way. ADR-0012. |
 | `syntax/logical` | stub |  |
 | `syntax/ternary` | stub |  |
 | `syntax/binary_if` | stub | `a ? b` with no else, yielding 0 when false. Distinct from ternary. |

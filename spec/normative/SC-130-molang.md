@@ -36,10 +36,45 @@ Sections to write:
 - 2.4 Newer constructs: `loop(count, {…})`, `for_each(v.x, array.y, {…})`, `break`, `continue`.
 - 2.5 Arrays and structs; `->` dereference chains such as
   `q.get_nearby_entities(...)->q.health`.
-- 2.6 What mocha does **not** express, and how each gap is closed.
+### 2.6 What mocha does not do
 
-`TODO(SC-130)`: enumerate the mocha gaps concretely. This is a prerequisite for the section being
-complete and needs an experiment, not a guess.
+Measured against `team.unnamed:mocha` 3.0.1, by evaluation rather than by reading signatures, and
+kept as an executable test (`MochaCapabilityTest`) so that a version bump which closes a gap fails
+the build instead of leaving a shim shadowing a working function.
+
+**The language surface is complete.** Every construct ADR-0008 flagged as doubtful works: binary-if
+`a ? b` yielding 0 when false, null-coalescing `??`, `->`, statement bodies with `return`,
+assignment to `v.` and `t.`, `break`, `continue`, blocks, arrays, and case-insensitivity outside
+strings. That part of ADR-0008's risk list was wrong.
+
+Four gaps, none of them on that list:
+
+**1. mocha is `double` end to end.** `NumberValue.of(double)`, `MochaFunction.evaluate()`, the AST's
+`DoubleExpression`, and the emitted bytecode. `NumberValue.normalize` maps NaN and Infinity to zero
+and does not narrow. This contradicts SC-000 §7 and §1 above, and not academically: `0.1 + 0.2 > 0.3`
+is **true** in `double` and **false** in `float`, so a render controller branching on it takes the
+other branch. ADR-0012 records what is done about it.
+
+**2. 36 of Bedrock's 61 `math.*` functions are missing.** Reading `MochaMath`'s public methods
+suggests 19; it implements `ObjectValue` and answers through `getProperty(String)`, so evaluation
+finds 25. The 36 absent are all thirty easing curves, plus `copy_sign`, `inverse_lerp` and `sign`,
+plus `random`, `random_integer` and `die_roll_integer`, which **throw** rather than returning a
+value.
+
+**3. `math.die_roll` is a different function.** `die_roll(1, 2, 2)` must be exactly 2; mocha returns
+a fresh random value below 1 on every call, so the range arguments are not reaching the roll at all.
+
+**4. Syntax errors are silent by default, and some are silent entirely.** Nothing is reported unless
+`handleParseExceptions` is installed — a malformed expression evaluates to 0 and says nothing, which
+is the failure constitution rule 8 exists to forbid. Installing the handler is necessary and **not
+sufficient**: a trailing operator is discarded (`1 +` evaluates to 1) and a ternary missing its true
+branch becomes 0, and neither reaches the handler. A pack with a truncated expression therefore
+loads looking healthy.
+
+Gaps 2 and 3 are closed by binding SweetCookie implementations over mocha's, which is work the
+coverage ledger already tracks as 61 `math.*` entries. Gap 4 is closed by installing the handler and
+raising our own diagnostic with provenance; the silent-truncation half is recorded as a fidelity
+divergence, because detecting it needs a parser we do not own.
 
 ## 3. Scopes
 
