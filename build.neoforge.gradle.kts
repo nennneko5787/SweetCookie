@@ -49,13 +49,36 @@ neoForge {
     }
 }
 
+
+// The Minecraft-free half has to travel WITH the mod. It is our own code and there is nowhere for a
+// user to fetch it from, so `implementation` alone compiles and then dies at runtime with
+// NoClassDefFoundError - which is exactly what the first real-environment test found.
+//
+// Merged rather than nested: core has no dependencies of its own, so there is nothing to isolate,
+// and Fabric's jar-in-jar wants nested jars to be mods while NeoForge's JarJar is a different
+// mechanism again. Copying the classes in is the one answer that is identical on both loaders.
+val coreBundle: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+configurations.named("implementation") { extendsFrom(coreBundle) }
+
+tasks.named<Jar>("jar") {
+    // EXCLUDE, not FAIL: the core modules each carry their own MANIFEST.MF and module marker, and
+    // the mod jar keeps the one it made.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(provider { coreBundle.map { zipTree(it) } }) {
+        exclude("META-INF/MANIFEST.MF", "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    }
+}
+
 dependencies {
     // The Minecraft-free half, via the `core` composite build. ADR-0001. `format` brings `molang`
     // and `api` transitively; `registry` is named separately because it is a peer of `format`,
     // not something `format` depends on - SC-120 is allocation and persistence, not parsing.
-    implementation("net.nennneko5787.sweetcookie:format")
-    implementation("net.nennneko5787.sweetcookie:registry")
-    implementation("net.nennneko5787.sweetcookie:ui")
+    coreBundle("net.nennneko5787.sweetcookie:format")
+    coreBundle("net.nennneko5787.sweetcookie:registry")
+    coreBundle("net.nennneko5787.sweetcookie:ui")
 }
 
 tasks.withType<JavaCompile>().configureEach {
