@@ -81,6 +81,14 @@ dependencies {
     coreBundle("net.nennneko5787.sweetcookie:ui")
 }
 
+// The Minecraft range is PINNED, not open-ended. See the Fabric buildscript for why.
+tasks.named<ProcessResources>("processResources") {
+    inputs.property("minecraftVersion", mc)
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand("minecraftVersion" to mc)
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.release = javaVersion
     // Deprecation warnings are on because they found a real one: NeoForge deprecates

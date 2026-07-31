@@ -19,10 +19,10 @@
   "depends": {
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
-    "minecraft": ">=1.21.11"
+    "minecraft": "${minecraftRange}"
   },
   "suggests": {
     "modmenu": "*"
   },
-  "_comment": "TODO(spike): the minecraft range must become per-node. A single broad range is wrong across the 1.21.11/26.2 seam and will let the mod load on a version it was not compiled for. SC-220 section 6 requires adding a version to touch only settings.gradle.kts and the properties file, so this metadata has to be generated, not hand-written."
+  "_comment": "minecraftRange is filled in per node by processResources. Each jar is compiled against exactly one Minecraft version and pinned to it: the classes it calls do not exist on the other one, so a range that spanned the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps adding a version to settings.gradle.kts plus one buildscript entry."
 }

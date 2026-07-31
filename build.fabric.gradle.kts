@@ -99,6 +99,18 @@ dependencies {
     modCompileOnly("com.terraformersmc:modmenu:$modMenu")
 }
 
+// The Minecraft range is PINNED, not open-ended. This jar is compiled against exactly one version
+// and calls classes that do not exist on the other, so ">=1.21.11" would let it load on 26.2 and
+// die there. The value is the node's own version, so adding a version still touches only
+// settings.gradle.kts and stonecutter.properties.toml (SC-220 section 6).
+tasks.named<ProcessResources>("processResources") {
+    val range = "~$mc"
+    inputs.property("minecraftRange", range)
+    filesMatching("fabric.mod.json") {
+        expand("minecraftRange" to range)
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.release = javaVersion
     // Deprecation warnings are on because they found a real one: NeoForge deprecates

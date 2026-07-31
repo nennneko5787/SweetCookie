@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -27,9 +29,10 @@ import net.nennneko5787.sweetcookie.core.registry.SlotPool;
  * detach per world afterwards with no registration at all (constitution rule 7, ADR-0007).
  *
  * <p>Registration is version-free and loader-free: {@code Registry.register},
- * {@code IntegerProperty.create}, {@code Identifier.fromNamespaceAndPath} and
- * {@code BlockBehaviour.Properties.of} are byte-identical on both supported Minecraft versions, so
- * this lives in the shared source tree with no {@code //?} comments in it.
+ * {@code IntegerProperty.create}, {@code Identifier.fromNamespaceAndPath},
+ * {@code BlockBehaviour.Properties.of} and {@code Properties.setId} are byte-identical on both
+ * supported Minecraft versions, so this lives in the shared source tree with no {@code //?}
+ * comments in it.
  */
 @SpecImpl("SC-120")
 public final class BlockPool {
@@ -58,8 +61,14 @@ public final class BlockPool {
         for (int sizeClass : classes) {
             for (int index = 0; index < pool.capacity(sizeClass); index++) {
                 BlockSlot slot = new BlockSlot(sizeClass, index);
-                PoolBlock block = new PoolBlock(properties(), sizeClass);
-                Registry.register(BuiltInRegistries.BLOCK, identifierOf(slot), block);
+                Identifier id = identifierOf(slot);
+                // The id goes on the PROPERTIES, before the block is constructed, and the same id is
+                // then used to register it. Block's constructor reads it and throws "Block id not
+                // set" without it — which is what the first real client launch hit, because nothing
+                // in a headless build ever constructs a Block.
+                PoolBlock block = new PoolBlock(
+                        properties().setId(ResourceKey.create(Registries.BLOCK, id)), sizeClass);
+                Registry.register(BuiltInRegistries.BLOCK, id, block);
                 registered.put(slot, block);
             }
         }

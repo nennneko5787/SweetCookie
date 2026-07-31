@@ -3,10 +3,10 @@ loaderVersion = "[1,)"
 license = "MIT"
 issueTrackerURL = "https://github.com/nennneko5787/SweetCookie/issues"
 
-# TODO(spike): versionRange values must become per-node. A single broad range is wrong across the
-# 1.21.11/26.2 seam and lets the mod load on a version it was not compiled for. SC-220 section 6
-# requires adding a Minecraft version to touch only settings.gradle.kts and the properties file,
-# so this metadata has to be generated rather than hand-written.
+# minecraftVersion is filled in per node by processResources. Each jar is compiled against exactly
+# one Minecraft version and is pinned to it: the classes it calls do not exist on the other one, so
+# a range spanning the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps
+# adding a version down to settings.gradle.kts plus one buildscript entry.
 
 [[mods]]
 modId = "sweetcookie"
@@ -31,6 +31,7 @@ side = "BOTH"
 [[dependencies.sweetcookie]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.11,)"
+# Pinned to exactly the version this jar was compiled against - see fabric.mod.json for why.
+versionRange = "[${minecraftVersion}]"
 ordering = "NONE"
 side = "BOTH"
