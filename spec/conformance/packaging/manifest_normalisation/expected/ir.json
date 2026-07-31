@@ -35,9 +35,7 @@
           "version": "2.0.0"
         }
       ],
-      "files": [
-        "manifest.json"
-      ],
+      "files": ["manifest.json"],
       "formatVersion": 2,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -61,6 +59,9 @@
           "version": "1.0.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack!a_classic_v2",
       "sourceKind": "DIRECTORY",
       "subpack": {
@@ -83,9 +84,7 @@
           "version": "1.0.0"
         }
       ],
-      "files": [
-        "manifest.json"
-      ],
+      "files": ["manifest.json"],
       "formatVersion": 3,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -111,6 +110,9 @@
           "version": "2.1.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack!b_modern_v3",
       "sourceKind": "DIRECTORY",
       "subpack": {
@@ -127,9 +129,7 @@
     {
       "capabilities": [],
       "dependencies": [],
-      "files": [
-        "manifest.json"
-      ],
+      "files": ["manifest.json"],
       "formatVersion": 1,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -148,6 +148,9 @@
           "version": "3.0.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack!c_skin_v1",
       "sourceKind": "DIRECTORY",
       "subpack": {

@@ -1,0 +1,159 @@
+{
+  "diagnostics": [
+    {
+      "code": "SCE-1031",
+      "count": 1,
+      "messageKey": "sweetcookie.diagnostic.ir.version_sniffed",
+      "pack": "5c00c1e0-0000-4000-8000-000000000011",
+      "path": "models/entity/sc_lying_declaration.geo.json",
+      "severity": "INFO"
+    }
+  ],
+  "packs": [
+    {
+      "capabilities": [],
+      "dependencies": [],
+      "files": ["manifest.json","models/entity/sc_honest_legacy.geo.json","models/entity/sc_lying_declaration.geo.json"],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "Minimal valid resource pack. Original content, authored for this project.",
+        "minEngineVersion": "1.21.0",
+        "name": "SweetCookie Conformance RP",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c00c1e0-0000-4000-8000-000000000011",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        }
+      ],
+      "resource": {
+        "geometries": {
+          "geometry.sc_honest_legacy": {
+            "bones": [
+              {
+                "cubes": [
+                  {
+                    "origin": [-4,0,-4],
+                    "size": [8,8,8],
+                    "uv": {
+                      "down": {
+                        "uv": [16,0],
+                        "uvSize": [8,8]
+                      },
+                      "east": {
+                        "uv": [16,8],
+                        "uvSize": [8,8]
+                      },
+                      "north": {
+                        "uv": [8,8],
+                        "uvSize": [8,8]
+                      },
+                      "south": {
+                        "uv": [24,8],
+                        "uvSize": [8,8]
+                      },
+                      "up": {
+                        "uv": [8,0],
+                        "uvSize": [8,8]
+                      },
+                      "west": {
+                        "uv": [0,8],
+                        "uvSize": [8,8]
+                      }
+                    }
+                  }
+                ],
+                "name": "sc_root",
+                "pivot": [0,0,0],
+                "rotation": [0,0,0]
+              }
+            ],
+            "declaredVersion": "1.8.0",
+            "effectiveVersion": "1.8.0",
+            "identifier": "geometry.sc_honest_legacy",
+            "lossy": false,
+            "sourceFamily": "legacy_1_8",
+            "textureHeight": 16,
+            "textureWidth": 16,
+            "visibleBounds": {
+              "height": 2,
+              "offset": [0,1,0],
+              "width": 2
+            }
+          },
+          "geometry.sc_lying_declaration": {
+            "bones": [
+              {
+                "cubes": [
+                  {
+                    "origin": [-4,0,-4],
+                    "size": [8,8,8],
+                    "uv": {
+                      "down": {
+                        "uv": [0,8],
+                        "uvSize": [8,8]
+                      },
+                      "east": {
+                        "uv": [0,0],
+                        "uvSize": [8,8]
+                      },
+                      "north": {
+                        "uv": [0,0],
+                        "uvSize": [8,8]
+                      },
+                      "south": {
+                        "uv": [0,0],
+                        "uvSize": [8,8]
+                      },
+                      "up": {
+                        "uv": [0,8],
+                        "uvSize": [8,8]
+                      },
+                      "west": {
+                        "uv": [0,0],
+                        "uvSize": [8,8]
+                      }
+                    }
+                  }
+                ],
+                "name": "sc_root",
+                "pivot": [0,0,0],
+                "rotation": [0,0,0]
+              }
+            ],
+            "declaredVersion": "1.8.0",
+            "effectiveVersion": "1.12.0",
+            "identifier": "geometry.sc_lying_declaration",
+            "lossy": true,
+            "sourceFamily": "modern",
+            "textureHeight": 16,
+            "textureWidth": 16,
+            "visibleBounds": {
+              "height": 2,
+              "offset": [0,1,0],
+              "width": 2
+            }
+          }
+        }
+      },
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

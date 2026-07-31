@@ -10,14 +10,14 @@ tier: T0
 # (spec, feature) pair is the unique key, and `SC-110#geometry/family_1_8` names nothing.
 spec: SC-180
 
-skip: >-
-  SC-110's geometry IR does not exist yet, so `ir.packs[0].resource.geometries` addresses nothing.
-  This case was written before the implementation, which is the intended order; specValidate reports
-  it on every run so it cannot be forgotten. Remove this key when SC-180 lands geometry parsing.
-
 features:
   - geometry/family_1_8
   - geometry/family_modern
+  - geometry/bones
+  - geometry/cubes
+  - geometry/box_uv
+  - geometry/per_face_uv
+  - geometry/visible_bounds
 
 description: >-
   A geometry file that DECLARES format_version 1.8.0 but is written in the modern
@@ -29,25 +29,53 @@ description: >-
 pack:
   extends: minimal_rp
   dir: pack
+  container: directory
 
 diagnostics:
   expected:
     - SCE-1031          # declared format_version contradicts the file's structure
   forbidden:
     - SCE-1030          # must NOT fall back to the lowest registered parser
+    - SCE-1035          # nothing in this corpus is malformed
+    - SCE-1036          # nothing required is missing
   exhaustive: true
 
 expect:
   ir: expected/ir.json
-  diagnostics: expected/diagnostics.json
 
 assert:
+  # The lying file declares 1.8.0 and is modern. The structure wins, and the declaration is kept so
+  # a diagnostic can quote both.
   - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].sourceFamily
     equals: modern
-  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].bones
-    contains: sc_root
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].declaredVersion
+    equals: 1.8.0
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].effectiveVersion
+    equals: 1.12.0
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].lossy
+    equals: "true"
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].bones[0].name
+    equals: sc_root
+
+  # The honest file is what it says it is, and gets no sniffing diagnostic of its own.
   - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].sourceFamily
     equals: legacy_1_8
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].lossy
+    equals: "false"
+
   # Box UV expands to per-face UV at parse time, because the reverse is not expressible (SC-180 §3).
-  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.north
-    absent: false
+  # The 8x8x8 cube at uv [0, 0]: north sits one depth in on both axes, up sits above it.
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.north.uv
+    equals: "[8,8]"
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.north.uvSize
+    equals: "[8,8]"
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.up.uv
+    equals: "[8,0]"
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].bones[0].cubes[0].uv.west.uv
+    equals: "[0,8]"
+
+  # Both families normalise to the same shape: nothing downstream can tell them apart by structure.
+  - that: ir.packs[0].resource.geometries['geometry.sc_lying_declaration'].bones[0].cubes[0].uv.north.uvSize
+    equals: "[8,8]"
+  - that: ir.packs[0].resource.geometries['geometry.sc_honest_legacy'].visibleBounds.height
+    equals: "2"

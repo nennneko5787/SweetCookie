@@ -92,8 +92,99 @@ presence of `geometry.*` keys means legacy; the declared version loses.
 The IR normalises both into one model with per-face UV, since box UV is expressible as per-face UV
 but not the reverse.
 
-Sections to write: bone hierarchy and pivots, `inflate`, `mirror`, per-cube rotation, locators,
-`poly_mesh`, `binding`, `visible_bounds`, and the Bedrock → Java coordinate conversion.
+### 3.1 What the sniffer looks at
+
+| Shape | Family |
+|---|---|
+| root has a `minecraft:geometry` member | modern |
+| root has any member matching `geometry\..*` | `1.8.0` |
+| neither | abstain; the declared version decides |
+
+Checked in that order. A file holding both is modern, because the modern member is the one a tool
+writes deliberately.
+
+The declared version is **not** discarded — it is recorded in `Provenance.declaredVersion` alongside
+the effective one and reported as `SCE-1031`. "Your file says 1.8.0 and is not" is only actionable if
+the author can see both halves.
+
+### 3.2 One IR for both families
+
+| Concept | `1.8.0` | modern | IR |
+|---|---|---|---|
+| identifier | the root member's name | `description.identifier` | `identifier`, with the `a:b` parent split off |
+| texture size | `texturewidth` / `textureheight` | `description.texture_width` / `_height` | `textureWidth` / `textureHeight`, defaulting to 16 |
+| culling box | `visible_bounds_*` at model level | the same keys under `description` | `visibleBounds`, absent when undeclared |
+| cube UV | `uv: [u, v]` | `uv: {north: {uv, uv_size, material_instance}, …}` | always per-face |
+
+**Box UV is not a family marker.** Modern files use it constantly, so the *shape of the value*
+decides how a cube's `uv` is read, not the file's family. A cube declaring no `uv` at all gets an
+empty face map rather than a guessed rectangle: a guess renders the wrong part of the texture and
+looks deliberate.
+
+Bones are kept as a **flat list**, with the hierarchy expressed by `parent` naming another bone.
+Bedrock's own files are flat and unordered — a child may precede its parent, and a named parent may
+not exist — so resolving a tree at parse time would mean either rejecting files Bedrock loads or
+inventing a root. Resolution is a later pass with its own diagnostic.
+
+A bone with no `name` is skipped with `SCE-1036`; nothing can reference, parent or animate it, and
+losing one bone costs less than losing the model. A model with no bones is legal and common: it is
+how an inheriting model says "the parent's bones, unchanged".
+
+Locators accept both spellings — `"name": [x, y, z]` and `"name": {"offset", "rotation"}` — and are
+**sorted by name** in the IR. Bedrock writes them as a JSON object; a golden that preserved the
+author's typing order would churn on an edit that changed nothing.
+
+### 3.3 Box UV expansion
+
+The `1.8.0` family's `uv: [u, v]` expands against the cube's `size: [x, y, z]` into the unwrapped-box
+arrangement, with the depth forming the margins:
+
+```
+     +----+----+
+     | UP |DOWN|
++----+----+----+-----+
+|WEST|NRTH|EAST|SOUTH|
++----+----+----+-----+
+```
+
+| Face | origin | size |
+|---|---|---|
+| `north` | `(u + z, v + z)` | `(x, y)` |
+| `south` | `(u + 2z + x, v + z)` | `(x, y)` |
+| `east` | `(u + z + x, v + z)` | `(z, y)` |
+| `west` | `(u, v + z)` | `(z, y)` |
+| `up` | `(u + z, v)` | `(x, z)` |
+| `down` | `(u + z + x, v)` | `(x, z)` |
+
+`TODO(SC-180)`: **this arrangement is asserted, not verified.** It is what every available reference
+describes, and no reference is an artifact. Nothing in a parse-level test can distinguish it from the
+variant with `east` and `west` exchanged — a real possibility, since Bedrock's Z axis is mirrored
+relative to Java's — because telling them apart requires looking at a rendered image. Until a T3 case
+does that, `geometry/box_uv` carries the caveat, and the constants live in one class so the
+correction is three lines rather than an audit.
+
+`mirror` flips U per cube and is parsed but not applied to the expansion. `inflate` grows a box
+without changing its UV, and is likewise recorded and not applied — both are render-stage concerns.
+
+### 3.4 Coordinate conventions
+
+**The IR preserves Bedrock's axes, pivots and handedness unchanged** (SC-110 §6.1). UVs stay in
+texel units and are not divided by the texture size: the divisor is per model, packs get it wrong,
+and folding a possibly-wrong divisor into the data makes the mistake unrecoverable.
+
+Conversion to Java's conventions happens once, in the renderer, where it can be checked against an
+image.
+
+### 3.5 Not yet parsed
+
+`poly_mesh`, `texture_meshes` and `binding` are recognised and preserved in the unknown bag rather
+than modelled. `binding` is Molang, and SC-110 §7 forbids storing Molang as text that something might
+evaluate — a raw string that looks evaluable is exactly how a parse error surfaces mid-frame with no
+provenance. It is kept only so the round trip is lossless and so a diagnostic can name it, and it
+becomes a `MolangExpr` when SC-130 lands.
+
+`inheritance` — the `geometry.a:geometry.b` syntax — is split into `identifier` and `parent` at parse
+time, but nothing resolves the parent yet.
 
 ## 4. Animation
 

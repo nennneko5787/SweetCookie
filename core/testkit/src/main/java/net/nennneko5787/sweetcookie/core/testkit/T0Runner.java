@@ -14,6 +14,9 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.format.diag.Diagnostic;
+import net.nennneko5787.sweetcookie.core.format.ir.AddonIr;
+import net.nennneko5787.sweetcookie.core.format.ir.AddonIrJson;
+import net.nennneko5787.sweetcookie.core.format.ir.IrLoader;
 import net.nennneko5787.sweetcookie.core.format.json.CanonicalJson;
 import net.nennneko5787.sweetcookie.core.format.json.JsonObject;
 import net.nennneko5787.sweetcookie.core.format.json.JsonValue;
@@ -58,11 +61,16 @@ public final class T0Runner {
         List<String> problems = new ArrayList<>();
 
         try (LoadedAddon addon = AddonLoader.load(List.of(packRoot), options)) {
-            JsonObject ir = LoadedAddonJson.of(addon, rewrite);
-            JsonValue diagnostics = LoadedAddonJson.diagnostics(addon.diagnostics(), rewrite);
+            // Always through the IR, even for a case that only asserts on packaging. One pipeline
+            // means a packaging case notices when a later domain's parser starts emitting a
+            // diagnostic it did not emit before, which is the regression class `forbidden` exists
+            // for and the one a separate shortcut path would hide.
+            AddonIr parsed = IrLoader.parse(addon);
+            JsonObject ir = AddonIrJson.of(parsed, rewrite);
+            JsonValue diagnostics = LoadedAddonJson.diagnostics(parsed.diagnostics(), rewrite);
             JsonValue root = new JsonObject(Map.of("ir", ir, "diagnostics", diagnostics));
 
-            checkDiagnostics(testCase, addon, problems);
+            checkDiagnostics(testCase, parsed, problems);
             checkAssertions(testCase, root, problems);
 
             testCase.expect().ir().ifPresent(name ->
@@ -78,7 +86,7 @@ public final class T0Runner {
     }
 
     private void checkDiagnostics(
-            ConformanceCase testCase, LoadedAddon addon, List<String> problems) {
+            ConformanceCase testCase, AddonIr addon, List<String> problems) {
         Set<String> emitted = new LinkedHashSet<>();
         for (Diagnostic diagnostic : addon.diagnostics().diagnostics()) {
             emitted.add(diagnostic.codeString());

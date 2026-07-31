@@ -63,9 +63,12 @@ abstract class SpecConformanceTask : DefaultTask() {
             }
         }
 
-        // 2. Every case a tracked entry relies on must have run and passed.
+        // 2. Every case ANY entry relies on must have run and passed - not only the ones above
+        // `stub`. A `stub` entry may name the case that proves its parse (that is how a parsing
+        // layer records evidence for a feature whose runtime effect does not exist yet), and a
+        // reference nothing checks is a reference that rots.
         val outcomes = readOutcomes(problems)
-        val relied = entries.filter { it.claimsImplementation }
+        val relied = entries.filter { it.conformance.isNotEmpty() }
         for (entry in relied) {
             for (caseId in entry.conformance) {
                 val where = "spec/coverage/${entry.shard}.yaml [${entry.id}]"

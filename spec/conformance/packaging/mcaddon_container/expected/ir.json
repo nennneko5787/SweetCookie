@@ -12,11 +12,7 @@
     {
       "capabilities": [],
       "dependencies": [],
-      "files": [
-        "documentation/example/manifest.json",
-        "entities/sc_conformance_probe.json",
-        "manifest.json"
-      ],
+      "files": ["documentation/example/manifest.json","entities/sc_conformance_probe.json","manifest.json"],
       "formatVersion": 2,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -35,6 +31,9 @@
           "version": "1.0.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack.mcaddon!behaviour",
       "sourceKind": "MCADDON",
       "subpack": {
@@ -51,9 +50,7 @@
     {
       "capabilities": [],
       "dependencies": [],
-      "files": [
-        "manifest.json"
-      ],
+      "files": ["manifest.json"],
       "formatVersion": 2,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -72,6 +69,9 @@
           "version": "1.0.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack.mcaddon!deeply/nested/resources",
       "sourceKind": "MCADDON",
       "subpack": {

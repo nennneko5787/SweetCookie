@@ -4,12 +4,7 @@
     {
       "capabilities": [],
       "dependencies": [],
-      "files": [
-        "manifest.json",
-        "texts/de_DE.lang",
-        "texts/en_US.lang",
-        "texts/languages.json"
-      ],
+      "files": ["manifest.json","texts/de_DE.lang","texts/en_US.lang","texts/languages.json"],
       "formatVersion": 2,
       "header": {
         "baseGameVersion": "0.0.0",
@@ -28,6 +23,9 @@
           "version": "1.0.0"
         }
       ],
+      "resource": {
+        "geometries": {}
+      },
       "source": "pack",
       "sourceKind": "DIRECTORY",
       "subpack": {
@@ -47,10 +45,7 @@
             "ui.sc_conformance.slot": "Slot #1"
           }
         },
-        "languages": [
-          "en_US",
-          "de_DE"
-        ]
+        "languages": ["en_US","de_DE"]
       },
       "unknownCapabilities": []
     }

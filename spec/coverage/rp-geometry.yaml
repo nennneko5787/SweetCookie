@@ -6,6 +6,15 @@
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
+#
+# EVERYTHING HERE IS `stub` AND STAYS `stub` UNTIL SOMETHING DRAWS.
+# These are SC-180 features, and SC-180 is rendering. Their runtime effect is a model appearing on
+# screen, and nothing renders yet. The parser is written, tested and proven by a conformance case -
+# and `stub` is exactly what SC-000 section 3 calls that: recognised, parsed into the IR, no runtime
+# effect. Promoting them because a parser exists would tell a user reading the compatibility table
+# that geometry works.
+#
+# A `stub` entry may still name the case that proves its parse; it may not name an `impl`.
 
 domain: rp-geometry
 spec: SC-180
@@ -14,45 +23,73 @@ upstream: null
 entries:
   - id: geometry/family_1_8
     status: stub
+    conformance: [packaging/format_version_sniffing]
+    diagnostics: [SCE-1031]
     notes: >-
-      Top-level geometry.* keys, box UV only.
+      Top-level geometry.* keys, box UV only. Parsed and proven; the structure decides the family and
+      a contradicting format_version is reported rather than obeyed.
   - id: geometry/family_modern
     status: stub
+    conformance: [packaging/format_version_sniffing]
+    diagnostics: [SCE-1031]
     notes: >-
-      minecraft:geometry array, per-face UV.
+      minecraft:geometry array, per-face UV. Normalises to the same IR as the 1.8.0 family, so
+      nothing downstream can tell which a pack used.
   - id: geometry/bones
     status: stub
+    conformance: [packaging/format_version_sniffing]
+    notes: >-
+      Kept as a flat list with parent named by string, matching Bedrock's own files. Hierarchy
+      resolution is a later pass; a nameless bone is skipped with SCE-1036.
   - id: geometry/pivot
     status: stub
   - id: geometry/rotation
     status: stub
   - id: geometry/cubes
     status: stub
+    conformance: [packaging/format_version_sniffing]
   - id: geometry/box_uv
     status: stub
+    conformance: [packaging/format_version_sniffing]
     notes: >-
-      Expanded to per-face UV at parse time; the reverse is not expressible.
+      Expanded to per-face UV at parse time; the reverse is not expressible. The unwrap arrangement
+      is ASSERTED, not verified - nothing at parse level can distinguish it from the variant with
+      east and west exchanged, which needs a rendered image. See SC-180 section 3.3.
   - id: geometry/per_face_uv
     status: stub
+    conformance: [packaging/format_version_sniffing]
   - id: geometry/inflate
     status: stub
+    notes: >-
+      Parsed and recorded on both bone and cube; applying it is a render-stage concern.
   - id: geometry/mirror
     status: stub
+    notes: >-
+      Parsed and recorded; the U flip it implies is not applied to box-UV expansion.
   - id: geometry/locators
     status: stub
+    notes: >-
+      Both spellings normalise - "name" as [x, y, z] and "name" as an object of offset and rotation.
+      Sorted by name so a golden does not churn on the author's typing order.
   - id: geometry/poly_mesh
     status: stub
     notes: >-
-      Forces the dynamic block render path - cannot be transpiled to a Java block model.
+      Forces the dynamic block render path - cannot be transpiled to a Java block model. Preserved in
+      the unknown bag rather than modelled.
   - id: geometry/binding
     status: stub
     notes: >-
-      Molang bone reparenting, evaluated per frame.
+      Molang bone reparenting, evaluated per frame. Kept as text in the IR and deliberately NOT
+      exposed as an expression: SC-110 section 7 forbids storing Molang as something evaluable, and
+      SC-130 does not exist yet.
   - id: geometry/inheritance
     status: stub
+    conformance: [packaging/format_version_sniffing]
     notes: >-
-      geometry.a:geometry.b parent syntax.
+      The geometry.a:geometry.b parent syntax. Split into identifier and parent at parse time on the
+      FIRST colon; nothing resolves the parent yet.
   - id: geometry/visible_bounds
     status: stub
+    conformance: [packaging/format_version_sniffing]
   - id: geometry/texture_meshes
     status: stub

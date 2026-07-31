@@ -83,7 +83,8 @@ public final class LoadedAddonJson {
         return array(out);
     }
 
-    private static JsonObject pack(LoadedPack pack, UnaryOperator<String> rewritePath) {
+    /** One pack, for a caller that renders a richer model around it — see {@code AddonIrJson}. */
+    public static JsonObject pack(LoadedPack pack, UnaryOperator<String> rewritePath) {
         Map<String, JsonValue> node = new LinkedHashMap<>();
         node.put("id", string(pack.id().toString()));
         node.put("loadOrder", JsonNumber.of(pack.loadOrder()));

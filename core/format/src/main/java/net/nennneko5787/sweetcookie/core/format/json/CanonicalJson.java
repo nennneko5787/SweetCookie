@@ -54,6 +54,9 @@ public final class CanonicalJson {
      * stored in this form and <b>compared after canonicalising both sides</b>, which keeps the
      * comparison exact while leaving the file reviewable. Key order and number spelling are
      * identical to {@link #write}.
+     *
+     * <p>An array holding only scalars stays on one line. Geometry is mostly three-element vectors,
+     * and one line each is the difference between a golden a reviewer reads and one they skim.
      */
     public static String pretty(JsonValue value) {
         StringBuilder sb = new StringBuilder();
@@ -80,6 +83,11 @@ public final class CanonicalJson {
                 sb.append(closing).append('}');
             }
             case JsonArray a when a.isEmpty() -> sb.append("[]");
+            // A vector, a UV pair or a list of names goes on one line. Spreading [-4, 0, -4] over
+            // five lines is how a golden becomes something nobody scrolls through, and a golden
+            // nobody reads on failure is one nobody trusts.
+            case JsonArray a when a.values().stream().noneMatch(
+                    v -> v instanceof JsonObject || v instanceof JsonArray) -> writeTo(sb, a);
             case JsonArray a -> {
                 sb.append("[\n");
                 for (int i = 0; i < a.size(); i++) {

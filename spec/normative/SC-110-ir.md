@@ -79,6 +79,23 @@ into memory.
 All three carry the line and column, because "malformed JSON" without a position is a diagnostic the
 author cannot act on.
 
+### 2.3 Diagnostics allocated by the parser layer
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `SCE-1030` | WARNING | the declared version is below the lowest registered parser; the lowest was used (§3.1 rule 2) |
+| `SCE-1031` | INFO | the file's structure contradicts its declared version, and the structure won (§3.1 rule 3) |
+| `SCE-1035` | WARNING | a known key held a value of the wrong shape; the field is dropped and the object survives |
+| `SCE-1036` | WARNING | a required key is absent, so the object it belongs to is skipped |
+| `SCE-1037` | WARNING | no parser is registered for this content kind at all |
+
+`SCE-1031` is INFO rather than WARNING on purpose. It is not an anomaly: the authoring tools have
+shipped mismatched declarations for years, a large fraction of published packs trip it, and raising
+it to WARNING would train authors to ignore the warning channel.
+
+`SCE-1035` and `SCE-1036` are the two halves of SC-000 §10 made concrete — drop the field, or skip
+the object, and in both cases continue.
+
 ## 3. `format_version` normalisation
 
 ### 3.1 The dispatcher

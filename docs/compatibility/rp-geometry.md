@@ -7,19 +7,19 @@ Ledger: [`spec/coverage/rp-geometry.yaml`](../../spec/coverage/rp-geometry.yaml)
 
 | Feature | Status | Notes |
 |---|---|---|
-| `geometry/family_1_8` | stub | Top-level geometry.* keys, box UV only. |
-| `geometry/family_modern` | stub | minecraft:geometry array, per-face UV. |
-| `geometry/bones` | stub |  |
+| `geometry/family_1_8` | stub | Top-level geometry.* keys, box UV only. Parsed and proven; the structure decides the family and a contradicting format_version is reported rather than obeyed. |
+| `geometry/family_modern` | stub | minecraft:geometry array, per-face UV. Normalises to the same IR as the 1.8.0 family, so nothing downstream can tell which a pack used. |
+| `geometry/bones` | stub | Kept as a flat list with parent named by string, matching Bedrock's own files. Hierarchy resolution is a later pass; a nameless bone is skipped with SCE-1036. |
 | `geometry/pivot` | stub |  |
 | `geometry/rotation` | stub |  |
 | `geometry/cubes` | stub |  |
-| `geometry/box_uv` | stub | Expanded to per-face UV at parse time; the reverse is not expressible. |
+| `geometry/box_uv` | stub | Expanded to per-face UV at parse time; the reverse is not expressible. The unwrap arrangement is ASSERTED, not verified - nothing at parse level can distinguish it from the variant with east and west exchanged, which needs a rendered image. See SC-180 section 3.3. |
 | `geometry/per_face_uv` | stub |  |
-| `geometry/inflate` | stub |  |
-| `geometry/mirror` | stub |  |
-| `geometry/locators` | stub |  |
-| `geometry/poly_mesh` | stub | Forces the dynamic block render path - cannot be transpiled to a Java block model. |
-| `geometry/binding` | stub | Molang bone reparenting, evaluated per frame. |
-| `geometry/inheritance` | stub | geometry.a:geometry.b parent syntax. |
+| `geometry/inflate` | stub | Parsed and recorded on both bone and cube; applying it is a render-stage concern. |
+| `geometry/mirror` | stub | Parsed and recorded; the U flip it implies is not applied to box-UV expansion. |
+| `geometry/locators` | stub | Both spellings normalise - "name" as [x, y, z] and "name" as an object of offset and rotation. Sorted by name so a golden does not churn on the author's typing order. |
+| `geometry/poly_mesh` | stub | Forces the dynamic block render path - cannot be transpiled to a Java block model. Preserved in the unknown bag rather than modelled. |
+| `geometry/binding` | stub | Molang bone reparenting, evaluated per frame. Kept as text in the IR and deliberately NOT exposed as an expression: SC-110 section 7 forbids storing Molang as something evaluable, and SC-130 does not exist yet. |
+| `geometry/inheritance` | stub | The geometry.a:geometry.b parent syntax. Split into identifier and parent at parse time on the FIRST colon; nothing resolves the parent yet. |
 | `geometry/visible_bounds` | stub |  |
 | `geometry/texture_meshes` | stub |  |
