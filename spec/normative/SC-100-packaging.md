@@ -32,10 +32,16 @@ The implementation **MUST** locate packs by **recursively searching for `manifes
 depth**, not by assuming a layout. `.mcaddon` nesting is not normalised in practice: real add-ons
 put packs at the root, in one subdirectory each, inside nested `.mcpack` files, or in a mixture.
 
-Nesting depth **MUST** be bounded (§3.3). A `manifest.json` found inside a directory that already
+Nesting depth **MUST** be bounded (§3). A `manifest.json` found inside a directory that already
 belongs to a discovered pack **MUST NOT** start a second pack — the outermost `manifest.json` on any
 path wins, and an inner one is reported as `SCE-1010` and ignored. Otherwise a pack that happens to
 ship a sample `manifest.json` as documentation would be mis-detected.
+
+The same rule applies to **nested archives**, in the same direction: an archive that lies inside an
+already-discovered pack is that pack's *content* and **MUST NOT** be opened as a container. Several
+popular packs ship an example `.mcpack` as documentation, and descending into one would invent a
+pack the author never published. An archive that lies outside every discovered pack root — the
+ordinary `.mcaddon` shape — is opened, subject to the depth limit.
 
 ### 2.2 World containers
 
@@ -53,7 +59,7 @@ below and **MUST** abort the offending *pack* — not the whole load — when on
 |---|---|---|
 | Path escaping the extraction root after normalisation (zip-slip) | forbidden | `SCE-1001` |
 | Absolute paths, drive letters, or `..` segments in an entry name | forbidden | `SCE-1001` |
-| Symlink or non-regular entries | forbidden | `SCE-1002` |
+| Symlink or non-regular entries | forbidden | `SCE-1002` (see below) |
 | Total uncompressed size | 512 MiB | `SCE-1003` |
 | Compression ratio, any single entry | 200:1 | `SCE-1003` |
 | Entry count | 65 536 | `SCE-1004` |
@@ -71,6 +77,18 @@ case-insensitive filesystems and real packs reference `Textures/Blocks/Foo.PNG` 
 the **first in archive order** wins.
 
 Limits are configurable; the defaults above are what the conformance corpus asserts.
+
+**`SCE-1002` is currently never emitted, and that is deliberate.** `java.util.zip` does not expose a
+zip entry's external file attributes, so the Unix mode bits marking a symlink are not reachable
+without hand-parsing the central directory — and the check would have nothing to protect, because
+entries are read into memory on demand and never materialised on a filesystem. A symlink entry is
+only ever a file whose contents happen to be a path. **Any stage that begins writing entries to disk
+MUST reinstate this check**; the code is allocated and its documentation says so rather than being
+quietly retired, because that is the moment it stops being theoretical.
+
+Declared sizes are attacker-controlled. The ratio and single-file limits are therefore checked
+**twice**: once against the archive's own headers, which is cheap and catches the honest case, and
+again against the bytes that actually arrive. A lying header buys nothing.
 
 ## 4. `manifest.json`
 
@@ -163,11 +181,17 @@ selects the highest version and emits `SCE-1027`.
 Deterministic, and it decides override precedence for §9 and identifier-collision tiebreaks
 (SC-120).
 
-Order is, in decreasing precedence:
+**Later in load order wins**, consistently with SC-110 §9.1. The resolved order is:
 
-1. Explicit order recorded in the world's activation file, for packs that appear in it.
-2. For the remainder: ascending by `(sanitised source path, header.uuid)` — a total order over
-   strings, independent of filesystem enumeration.
+1. First, packs the world's activation file does **not** name, ascending by
+   `(sanitised source path, header.uuid)` — a total order over strings, independent of filesystem
+   enumeration.
+2. Then, packs it does name, in that file's order. The last entry in the activation file therefore
+   has the highest precedence of all.
+
+An explicit choice outranks an incidental one. This paragraph originally said only "in decreasing
+precedence", which did not say whether a listed pack outranked an unlisted one; the ambiguity was
+found while implementing §11 and is resolved here rather than in code.
 
 Within a single `.mcaddon`, archive entry order is *not* used, because it is not stable across
 re-zipping. The rule above uses the pack's path *inside* the container, which is.
@@ -226,13 +250,23 @@ packs contain `#` in values.
 Everything after this document reads through one interface:
 
 ```java
-public interface PackVfs {
+public interface PackVfs extends Closeable {
     Optional<ByteSource> read(String path);       // case-insensitive, '/'-separated, root-relative
     List<String> list(String directory);          // non-recursive, normalised paths
     Stream<String> walk(String directory);        // recursive
+    Stream<String> paths();                       // every entry, in archive order
     boolean exists(String path);
+    PackVfs rooted(String prefix);                // a view, for a pack inside a container
+    void close();                                 // releases the archive; a view closes nothing
 }
 ```
+
+`paths()` is in archive order, which is what makes discovery and the IR deterministic (SC-110 §10).
+A directory has no declared order, so one is imposed by sorting on the relative path — two machines
+whose filesystems enumerate differently must still produce the same load order.
+
+`Closeable` because an implementation may hold an open archive; see §12. Closing a `rooted` **view**
+must not close the archive its siblings are still reading.
 
 A pack's VFS is a **stack of layers**, highest precedence first:
 
@@ -274,19 +308,20 @@ public record LoadedAddon(
 ) {}
 
 public record LoadedPack(
-    PackId id,                       // header.uuid, normalised
-    SemanticVersion version,
-    PackHeader header,
-    List<PackModule> modules,
-    List<PackDependency> dependencies,
-    Set<Capability> capabilities,
+    Manifest manifest,               // header, modules, dependencies, capabilities, metadata
     SubpackSelection subpacks,
     Localisation texts,
-    PackVfs vfs,
+    PackVfs vfs,                     // subpack overlay already applied
     PackSource source,               // where it came from, for diagnostics and reload
-    int loadOrder
+    int loadOrder                    // index in the resolved order; higher wins
 ) {}
 ```
+
+`id()`, `version()`, `header()`, `modules()`, `dependencies()` and `capabilities()` are accessors
+delegating to `manifest`. They were fields in the first draft of this document; every one of them is
+already a field of `Manifest`, and two places for one fact is two places to edit it.
+
+`vfs` already has the selected subpack layered over it, so no consumer needs to know subpacks exist.
 
 No file inside the pack other than `manifest.json` and `texts/**` has been read at this point.
 Everything else is deferred to SC-110's parser dispatch, which reads through `vfs`.
@@ -303,6 +338,21 @@ user from replacing the file on Windows, which is the platform most add-on autho
 
 ## 13. Diagnostics allocated here
 
-`SCE-1001`–`SCE-1028` (parse, listed inline above) and `SCE-2001`–`SCE-2005` (semantic). The
+`SCE-1001`–`SCE-1029` (parse, listed inline above) and `SCE-2001`–`SCE-2005` (semantic). The
 authoritative table is SC-240; this document allocates the ranges and must be kept consistent with
 it by `specValidate`.
+
+Two codes were allocated while implementing this document and are recorded here:
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `SCE-1012` | WARNING | a `modules[].type` this build does not recognise; recorded, then ignored |
+| `SCE-1029` | ERROR | a manifest with no usable `header.uuid`, or no `modules` |
+
+`SCE-1029` marks the only two cases in which a manifest is refused outright. Everything else in §4
+degrades, per constitution rule 1. These two do not, because a pack with no identity cannot be
+tracked in the ledger (SC-120) and a pack with no modules has nothing to contribute.
+
+`SCE-1012` exists because the alternative — dropping an unrecognised module type silently — is
+exactly the failure mode constitution rule 8 exists to prevent: a pack contributing content that
+never appears, with nothing anywhere saying so.

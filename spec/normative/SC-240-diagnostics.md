@@ -89,7 +89,7 @@ renumbered**: users search the internet for them.
 
 | Range | Class | Allocated in |
 |---|---|---|
-| 1000–1999 | Parse | SC-100 (1001–1028), SC-110 (1030–1040) |
+| 1000–1999 | Parse | SC-100 (1001–1029), SC-110 (1030–1040) |
 | 2000–2999 | Semantic | SC-100 (2001–2005), SC-110 (2010–2012), SC-120 (2020–2021) |
 | 3000–3999 | Runtime | SC-120 (3020), SC-130, SC-160, SC-200 |
 | 4000–4999 | Registration and persistence | SC-120 (4001, 4010–4015) |
