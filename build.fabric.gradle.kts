@@ -31,6 +31,12 @@ sourceSets {
         // Constitution rule 12, SC-220 section 3.
         java.srcDir(rootProject.file("src/fabric/java"))
         resources.srcDir(rootProject.file("src/fabric/resources"))
+
+        // The VERSION axis, separate from the loader axis above (SC-220 section 3). Client
+        // rendering is where the two Minecraft versions genuinely diverge - 26.2 replaced
+        // Screen.render(GuiGraphics) with extractRenderState(GuiGraphicsExtractor) and removed
+        // GuiGraphics's text methods - and section 3 requires a directory rather than //? for it.
+        java.srcDir(rootProject.file("src/client/gfx-" + mc.replace('.', '_')))
     }
 }
 
