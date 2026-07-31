@@ -32,4 +32,5 @@ include(":api")       // @SpecImpl / @ProvesSpec annotations
 include(":format")    // archive, manifest, JSON -> IR. The largest module in the project.
 include(":molang")    // mocha binding, 315 query SPI, 106 filter tests
 include(":script")    // JS host SPI and @minecraft/* facade interfaces
+include(":registry")  // logical identifiers, the block slot pool and the world ledger
 include(":testkit")   // conformance case loader, trace comparator, goldens

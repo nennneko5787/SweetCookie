@@ -46,7 +46,12 @@ sweetcookie:<sanitise(bedrock namespace)>.<sanitise(bedrock path)>
 |---|---|
 | `wizardry:magic_wand` | `sweetcookie:wizardry.magic_wand` |
 | `my_pack:fire/ember_block` | `sweetcookie:my_pack.fire_ember_block` |
-| `Cool-Pack:Thing` | `sweetcookie:cool_pack.thing` |
+| `Cool-Pack:Thing` | `sweetcookie:cool-pack.thing` |
+
+The hyphen **survives**: it is inside `[a-z0-9_.-]` and is legal in a Java namespace. An earlier
+revision of this table mapped it to `_`, contradicting the rule one line above it. Replacing a legal
+character would have been worse than cosmetic — it creates collisions that need not exist, since
+`cool-pack` and `cool_pack` would then derive the same identifier.
 
 A Bedrock identifier with no namespace defaults to `minecraft`, matching Bedrock.
 
@@ -199,14 +204,31 @@ number of distinct Bedrock state combinations the block declares, take a free sl
 and record the binding.
 
 The Bedrock state tuple ↔ index mapping is the mixed-radix encoding of the block's declared states
-in **declaration order**, with each state's values in **declaration order**:
+in **declaration order**, with each state's values in **declaration order**, and the **first declared
+state as the least significant digit**:
 
 ```
-index = Σ over states s, in declaration order:  valueIndex(s) × Π (sizeOf(later states))
+index = Σ over states s, in declaration order:  valueIndex(s) × Π (sizeOf(earlier states))
 ```
 
 Traits (SC-150) are expanded into states before encoding, appended after the declared states in the
 fixed order `placement_direction`, `placement_position`.
+
+**The digit order is not arbitrary, and an earlier revision of this document had it backwards.** It
+placed the first state in the *most* significant position — `Π (sizeOf(later states))` — which
+contradicts the append rule in the sentence immediately after it. Appending a state only leaves
+existing encodings alone when the appended state is the *most* significant digit, i.e. when earlier
+states are the less significant ones:
+
+| | states `A`(2) | after appending trait `T`(4) |
+|---|---|---|
+| least significant first | `a` | `a + 2·t` — old index `a` still decodes to the same `A`, with `T` at its first value |
+| most significant first | `a` | `4·a + t` — **every placed block shifts** |
+
+Both spellings are self-consistent; only one preserves the property the append rule exists to
+provide, and getting it wrong scrambles every placed block the first time a pack enables a trait.
+The correction is free today because no ledger has been written by a released build. SC-150 §2.3
+states the same rule and the two must never diverge again.
 
 ### 6.2 Default pool
 
