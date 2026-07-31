@@ -1,9 +1,11 @@
 package net.nennneko5787.sweetcookie;
 
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
+import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
+import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
 
 /**
  * Shared entry point. Version- and loader-independent.
@@ -18,6 +20,7 @@ public final class SweetCookie {
     public static final String MOD_ID = "sweetcookie";
 
     private static PlatformInfo platform;
+    private static LifecycleHooks lifecycle;
     private static BlockPool blockPool;
 
     private SweetCookie() {
@@ -34,12 +37,14 @@ public final class SweetCookie {
         // Resolved once, eagerly, into a field (SC-230 §2 rule 3). A missing provider fails here
         // rather than at world load, which is the far worse place to discover one.
         platform = Services.load(PlatformInfo.class);
+        lifecycle = Services.load(LifecycleHooks.class);
 
         // TODO(SC-120 §6.2): the effective pool is the element-wise maximum of the configured
         // default, every world's ledger and the installed packs. Config and ledger loading need
         // LifecycleHooks, which is not written yet, so this registers the default.
         // SlotPool.grownTo is the operation that will do it, and it exists and is tested.
         blockPool = BlockPool.register(SlotPool.DEFAULT);
+        WorldLedger.install(lifecycle, SlotPool.DEFAULT);
 
         System.out.println("[SweetCookie] " + platform.loaderName() + " "
                 + platform.loaderVersion() + " (" + platform.side() + "): registered "
