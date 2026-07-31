@@ -95,6 +95,53 @@ public record ActivePlan(List<Step> steps) {
         return new ActivePlan(steps);
     }
 
+    /**
+     * The full desired order, when a screen only decided about <b>some</b> of the packs.
+     *
+     * <p>SC-280 §5.2's tabs show behaviour packs and resource packs separately, so committing one
+     * tab says nothing about the other. Handing {@link #between} only the tab's selection would read
+     * every absent pack as deselected and disable the entire other kind — which is the failure mode
+     * of every "the screen returns the whole state" assumption meeting a screen that returns part of
+     * it.
+     *
+     * <p>So the tab's packs are <b>replaced in place</b>: the slots the old ones occupied are
+     * rewritten with the new sequence, and everything else keeps the position it had. Committing an
+     * unchanged tab therefore produces no steps at all, which is what makes switching tabs and
+     * closing free.
+     *
+     * @param current   the whole activation, in precedence order
+     * @param selection what this tab now has selected, in precedence order
+     * @param kind      every installed pack of this tab's kind, selected or not — membership, not
+     *                  order, so that a pack the tab did not select is known to be deselected rather
+     *                  than merely absent
+     */
+    public static List<PackId> spliceKind(
+            List<PackId> current, List<PackId> selection, java.util.Set<PackId> kind) {
+        List<PackId> slots = new ArrayList<>();
+        for (int i = 0; i < current.size(); i++) {
+            if (kind.contains(current.get(i))) {
+                slots.add(current.get(i));
+            }
+        }
+        List<PackId> merged = new ArrayList<>();
+        int taken = 0;
+        for (PackId pack : current) {
+            if (!kind.contains(pack)) {
+                merged.add(pack);
+            } else if (taken < selection.size()) {
+                merged.add(selection.get(taken++));
+            }
+            // A slot with nothing left to put in it closes up: the tab deselected more than it
+            // selected.
+        }
+        // More selected than there were slots. The extras go at the end, which is where enabling a
+        // pack puts it anyway (ActivePacks.enable), so the two routes agree.
+        for (int i = taken; i < selection.size(); i++) {
+            merged.add(selection.get(i));
+        }
+        return merged;
+    }
+
     /** Applies the plan, for a caller holding the state directly rather than sending commands. */
     public ActivePacks applyTo(ActivePacks packs, java.util.function.Function<PackId,
             SemanticVersion> versions) {

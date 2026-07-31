@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -31,6 +31,7 @@ import net.nennneko5787.sweetcookie.core.format.diag.Severity;
 import net.nennneko5787.sweetcookie.core.format.value.PackId;
 import net.nennneko5787.sweetcookie.core.registry.ActivePacks;
 import net.nennneko5787.sweetcookie.core.registry.ActivePlan;
+import net.nennneko5787.sweetcookie.runtime.addon.PackKind;
 import net.nennneko5787.sweetcookie.runtime.addon.PackSummary;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.ui.Views;
@@ -48,12 +49,19 @@ import net.nennneko5787.sweetcookie.runtime.ui.Views;
  * operated some other way is the surprising one, and every hour spent on the bespoke one was spent
  * re-deriving behaviour that shipped with the game.
  *
- * <p><b>This entire class is version-free.</b> Every type it touches was checked against both
- * merged jars and is identical, constructor signatures included — {@code PackSelectionScreen},
+ * <p><b>This class is version-free.</b> Every type it touches was checked against both merged jars
+ * and is identical, constructor signatures included — {@code PackSelectionScreen},
  * {@code PackRepository}, {@code Pack}, {@code PackLocationInfo}, {@code Pack.Metadata},
  * {@code PackSelectionConfig}, {@code PackResources}, {@code IoSupplier}. That is a strong result
  * given that 26.2 replaced the screen rendering model outright (SC-280 §3.1): the rewrite went
- * through {@code Screen}'s own drawing, and this screen never draws.
+ * through {@code Screen}'s own drawing, and this screen never draws. The single exception in the
+ * whole path is building the tab bar, which is why {@code PackTabBar} — and only that — has a copy
+ * per version directory.
+ *
+ * <p>Two tabs, one per {@link PackKind}, because Bedrock separates behaviour packs from resource
+ * packs everywhere it lists them and an {@code .mcaddon} normally unpacks into one of each. Each tab
+ * is a whole screen with its own repository, which is what lets a commit from one say nothing about
+ * the other.
  */
 @SpecImpl("SC-280")
 public final class AddonPackScreen {
@@ -70,36 +78,47 @@ public final class AddonPackScreen {
      * client gets the read-only view, which says the server decides.
      */
     public static Screen open(Screen parent) {
-        Optional<ActivePacks> active = WorldActivation.known();
-        return active
-                .<Screen>map(packs -> selection(parent, packs))
-                .orElseGet(() -> new ViewScreen(parent,
-                        () -> Views.packs(SweetCookie.addons(), WorldActivation.known())));
+        return WorldActivation.known().isPresent()
+                ? selection(parent, PackKind.BEHAVIOR)
+                : new ViewScreen(parent,
+                        () -> Views.packs(SweetCookie.addons(), WorldActivation.known()));
     }
 
-    private static Screen selection(Screen parent, ActivePacks active) {
-        PackRepository repository = repositoryOf(active);
-        return new PackSelectionScreen(
-                repository,
-                AddonPackScreen::apply,
+    /**
+     * One tab's screen.
+     *
+     * <p>Rebuilt whenever a tab is chosen rather than kept side by side, so that switching tabs
+     * after committing shows what the commit did. Building one is reading two in-memory lists.
+     */
+    private static Screen selection(Screen parent, PackKind kind) {
+        ActivePacks active = WorldActivation.current();
+        return new TabbedPackScreen(
+                parent,
+                kind,
+                repositoryOf(active, kind),
+                committed -> apply(committed, kind),
                 SweetCookie.platform().addonDirectory(),
                 // The title is the one part of this screen we write, so it carries the thing Java
                 // Edition's own pack screen never says: which end of the selected list wins. A user
                 // who assumes the wrong one silently gets the other pack's content (SC-280 §5.1).
-                Component.literal("SweetCookie add-ons - the top of the selected list wins"));
+                Component.literal(kind.title() + " - the top of the selected list wins"),
+                chosen -> Minecraft.getInstance().setScreenAndShow(selection(parent, chosen)));
     }
 
     /**
-     * Builds a repository whose packs are our add-ons.
+     * Builds a repository holding one tab's packs.
      *
      * <p>Freshly built each time the screen opens rather than kept: it is a view of an
      * {@link net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry AddonRegistry} that is itself
      * rebuilt on every scan, and a repository that outlived one would list packs that are no longer
      * installed.
+     *
+     * <p>Filtered to the tab's kind, including the selection — handing the screen a selected pack it
+     * has no row for would make it disappear on commit.
      */
-    private static PackRepository repositoryOf(ActivePacks active) {
+    private static PackRepository repositoryOf(ActivePacks active, PackKind kind) {
         PackRepository repository = new PackRepository(consumer -> {
-            for (PackSummary pack : SweetCookie.addons().packs()) {
+            for (PackSummary pack : packsOf(kind)) {
                 consumer.accept(packOf(pack));
             }
         });
@@ -108,8 +127,21 @@ public final class AddonPackScreen {
         // out of the jar rather than assumed: PackSelectionModel reverses on the way in and
         // Lists.reverse on commit, so the screen shows highest-first while the repository is
         // lowest-first. Getting this backwards would silently invert every user's overrides.
-        repository.setSelected(active.order().stream().map(PackId::toString).toList());
+        Set<PackId> ofKind = idsOf(kind);
+        repository.setSelected(active.order().stream()
+                .filter(ofKind::contains)
+                .map(PackId::toString)
+                .toList());
         return repository;
+    }
+
+    private static List<PackSummary> packsOf(PackKind kind) {
+        return SweetCookie.addons().packs().stream().filter(kind::includes).toList();
+    }
+
+    /** Every installed pack of a kind, so that "not selected" can be told from "not in this tab". */
+    private static Set<PackId> idsOf(PackKind kind) {
+        return packsOf(kind).stream().map(PackSummary::id).collect(Collectors.toSet());
     }
 
     /**
@@ -181,12 +213,17 @@ public final class AddonPackScreen {
      * and moving one pack sends one command. Replaying the whole list would put two lines of chat
      * per installed pack in front of a user who moved one of them.
      */
-    private static void apply(PackRepository committed) {
-        List<PackId> desired = new ArrayList<>();
+    private static void apply(PackRepository committed, PackKind kind) {
+        List<PackId> selected = new ArrayList<>();
         for (String id : committed.getSelectedIds()) {
-            PackId.parse(id).ifPresent(desired::add);
+            PackId.parse(id).ifPresent(selected::add);
         }
-        ActivePlan plan = ActivePlan.between(WorldActivation.current(), desired);
+        ActivePacks current = WorldActivation.current();
+        // This tab decided about its own kind and said nothing about the other. Handing the
+        // selection straight to between() would read every resource pack as deselected and disable
+        // the lot; spliceKind replaces this kind's entries in place and leaves the rest alone.
+        List<PackId> desired = ActivePlan.spliceKind(current.order(), selected, idsOf(kind));
+        ActivePlan plan = ActivePlan.between(current, desired);
         for (ActivePlan.Step step : plan.steps()) {
             send(commandFor(step));
         }

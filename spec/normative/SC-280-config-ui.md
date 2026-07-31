@@ -118,8 +118,8 @@ Not just a list of checkboxes:
 - which packs the current world has enabled, distinct from which are installed;
 - load order, reorderable, since it decides override precedence (SC-100 §5).
 
-Drag-and-drop import of a `.mcaddon` / `.mcpack` **file** onto the screen is `TODO(SC-280)` but is
-close to how users expect this to work. (Dragging rows *within* the screen is §5.2 and is required.)
+Drag-and-drop import of a `.mcaddon` / `.mcpack` **file** onto the screen comes free with §5.2: it is
+vanilla `PackSelectionScreen.onFilesDrop`, and it copies the file into the add-on directory.
 
 ### 5.1 Three things Java Edition's pack screen makes a user guess
 
@@ -148,7 +148,30 @@ Two earlier revisions of this section specified a bespoke list — first keyboar
 drag-driven. Both were wrong for the same reason: they re-derived behaviour that shipped with the
 game, and a pack list that had to be operated some other way is the surprising one.
 
-What the mod supplies is therefore only the data and the parts vanilla leaves blank:
+#### 5.2.1 Two tabs, behaviour and resource
+
+A **tab bar at the top switches between behaviour packs and resource packs.** Bedrock separates the
+two everywhere it lists them, and an `.mcaddon` normally unpacks into one of each — a single list
+shows every add-on as two adjacent rows with nothing to tell them apart, which is neither what
+Bedrock does nor what Java Edition does.
+
+- **each tab is a whole screen**, not a panel. Vanilla's `Tab` hosts widgets inside one screen and
+  cannot host a `Screen`, which `PackSelectionScreen` is. Selecting the other tab opens the other
+  screen, drawing the same bar in the same place with the other tab lit;
+- **a pack that declares both module types appears in both tabs**, and enabling it in either enables
+  the whole pack. There is one pack and one activation entry, not two halves; that is the truth
+  about the file, so it is what the screen shows;
+- **committing one tab must not disturb the other kind.** The tab knows only its own packs, so its
+  selection is spliced into the activation in place — this kind's entries are rewritten, everything
+  else keeps its position. Handing the tab's selection straight to the diff would read every pack of
+  the other kind as deselected and disable all of them.
+
+Making room for the bar is the **one** place the mod reaches into a vanilla screen's layout, and it
+is done by measuring what `init()` produced rather than by assuming coordinates. A hard-coded offset
+overlaps silently the moment the header changes, and an overlapping list is still clickable — the
+failure would be a tab bar that cannot be pressed, not an exception.
+
+Otherwise, what the mod supplies is only the data and the parts vanilla leaves blank:
 
 - **the title carries the precedence rule.** It is the one string this screen takes from us, and
   Java Edition's own pack screen never says which end of the selected column wins (§5.1). Vanilla
@@ -159,7 +182,7 @@ What the mod supplies is therefore only the data and the parts vanilla leaves bl
   "made for a newer/older version of Minecraft", which is a false statement about a Bedrock pack
   that failed to parse.
 
-#### 5.2.1 Committing is a diff
+#### 5.2.2 Committing is a diff
 
 The screen hands back a whole selection; every management operation is a command (§7.1). The
 translation **must be a diff**, not a replay:
@@ -238,13 +261,27 @@ likewise `core/`, with only the call that turns a laid-out line into pixels per 
 replaced the screen rendering model outright, so anything that needed a `Screen` would have to be
 written twice and run on a client.
 
-### 7.3 The whole selection path is version-free
+### 7.3 The selection path is version-free but for the tab bar
 
 Checked against both merged jars, signature by signature: `PackSelectionScreen`, `PackRepository`,
 `RepositorySource`, `Pack`, `PackLocationInfo`, `Pack.Metadata`, `PackSelectionConfig`, `PackSource`,
-`PackResources`, `IoSupplier`, `PackType`, `MetadataSectionType` — **identical on 1.21.11 and 26.2,
-constructors included.** None of it is behind §3.1's divergence, because the render rewrite went
-through `Screen`'s drawing and this path never draws.
+`PackResources`, `IoSupplier`, `PackType`, `MetadataSectionType`, and `AbstractWidget`'s position
+setters — **identical on 1.21.11 and 26.2, constructors included.** None of it is behind §3.1's
+divergence, because the render rewrite went through `Screen`'s drawing and this path never draws.
+
+**Building the tab bar is the exception**, and it is the whole of the exception:
+
+| | 1.21.11 | 26.2 |
+|---|---|---|
+| two-argument builder | `TabNavigationBar.builder(TabManager, int)` | moved to `MenuTabBar.builder` |
+| sizing | `setWidth(int)` then `arrangeElements()` | `arrangeElements(int)` |
+| the bar | `AbstractContainerEventHandler` — not a widget, cannot be positioned | `AbstractContainerWidget` |
+
+So the bar sits at the top on both, because on 1.21.11 that is the only place it can sit, and the
+screen moves its own content down instead. Two things that would have diverged do not, because
+vanilla absorbed them: `GridLayoutTab` is a concrete public `Tab` on both, so 26.2 adding
+`Tab.getLayout()` costs nothing, and `TabButton` becoming abstract there would have mattered only if
+tabs were added one at a time.
 
 One loader divergence exists and is not a version one: **NeoForge adds a fifth component to
 `Pack.Metadata` and deprecates the canonical constructor**; Fabric has only the four-argument form.

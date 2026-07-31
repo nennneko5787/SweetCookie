@@ -89,6 +89,56 @@ class ActivePlanTest {
         assertReaches(ActivePacks.NONE, List.of(A, B, C));
     }
 
+    // --- spliceKind: committing one tab must not disable the other kind (SC-280 §5.2) ---
+
+    private static final java.util.Set<PackId> BEHAVIOUR = java.util.Set.of(A, C);
+    private static final java.util.Set<PackId> RESOURCE = java.util.Set.of(B, D);
+
+    @Test
+    void committingOneTabLeavesTheOtherKindAlone() {
+        // The bug this exists to prevent: the behaviour tab returns only behaviour packs, and a
+        // plan built straight from it disables every resource pack in the world.
+        List<PackId> merged =
+                ActivePlan.spliceKind(List.of(A, B, C, D), List.of(A, C), BEHAVIOUR);
+        assertEquals(List.of(A, B, C, D), merged);
+        assertTrue(ActivePlan.between(packs(A, B, C, D), merged).isEmpty());
+    }
+
+    @Test
+    void reorderingWithinATabRewritesOnlyThatKindsSlots() {
+        assertEquals(List.of(C, B, A, D),
+                ActivePlan.spliceKind(List.of(A, B, C, D), List.of(C, A), BEHAVIOUR));
+    }
+
+    @Test
+    void deselectingInATabClosesUpItsSlots() {
+        // C takes the earliest of the kind's slots and the last one closes up, so C ends up ahead
+        // of B. That is not a reorder anyone asked for in any sense that matters: B is the other
+        // kind, and precedence between a behaviour pack and a resource pack decides nothing. What
+        // must be preserved is the order within a kind, and C is the only one left.
+        assertEquals(List.of(C, B, D),
+                ActivePlan.spliceKind(List.of(A, B, C, D), List.of(C), BEHAVIOUR));
+    }
+
+    @Test
+    void selectingMoreThanThereWereSlotsAppendsAtTheEnd() {
+        // Where ActivePacks.enable would have put it, so the screen and the command agree.
+        assertEquals(List.of(A, B, D, C),
+                ActivePlan.spliceKind(List.of(A, B, D), List.of(A, C), BEHAVIOUR));
+    }
+
+    @Test
+    void aTabWithNothingEnabledYetStillPlacesItsSelection() {
+        assertEquals(List.of(B, D, A),
+                ActivePlan.spliceKind(List.of(B, D), List.of(A), BEHAVIOUR));
+    }
+
+    @Test
+    void theOtherTabSeesTheSameActivationTheOppositeWayRound() {
+        assertEquals(List.of(A, D, C, B),
+                ActivePlan.spliceKind(List.of(A, B, C, D), List.of(D, B), RESOURCE));
+    }
+
     @Test
     void disablesComeBeforeTheMovesTheyShorten() {
         // If a move ran before the disable, its position would be counted against a list that still

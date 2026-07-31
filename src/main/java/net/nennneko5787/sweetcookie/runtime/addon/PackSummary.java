@@ -30,6 +30,9 @@ import net.nennneko5787.sweetcookie.core.format.value.PackId;
  * @param provides    what it contributes, by content kind
  * @param diagnostics everything reported against this pack, deduplicated
  * @param icon        {@code pack_icon.png}, or empty if the pack has none or it is unreadably large
+ * @param behavior    true when it declares a behavior module; SC-280 5.2 puts it in that tab
+ * @param resource    true when it declares a resource module. Both can be true: one manifest may
+ *                    declare both module types, and such a pack appears in both tabs
  */
 @SpecImpl("SC-280")
 public record PackSummary(
@@ -40,7 +43,9 @@ public record PackSummary(
         int loadOrder,
         Provides provides,
         List<Diagnostic> diagnostics,
-        Optional<byte[]> icon) {
+        Optional<byte[]> icon,
+        boolean behavior,
+        boolean resource) {
 
     /** Counts per content kind. Zero is meaningful: it distinguishes "none" from "not parsed yet". */
     public record Provides(int blocks, int geometries) {
@@ -78,7 +83,9 @@ public record PackSummary(
                 pack.loadOrder(),
                 new Provides(pack.behavior().blocks().size(), pack.resource().geometries().size()),
                 diagnostics,
-                iconOf(pack));
+                iconOf(pack),
+                pack.source().manifest().hasBehavior(),
+                pack.source().manifest().hasResources());
     }
 
     /**
