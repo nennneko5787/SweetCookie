@@ -7,7 +7,11 @@ import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
+import net.nennneko5787.sweetcookie.platform.CommandRegistrar;
+import net.nennneko5787.sweetcookie.runtime.command.SweetCookieCommand;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
+import net.nennneko5787.sweetcookie.runtime.ui.TextView;
+import net.nennneko5787.sweetcookie.runtime.ui.Views;
 
 /**
  * Shared entry point. Version- and loader-independent.
@@ -42,6 +46,7 @@ public final class SweetCookie {
         // rather than at world load, which is the far worse place to discover one.
         platform = Services.load(PlatformInfo.class);
         lifecycle = Services.load(LifecycleHooks.class);
+        Services.load(CommandRegistrar.class).onRegisterCommands(SweetCookieCommand::register);
 
         config = SweetCookieConfig.load(platform.configDirectory());
 
@@ -65,7 +70,8 @@ public final class SweetCookie {
         // dedicated server reaches its first server-start immediately anyway.
         lifecycle.onServerStarting(scope -> {
             addons = AddonRegistry.scan(platform.addonDirectory());
-            addons.describe().forEach(line -> System.out.println("[SweetCookie] " + line));
+            TextView.render(Views.packs(addons))
+                    .forEach(line -> System.out.println("[SweetCookie] " + line));
         });
     }
 

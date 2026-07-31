@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.format.diag.Diagnostic;
-import net.nennneko5787.sweetcookie.core.format.diag.Severity;
 import net.nennneko5787.sweetcookie.core.format.ir.AddonIr;
 import net.nennneko5787.sweetcookie.core.format.ir.IrLoader;
 import net.nennneko5787.sweetcookie.core.format.ir.PackIr;
@@ -123,40 +122,4 @@ public final class AddonRegistry {
         return packs.isEmpty();
     }
 
-    /**
-     * A readable summary, one line per pack.
-     *
-     * <p>The screen SC-280 §5 describes is not built yet — the two supported Minecraft versions do
-     * not share a UI rendering model, so it needs the version-free widget layer that section calls
-     * for. Until then this is the same information as text, which is what the development loop in
-     * §1 actually needs: enable, watch it fail, read why.
-     */
-    public List<String> describe() {
-        List<String> lines = new ArrayList<>();
-        if (packs.isEmpty()) {
-            lines.add("no add-ons installed");
-        }
-        for (PackSummary pack : packs) {
-            StringBuilder line = new StringBuilder()
-                    .append('[').append(pack.loadOrder()).append("] ")
-                    .append(pack.name().isEmpty() ? pack.source() : pack.name())
-                    .append(' ').append(pack.version());
-            String provides = pack.provides().describe();
-            line.append(provides.isEmpty() ? " - provides nothing this build reads" : " - " + provides);
-            long errors = pack.count(Severity.ERROR);
-            long warnings = pack.count(Severity.WARNING);
-            if (errors > 0 || warnings > 0) {
-                line.append("  (").append(errors).append(" error(s), ")
-                        .append(warnings).append(" warning(s))");
-            }
-            lines.add(line.toString());
-            // Errors are quoted in full. A count alone tells a user something is wrong and not what,
-            // which is the failure constitution rule 8 exists to prevent.
-            pack.diagnostics().stream()
-                    .filter(d -> d.severity() == Severity.ERROR)
-                    .forEach(d -> lines.add("      " + d));
-        }
-        unattributed.forEach(d -> lines.add("  (no pack) " + d));
-        return lines;
-    }
 }
