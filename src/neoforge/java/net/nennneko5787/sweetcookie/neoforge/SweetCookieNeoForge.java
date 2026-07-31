@@ -7,6 +7,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.nennneko5787.sweetcookie.SweetCookie;
 import net.nennneko5787.sweetcookie.client.ui.ViewScreen;
+import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.ui.Views;
 
 /**
@@ -33,7 +34,7 @@ public final class SweetCookieNeoForge {
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             container.registerExtensionPoint(IConfigScreenFactory.class,
                     (modContainer, parent) ->
-                            new ViewScreen(parent, Views.packs(SweetCookie.addons())));
+                            new ViewScreen(parent, Views.packs(SweetCookie.addons(), WorldActivation.current())));
         }
     }
 }

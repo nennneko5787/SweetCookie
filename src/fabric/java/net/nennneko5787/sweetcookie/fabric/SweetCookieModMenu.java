@@ -4,6 +4,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import net.nennneko5787.sweetcookie.SweetCookie;
 import net.nennneko5787.sweetcookie.client.ui.ViewScreen;
+import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.ui.Views;
 
 /**
@@ -23,6 +24,6 @@ public final class SweetCookieModMenu implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> new ViewScreen(parent, Views.packs(SweetCookie.addons()));
+        return parent -> new ViewScreen(parent, Views.packs(SweetCookie.addons(), WorldActivation.current()));
     }
 }

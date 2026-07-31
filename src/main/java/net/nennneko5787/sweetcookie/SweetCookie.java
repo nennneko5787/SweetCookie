@@ -5,6 +5,7 @@ import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
+import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
 import net.nennneko5787.sweetcookie.platform.CommandRegistrar;
@@ -59,6 +60,7 @@ public final class SweetCookie {
 
         blockPool = BlockPool.register(effective);
         WorldLedger.install(lifecycle, effective);
+        WorldActivation.install(lifecycle);
 
         System.out.println("[SweetCookie] " + platform.loaderName() + " "
                 + platform.loaderVersion() + " (" + platform.side() + "): registered "
@@ -70,7 +72,7 @@ public final class SweetCookie {
         // dedicated server reaches its first server-start immediately anyway.
         lifecycle.onServerStarting(scope -> {
             addons = AddonRegistry.scan(platform.addonDirectory());
-            TextView.render(Views.packs(addons))
+            TextView.render(Views.packs(addons, WorldActivation.current()))
                     .forEach(line -> System.out.println("[SweetCookie] " + line));
         });
     }

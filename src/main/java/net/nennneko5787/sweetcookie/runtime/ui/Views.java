@@ -32,9 +32,27 @@ public final class Views {
      * pack, because a badge alone says something is wrong and not what.
      */
     public static ViewModel packs(AddonRegistry addons) {
-        List<ViewModel.Row> rows = new ArrayList<>();
+        return packs(addons, net.nennneko5787.sweetcookie.core.registry.ActivePacks.NONE);
+    }
+
+    /**
+     * The add-on management view, with this world's activation state.
+     *
+     * <p>Java Edition's resource-pack screen leaves three things to guess, and this one states all
+     * three: <b>which end of the order wins</b>, <b>what a pack actually contains</b>, and <b>why a
+     * pack is not doing anything</b>. Guessing the first gets you the other pack's texture with no
+     * indication why.
+     */
+    public static ViewModel packs(
+            AddonRegistry addons,
+            net.nennneko5787.sweetcookie.core.registry.ActivePacks active) {
+
+        List<ViewModel.Row> enabled = new ArrayList<>();
+        List<ViewModel.Row> available = new ArrayList<>();
+
         for (PackSummary pack : addons.packs()) {
-            String label = "[" + pack.loadOrder() + "] "
+            java.util.Optional<Integer> order = active.orderOf(pack.id());
+            String label = order.map(position -> (position + 1) + ". ").orElse("")
                     + (pack.name().isEmpty() ? pack.source() : pack.name());
             String provides = pack.provides().describe();
             List<String> notes = pack.diagnostics().stream()
@@ -48,16 +66,29 @@ public final class Views {
                     + (provides.isEmpty() ? " - provides nothing this build reads" : " - " + provides)
                     + (warnings > 0 && notes.isEmpty() ? "  (" + warnings + " warning(s))" : "");
 
-            rows.add(pack.badge()
+            ViewModel.Row row = pack.badge()
                     .map(badge -> ViewModel.Row.of(label, detail, badge, notes))
-                    .orElseGet(() -> ViewModel.Row.of(label, detail)));
-        }
-        if (rows.isEmpty()) {
-            rows.add(ViewModel.Row.empty("no add-ons installed"));
+                    .orElseGet(() -> ViewModel.Row.of(label, detail));
+            (order.isPresent() ? enabled : available).add(row);
         }
 
         List<ViewModel.Section> sections = new ArrayList<>();
-        sections.add(ViewModel.Section.of("installed", rows));
+        if (addons.packs().isEmpty()) {
+            sections.add(ViewModel.Section.of("installed",
+                    List.of(ViewModel.Row.empty("no add-ons installed"))));
+        } else {
+            // The heading carries the precedence rule. Java Edition's screen puts the direction
+            // nowhere, and a user who assumes the wrong end silently gets the other pack's content.
+            sections.add(ViewModel.Section.of(
+                    enabled.isEmpty()
+                            ? "enabled in this world - none"
+                            : "enabled in this world, lowest priority first (the last one wins)",
+                    enabled));
+            sections.add(ViewModel.Section.of(
+                    available.isEmpty() ? "installed but not enabled - none"
+                            : "installed but not enabled",
+                    available));
+        }
 
         // Reported before any pack had an identity - a corrupt archive, an unusable manifest. It has
         // no pack to sit under and would be dropped by a per-pack view that did not say so.

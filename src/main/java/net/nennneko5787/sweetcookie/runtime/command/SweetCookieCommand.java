@@ -1,13 +1,22 @@
 package net.nennneko5787.sweetcookie.runtime.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.nennneko5787.sweetcookie.SweetCookie;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
+import net.nennneko5787.sweetcookie.core.registry.ActivePacks;
+import net.nennneko5787.sweetcookie.runtime.addon.PackSummary;
+import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
 import net.nennneko5787.sweetcookie.runtime.ui.TextView;
 import net.nennneko5787.sweetcookie.runtime.ui.ViewModel;
@@ -20,29 +29,155 @@ import net.nennneko5787.sweetcookie.runtime.ui.Views;
  * gives a dedicated server the full feature set with no client UI, and what stops the screen from
  * growing semantics of its own.
  *
- * <p>The read-only queries here need <b>no permission level</b>. They report what this instance has
- * installed and what this world has bound, which is information a player is entitled to when their
- * blocks look wrong — and refusing it to non-operators would make the single most common support
- * question unanswerable by the person asking it. Anything that <em>changes</em> state will require
- * level 2 when it arrives.
+ * <p><b>Permissions split by effect, not by command.</b> The read-only queries need none: they
+ * report what is installed and what this world bound, which is what a player needs when their blocks
+ * look wrong, and refusing it to non-operators makes the commonest support question unanswerable by
+ * the person asking it. The mutating ones need level 2, because pack order decides what every player
+ * in the world sees.
  */
 @SpecImpl({"SC-280", "SC-120"})
 public final class SweetCookieCommand {
+
+    /** Suggests pack names from what is actually installed, so nobody types a UUID. */
+    private static final SuggestionProvider<CommandSourceStack> INSTALLED_PACKS =
+            (context, builder) -> SharedSuggestionProvider.suggest(
+                    SweetCookie.addons().packs().stream().map(SweetCookieCommand::handleOf).toList(),
+                    builder);
 
     private SweetCookieCommand() {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(SweetCookie.MOD_ID)
-                .executes(context -> show(context.getSource(), Views.packs(SweetCookie.addons())));
+                .executes(context -> show(context.getSource(), packsView()));
 
-        root.then(Commands.literal("packs").executes(context ->
-                show(context.getSource(), Views.packs(SweetCookie.addons()))));
+        root.then(Commands.literal("packs")
+                .executes(context -> show(context.getSource(), packsView())));
 
         root.then(Commands.literal("pool").executes(context ->
                 show(context.getSource(), Views.pool(SweetCookie.blockPool(), WorldLedger.current()))));
 
+        root.then(Commands.literal("enable")
+                .requires(SweetCookieCommand::mayManagePacks)
+                .then(Commands.argument("pack", StringArgumentType.greedyString())
+                        .suggests(INSTALLED_PACKS)
+                        .executes(context -> enable(context, true))));
+
+        root.then(Commands.literal("disable")
+                .requires(SweetCookieCommand::mayManagePacks)
+                .then(Commands.argument("pack", StringArgumentType.greedyString())
+                        .suggests(INSTALLED_PACKS)
+                        .executes(context -> enable(context, false))));
+
+        root.then(Commands.literal("order")
+                .requires(SweetCookieCommand::mayManagePacks)
+                .then(Commands.argument("position", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("pack", StringArgumentType.greedyString())
+                                .suggests(INSTALLED_PACKS)
+                                .executes(SweetCookieCommand::order))));
+
         dispatcher.register(root);
+    }
+
+    /**
+     * Level 2, spelled with the name Minecraft now uses for it.
+     *
+     * <p>CommandSourceStack.hasPermission(int) is gone on both supported versions: permissions are a
+     * PermissionSet tested by a named PermissionCheck, and Commands.LEVEL_GAMEMASTERS is what used
+     * to be level 2. Both versions agree exactly, so this is not a version divergence - it is an
+     * API that moved, and a numeric literal written from memory would have compiled on neither.
+     */
+    private static boolean mayManagePacks(CommandSourceStack source) {
+        return Commands.LEVEL_GAMEMASTERS.check(source.permissions());
+    }
+
+    private static ViewModel packsView() {
+        return Views.packs(SweetCookie.addons(), WorldActivation.current());
+    }
+
+    private static int enable(CommandContext<CommandSourceStack> context, boolean on) {
+        String handle = StringArgumentType.getString(context, "pack");
+        Optional<PackSummary> pack = find(handle);
+        if (pack.isEmpty()) {
+            return notInstalled(context, handle);
+        }
+        PackSummary found = pack.get();
+        Optional<ActivePacks> updated = WorldActivation.update(active ->
+                on ? active.enable(found.id(), versionOf(found)) : active.disable(found.id()));
+        if (updated.isEmpty()) {
+            return noWorld(context);
+        }
+        // Says where it landed, not just that it worked. "Enabled" alone leaves a user to open the
+        // list again to find out what it now overrides.
+        String where = updated.get().orderOf(found.id())
+                .map(position -> " at position " + (position + 1) + " of " + updated.get().size()
+                        + "; the last position wins")
+                .orElse("");
+        return message(context, (on ? "enabled " : "disabled ") + handleOf(found) + where);
+    }
+
+    private static int order(CommandContext<CommandSourceStack> context) {
+        String handle = StringArgumentType.getString(context, "pack");
+        int position = IntegerArgumentType.getInteger(context, "position");
+        Optional<PackSummary> pack = find(handle);
+        if (pack.isEmpty()) {
+            return notInstalled(context, handle);
+        }
+        if (!WorldActivation.current().isEnabled(pack.get().id())) {
+            return message(context, handleOf(pack.get())
+                    + " is not enabled in this world, so it has no position to move");
+        }
+        // Positions are 1-based for the user and 0-based inside; a position past the end clamps to
+        // the end, because "move it to the top" is naturally typed as a large number.
+        Optional<ActivePacks> updated =
+                WorldActivation.update(active -> active.moveTo(pack.get().id(), position - 1));
+        if (updated.isEmpty()) {
+            return noWorld(context);
+        }
+        return message(context, "moved " + handleOf(pack.get()) + " to position "
+                + (updated.get().orderOf(pack.get().id()).orElse(0) + 1)
+                + " of " + updated.get().size() + "; the last position wins");
+    }
+
+    /**
+     * Finds a pack by name or by identity, case-insensitively.
+     *
+     * <p>Names first, because that is what the suggestion list offers and what a user reads on the
+     * screen. Identity as a fallback so that two packs sharing a display name are still reachable.
+     */
+    private static Optional<PackSummary> find(String handle) {
+        List<PackSummary> installed = SweetCookie.addons().packs();
+        return installed.stream()
+                .filter(pack -> handleOf(pack).equalsIgnoreCase(handle))
+                .findFirst()
+                .or(() -> installed.stream()
+                        .filter(pack -> pack.id().toString().equalsIgnoreCase(handle))
+                        .findFirst());
+    }
+
+    private static String handleOf(PackSummary pack) {
+        return pack.name().isEmpty() ? pack.id().toString() : pack.name();
+    }
+
+    private static net.nennneko5787.sweetcookie.core.format.value.SemanticVersion versionOf(
+            PackSummary pack) {
+        return net.nennneko5787.sweetcookie.core.format.value.SemanticVersion
+                .tryParse(pack.version())
+                .orElse(net.nennneko5787.sweetcookie.core.format.value.SemanticVersion.ZERO);
+    }
+
+    private static int notInstalled(CommandContext<CommandSourceStack> context, String handle) {
+        return message(context, "no installed add-on called \"" + handle
+                + "\". /sweetcookie packs lists what is installed.");
+    }
+
+    private static int noWorld(CommandContext<CommandSourceStack> context) {
+        return message(context, "no world is loaded, so there is nothing to enable packs for");
+    }
+
+    private static int message(CommandContext<CommandSourceStack> context, String text) {
+        context.getSource().sendSuccess(() -> Component.literal("[SweetCookie] " + text), false);
+        return 1;
     }
 
     /**
