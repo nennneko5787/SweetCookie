@@ -11,11 +11,12 @@
 | [0005](0005-scripting-as-optional-companion.md) | Scripting is an optional companion mod on GraalJS | accepted | SC-200, SC-260 | low |
 | [0006](0006-licensing-and-attribution.md) | Licensing and attribution — **MIT** | accepted | all | irreversible once contributed to |
 | [0007](0007-no-registry-entry-per-feature.md) | No Bedrock feature gets a Java registry entry | accepted | SC-120, SC-150, SC-160, SC-170 | high |
-| [0008](0008-mocha-for-molang.md) | Molang runs on `team.unnamed:mocha` | accepted | SC-130, SC-250 | low |
+| [0008](0008-mocha-for-molang.md) | Molang runs on `team.unnamed:mocha` | **superseded by 0013** | SC-130, SC-250 | low |
 | [0009](0009-hand-rolled-platform-services.md) | Platform abstraction is a hand-rolled `ServiceLoader` | accepted | SC-220, SC-230 | low |
 | [0010](0010-geometry-submission-needs-no-abstraction.md) | Geometry submission needs no version abstraction | accepted | SC-180, SC-220 | low |
 | [0011](0011-the-ledger-verifies-implemented.md) | The ledger verifies `implemented` rather than promoting it | accepted | SC-000, SC-240 | medium |
-| [0012](0012-molang-arithmetic-width.md) | Molang evaluates in `double`, and the divergence is stated | accepted | SC-000, SC-130, SC-250 | medium |
+| [0012](0012-molang-arithmetic-width.md) | Molang evaluates in `double`, and the divergence is stated | **superseded by 0013** | SC-000, SC-130, SC-250 | — |
+| [0013](0013-own-the-molang-pipeline.md) | SweetCookie owns the Molang pipeline, and it is `float` | accepted | SC-000, SC-130, SC-250 | low one way, medium the other |
 
 ## Open decisions
 

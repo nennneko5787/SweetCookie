@@ -1,6 +1,6 @@
 # ADR-0008 — Molang runs on `team.unnamed:mocha`
 
-**Status:** accepted
+**Status:** superseded-by ADR-0013
 **Date:** 2026-07-30
 **Affects:** SC-130, SC-250
 

@@ -1,9 +1,15 @@
 # ADR-0012 — Molang evaluates in `double`, and the divergence is stated
 
-**Status:** accepted
+**Status:** superseded-by ADR-0013
 **Date:** 2026-07-31
 **Affects:** SC-000, SC-130, SC-250
 **Supersedes:** —
+
+> **Superseded the same day it was accepted.** This ADR proposed accepting a numerical divergence
+> from Bedrock in exchange for keeping a third-party bytecode compiler. It was rejected on review:
+> the project exists to run Bedrock content, and "matches Bedrock except where a dependency made it
+> inconvenient" is not the product. The analysis below is kept because ADR-0013 rests on its
+> measurements — the reasoning is what changed, not the facts.
 
 ## Context
 

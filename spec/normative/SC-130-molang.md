@@ -10,10 +10,15 @@ frame of every custom entity, so its design decides whether the client is playab
 
 ## 1. Decisions already taken
 
-**Base implementation: `team.unnamed:mocha` (MIT).** Java, on Maven Central, with both an
-interpreter and a compiler to JVM bytecode. The alternatives considered were `hollow-cube/molang`,
-`Draylar/arcane` and `bedrockk/MoLang`; mocha wins on licence, availability and the bytecode path,
-which matters because the alternative is tree-walking an AST per bone per frame. ADR-0008.
+**The pipeline is ours: lexer, parser, folding, compilation and evaluation.** ADR-0013, superseding
+ADR-0008's choice of `team.unnamed:mocha`. The measurement in §2.6 found that library evaluating in
+`double`, binding 25 of the 61 `math.*` functions, getting `math.die_roll` wrong, and accepting some
+malformed expressions in silence. The first of those cannot be wrapped away, and this project exists
+to match Bedrock rather than to match Bedrock except where a dependency made it inconvenient.
+
+Evaluation is **closure compilation**, not AST walking: the tree is compiled once into nested
+operation objects holding their already-compiled children, so a frame costs virtual dispatch over a
+fixed shape. A bytecode backend behind the same interface stays available if §6's budget demands it.
 
 **Expressions are parsed at ingest, never stored as text** (SC-110 §7). Parse errors surface at load
 with provenance instead of mid-frame with none; constants fold once; and the set of queries a pack
@@ -36,11 +41,13 @@ Sections to write:
 - 2.4 Newer constructs: `loop(count, {…})`, `for_each(v.x, array.y, {…})`, `break`, `continue`.
 - 2.5 Arrays and structs; `->` dereference chains such as
   `q.get_nearby_entities(...)->q.health`.
-### 2.6 What mocha does not do
+### 2.6 What `team.unnamed:mocha` does not do
 
-Measured against `team.unnamed:mocha` 3.0.1, by evaluation rather than by reading signatures, and
-kept as an executable test (`MochaCapabilityTest`) so that a version bump which closes a gap fails
-the build instead of leaving a shim shadowing a working function.
+The measurement that produced ADR-0013. Recorded because a future reader will ask why an obvious,
+maintained, MIT-licensed Molang library is not being used, and because re-running it is the first
+step if mocha is ever reconsidered.
+
+Measured against version 3.0.1, by evaluation rather than by reading signatures.
 
 **The language surface is complete.** Every construct ADR-0008 flagged as doubtful works: binary-if
 `a ? b` yielding 0 when false, null-coalescing `??`, `->`, statement bodies with `return`,

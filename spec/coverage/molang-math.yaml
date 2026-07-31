@@ -4,6 +4,11 @@
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
+#
+# All 61 are implemented in float and unit-tested (ADR-0013), but they stay `stub` until something
+# evaluates Molang in game: SC-000 section 3 reserves anything above `stub` for an observable
+# runtime effect, and there is no runtime yet. A binding table test pins that this shard and
+# MolangMathBinding name the same 61.
 
 domain: molang-math
 spec: SC-130
