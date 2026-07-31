@@ -1,5 +1,7 @@
 package net.nennneko5787.sweetcookie.runtime.registry;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -35,6 +37,22 @@ public final class PoolBlock extends Block {
      */
     private static final ThreadLocal<IntegerProperty> UNDER_CONSTRUCTION = new ThreadLocal<>();
 
+    /**
+     * One property instance per size class, shared by every block of that class.
+     *
+     * <p><b>Sharing is required, not an optimisation.</b> {@code StateHolder} keys its values with a
+     * {@code Reference2ObjectArrayMap} — an identity map — so a property is found only by being the
+     * same object, never by being equal to one. Building a second {@code IntegerProperty} with the
+     * same name and range gives an object that is {@code equals} to the first and useless against a
+     * state built from it: {@code setValue} reports "does not exist in Block", which is exactly what
+     * the second real client launch hit.
+     *
+     * <p>Vanilla shares its own properties the same way, as constants on
+     * {@code BlockStateProperties}. Sharing across blocks is normal; a state definition holds the
+     * property, it does not own it.
+     */
+    private static final Map<Integer, IntegerProperty> INDEX_PROPERTIES = new ConcurrentHashMap<>();
+
     private final int sizeClass;
     private final IntegerProperty index;
 
@@ -59,14 +77,10 @@ public final class PoolBlock extends Block {
         return properties;
     }
 
-    /**
-     * The property for a size class.
-     *
-     * <p>A fresh instance per call is fine and is what vanilla does for its own blocks: property
-     * identity is per block, and two pool blocks of the same class never share a state definition.
-     */
+    /** The property for a size class. The same object every time — see {@link #INDEX_PROPERTIES}. */
     private static IntegerProperty indexProperty(int sizeClass) {
-        return IntegerProperty.create("i", 0, sizeClass - 1);
+        return INDEX_PROPERTIES.computeIfAbsent(
+                sizeClass, states -> IntegerProperty.create("i", 0, states - 1));
     }
 
     @Override

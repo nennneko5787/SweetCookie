@@ -39,6 +39,18 @@ repositories {
     maven("https://maven.neoforged.net/releases/") { name = "NeoForged" }
 }
 
+// The headless registration test does NOT run on NeoForge, and that is a NeoForge fact rather than
+// a decision: it patches SharedConstants to ask FMLEnvironment.isProduction(), which throws "There
+// is no current FML Loader" outside a launched game. Bootstrapping Minecraft from plain JUnit needs
+// ModDevGradle unit-test harness, which is a bigger piece of work than this bought.
+//
+// Nothing is lost that matters. BlockPool and PoolBlock are in src/main/java - version-dependent,
+// loader-free - and both bugs this test exists for were version-API bugs. Running it on both Fabric
+// nodes covers 1.21.11 and 26.2, which is the axis they lived on.
+tasks.named<Test>("test") {
+    enabled = false
+}
+
 neoForge {
     version = neoforgeVersion
 
@@ -47,6 +59,10 @@ neoForge {
             sourceSet(sourceSets["main"])
         }
     }
+
+    // Loom puts Minecraft on every source set; ModDevGradle only on the ones it is told about. The
+    // headless registration test needs the game on its classpath to construct a Block at all.
+    addModdingDependenciesTo(sourceSets["test"])
 }
 
 
@@ -57,7 +73,7 @@ neoForge {
 // Merged rather than nested: core has no dependencies of its own, so there is nothing to isolate,
 // and Fabric's jar-in-jar wants nested jars to be mods while NeoForge's JarJar is a different
 // mechanism again. Copying the classes in is the one answer that is identical on both loaders.
-val coreBundle: Configuration by configurations.creating {
+val coreBundle = configurations.create("coreBundle") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -79,6 +95,11 @@ dependencies {
     coreBundle("net.nennneko5787.sweetcookie:format")
     coreBundle("net.nennneko5787.sweetcookie:registry")
     coreBundle("net.nennneko5787.sweetcookie:ui")
+
+    val junit = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
+    testImplementation(platform(junit.findLibrary("junit-bom").get()))
+    testImplementation(junit.findLibrary("junit-jupiter").get())
+    testRuntimeOnly(junit.findLibrary("junit-launcher").get())
 }
 
 // The Minecraft range is PINNED, not open-ended. See the Fabric buildscript for why.

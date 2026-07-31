@@ -49,6 +49,20 @@ sourceSets {
     }
 }
 
+// A test source set on the NODE, against the node's own Minecraft jar.
+//
+// The core tests cannot reach this half by construction (ADR-0001), and until two client launches
+// crashed inside block registration there was nothing between "it compiles" and "a user runs it".
+// Bootstrap.bootStrap() initialises the registries without a window, which is enough to really
+// construct a Block - which is where both of those bugs lived.
+//
+// No srcDir is added: Stonecutter already feeds src/test/java through its own processing, and
+// naming it again compiles every class twice.
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    testLogging { events("failed") }
+}
+
 repositories {
     mavenCentral()
     maven("https://maven.fabricmc.net/") { name = "Fabric" }
@@ -63,7 +77,7 @@ repositories {
 // Merged rather than nested: core has no dependencies of its own, so there is nothing to isolate,
 // and Fabric's jar-in-jar wants nested jars to be mods while NeoForge's JarJar is a different
 // mechanism again. Copying the classes in is the one answer that is identical on both loaders.
-val coreBundle: Configuration by configurations.creating {
+val coreBundle = configurations.create("coreBundle") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -97,6 +111,11 @@ dependencies {
     // declared in fabric.mod.json and is only ever loaded BY ModMenu, so a client without it never
     // touches the class.
     modCompileOnly("com.terraformersmc:modmenu:$modMenu")
+
+    val junit = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
+    testImplementation(platform(junit.findLibrary("junit-bom").get()))
+    testImplementation(junit.findLibrary("junit-jupiter").get())
+    testRuntimeOnly(junit.findLibrary("junit-launcher").get())
 }
 
 // The Minecraft range is PINNED, not open-ended. This jar is compiled against exactly one version
