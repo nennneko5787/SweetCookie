@@ -28,15 +28,47 @@ public record ViewModel(String title, List<Section> sections) {
         sections = List.copyOf(sections);
     }
 
-    /** A group of rows under a heading. */
-    public record Section(String heading, List<Row> rows) {
+    /**
+     * A group of rows under a heading.
+     *
+     * @param drop what dropping a dragged row into this section means, when anything does
+     */
+    public record Section(String heading, List<Row> rows, Optional<DropTarget> drop) {
         public Section {
             rows = List.copyOf(rows);
         }
 
         public static Section of(String heading, List<Row> rows) {
-            return new Section(heading, rows);
+            return new Section(heading, rows, Optional.empty());
         }
+
+        public static Section of(String heading, List<Row> rows, DropTarget drop) {
+            return new Section(heading, rows, Optional.of(drop));
+        }
+    }
+
+    /**
+     * What dropping a dragged row into a section does. SC-280 §5.2.
+     *
+     * <p>The section decides, not the row, because that is what makes dragging <b>between</b>
+     * sections mean something: the same pack dropped into "enabled" is enabled and positioned, and
+     * dropped into "not enabled" is disabled. A row that could only be reordered within its own list
+     * would leave enabling to some other control, and then dragging would be the second way to do
+     * half the job rather than the way to do all of it.
+     *
+     * <p>Returns commands, plural and possibly none. Plural because dragging a disabled pack to a
+     * position is an enable and a move; none because dropping a pack where it already is should do
+     * nothing at all rather than send a command that changes nothing.
+     */
+    @FunctionalInterface
+    public interface DropTarget {
+
+        /**
+         * @param dragged  the row being dropped
+         * @param position where it would land among this section's rows, counting the dragged row
+         *                 itself if it is already here
+         */
+        List<String> commands(Row dragged, int position);
     }
 
     /**
@@ -59,14 +91,17 @@ public record ViewModel(String title, List<Section> sections) {
     /**
      * One line.
      *
+     * @param key     what this row is, as commands name it — a pack's handle. Stable across
+     *                rebuilds, unlike {@code label}, which carries the position number and so
+     *                changes the moment the row is dragged anywhere
      * @param label   the primary text: a pack name, a size class, a setting
      * @param detail  the secondary text: a version, a count, what a pack provides
      * @param badge   the worst severity reported against this row, when anything was
      * @param notes   lines shown under the row — the diagnostics themselves, quoted
      * @param actions what this row can do; empty makes the row a statement rather than a control
      */
-    public record Row(String label, String detail, Optional<Severity> badge, List<String> notes,
-            List<Action> actions) {
+    public record Row(String key, String label, String detail, Optional<Severity> badge,
+            List<String> notes, List<Action> actions) {
 
         public Row {
             notes = List.copyOf(notes);
@@ -74,21 +109,31 @@ public record ViewModel(String title, List<Section> sections) {
         }
 
         public static Row of(String label, String detail) {
-            return new Row(label, detail, Optional.empty(), List.of(), List.of());
+            return new Row(label, label, detail, Optional.empty(), List.of(), List.of());
         }
 
         public static Row of(String label, String detail, Severity badge, List<String> notes) {
-            return new Row(label, detail, Optional.of(badge), notes, List.of());
+            return new Row(label, label, detail, Optional.of(badge), notes, List.of());
         }
 
         /** A row with nothing to say, so a section can state that rather than appear broken. */
         public static Row empty(String label) {
-            return new Row(label, "", Optional.empty(), List.of(), List.of());
+            return new Row(label, label, "", Optional.empty(), List.of(), List.of());
+        }
+
+        /** The same row, under the name commands use for it. */
+        public Row keyed(String key) {
+            return new Row(key, label, detail, badge, notes, actions);
         }
 
         /** The same row, with things it can do. */
         public Row with(List<Action> actions) {
-            return new Row(label, detail, badge, notes, actions);
+            return new Row(key, label, detail, badge, notes, actions);
+        }
+
+        /** True when this row can be picked up and dropped somewhere else. SC-280 §5.2. */
+        public boolean draggable() {
+            return !actions.isEmpty();
         }
     }
 

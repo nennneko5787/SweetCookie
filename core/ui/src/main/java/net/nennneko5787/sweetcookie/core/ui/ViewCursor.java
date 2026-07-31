@@ -65,6 +65,23 @@ public final class ViewCursor {
     }
 
     /**
+     * Selects the row a command would name, leaving the selection alone if it is not there.
+     *
+     * <p>What a mouse click does, so that clicking a row and then using the keys continues from the
+     * row that was clicked. Two ways of pointing at the same list that disagreed about which row was
+     * current would be worse than having only one.
+     */
+    public ViewCursor selectKey(String key) {
+        List<ViewModel.Row> rows = rows();
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).key().equals(key)) {
+                return select(i);
+            }
+        }
+        return this;
+    }
+
+    /**
      * Handles a key.
      *
      * <p>Returns the command the key asked for, so that the caller — a {@code Screen}, the only part

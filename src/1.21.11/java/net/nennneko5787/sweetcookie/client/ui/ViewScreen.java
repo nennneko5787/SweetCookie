@@ -1,11 +1,14 @@
 package net.nennneko5787.sweetcookie.client.ui;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.nennneko5787.sweetcookie.core.ui.ViewCursor;
+import net.nennneko5787.sweetcookie.core.ui.ViewDrag;
 import net.nennneko5787.sweetcookie.core.ui.ViewLayout;
 import net.nennneko5787.sweetcookie.core.ui.ViewModel;
 
@@ -27,6 +30,7 @@ public final class ViewScreen extends Screen {
     private final Supplier<ViewModel> source;
     private ViewModel view;
     private ViewCursor cursor;
+    private final ViewDrag drag = new ViewDrag();
     private int scroll;
 
     public ViewScreen(Screen parent, ViewModel view) {
@@ -60,16 +64,55 @@ public final class ViewScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        // Kept by key, not by index: an action can move a pack into the other section, and an
+        // index would leave the selection on whatever row inherited its position.
+        Optional<String> key = cursor.selection().map(ViewModel.Row::key);
         int selected = cursor.selectedIndex();
         view = source.get();
         cursor = new ViewCursor(view).select(selected);
+        key.ifPresent(cursor::selectKey);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
         ViewLayout.draw(view, (text, x, y, argb) ->
-                graphics.drawString(this.font, text, x, y, argb), scroll, cursor.selectedIndex());
+                graphics.drawString(this.font, text, x, y, argb), scroll, cursor.selectedIndex(),
+                drag);
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0 && drag.press(view, scroll, event.y())) {
+            drag.heldKey().ifPresent(cursor::selectKey);
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (drag.holding()) {
+            drag.moveTo(event.y());
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (!drag.holding()) {
+            return super.mouseReleased(event);
+        }
+        drag.release(view, scroll).forEach(this::run);
+        return true;
+    }
+
+    @Override
+    public void removed() {
+        // A drag left live across a screen change would move whatever the next press landed on.
+        drag.cancel();
+        super.removed();
     }
 
     @Override

@@ -71,9 +71,12 @@ public final class Views {
                     + (provides.isEmpty() ? " - provides nothing this build reads" : " - " + provides)
                     + (warnings > 0 && notes.isEmpty() ? "  (" + warnings + " warning(s))" : "");
 
+            // Keyed by the handle commands use, not by the label: the label carries the position
+            // number, which changes the instant the row is dragged anywhere.
             ViewModel.Row row = pack.badge()
                     .map(badge -> ViewModel.Row.of(label, detail, badge, notes))
-                    .orElseGet(() -> ViewModel.Row.of(label, detail));
+                    .orElseGet(() -> ViewModel.Row.of(label, detail))
+                    .keyed(handle);
             if (order.isPresent()) {
                 enabled.add(row.with(enabledActions(handle, order.get(), active.get().size())));
             } else {
@@ -97,15 +100,23 @@ public final class Views {
         } else {
             // The heading carries the precedence rule. Java Edition's screen puts the direction
             // nowhere, and a user who assumes the wrong end silently gets the other pack's content.
+            //
+            // Both sections take drops, which is what makes dragging the whole interaction rather
+            // than half of one: a pack is enabled by dragging it into the list that is in use and
+            // disabled by dragging it out, exactly as the two lists suggest.
             sections.add(ViewModel.Section.of(
                     enabled.isEmpty()
-                            ? "enabled in this world - none"
+                            ? "enabled in this world - none; drag a pack here to use it"
                             : "enabled in this world, lowest priority first (the last one wins)",
-                    enabled));
+                    enabled,
+                    (dragged, position) -> enableAt(dragged, position, currentOrder(enabled))));
             sections.add(ViewModel.Section.of(
                     available.isEmpty() ? "installed but not enabled - none"
                             : "installed but not enabled",
-                    available));
+                    available,
+                    (dragged, position) -> currentOrder(enabled).contains(dragged.key())
+                            ? List.of("sweetcookie disable " + dragged.key())
+                            : List.of()));
         }
 
         // Reported before any pack had an identity - a corrupt archive, an unusable manifest. It has
@@ -120,13 +131,47 @@ public final class Views {
         return new ViewModel("SweetCookie add-ons", sections);
     }
 
+    /** The enabled section's keys, in precedence order — what a drop is measured against. */
+    private static List<String> currentOrder(List<ViewModel.Row> enabled) {
+        return enabled.stream().map(ViewModel.Row::key).toList();
+    }
+
+    /**
+     * What dropping a pack into the enabled list means.
+     *
+     * <p>Three cases, and the arithmetic in the middle one is the whole reason this is not a one
+     * liner. {@code order} <b>removes and reinserts</b>, so an index measured against a list that
+     * still contains the dragged pack is one too high once the pack it counted past is itself the
+     * pack being moved. Getting this wrong moves a pack one place short of where the insertion mark
+     * promised, every time it is dragged downwards — the kind of off-by-one a user reads as the
+     * screen ignoring them.
+     *
+     * @param position where the pack landed, counted against the list as drawn
+     */
+    private static List<String> enableAt(ViewModel.Row dragged, int position, List<String> order) {
+        int from = order.indexOf(dragged.key());
+        if (from < 0) {
+            // Not enabled yet. enable() appends, so it arrives at the end and then moves; two
+            // commands, because that is honestly two operations and each reports its own result.
+            int target = Math.min(position, order.size());
+            return List.of("sweetcookie enable " + dragged.key(),
+                    "sweetcookie order " + (target + 1) + " " + dragged.key());
+        }
+        int target = position > from ? position - 1 : position;
+        if (target == from) {
+            // Dropped where it already was. Sending a command that changes nothing would still print
+            // a confirmation, and a user who nudged the mouse would be told they had reordered.
+            return List.of();
+        }
+        return List.of("sweetcookie order " + (target + 1) + " " + dragged.key());
+    }
+
     /**
      * What an enabled pack can do, in the order a user reaches for them.
      *
-     * <p>Reordering is offered as <b>raise</b> and <b>lower</b> rather than drag-and-drop, which is
-     * the whole of Java Edition's answer. A drag needs a mouse, needs the target visible, and gives
-     * no feedback about how far a pack moved; two keys work from the keyboard, on a list longer than
-     * the screen, and land the pack somewhere the confirmation can name.
+     * <p>Dragging is the way to reorder (SC-280 §5.2) and these keys are the same operations reached
+     * without a mouse. They are not a second mechanism: both build the same {@code /sweetcookie}
+     * command, so there is nothing for them to disagree about.
      *
      * <p>The ends are omitted rather than shown disabled: a key that does nothing is a key a user
      * presses twice before concluding the screen is broken.

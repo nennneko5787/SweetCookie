@@ -2,6 +2,7 @@ package net.nennneko5787.sweetcookie.core.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.format.diag.Severity;
 
@@ -11,6 +12,10 @@ import net.nennneko5787.sweetcookie.core.format.diag.Severity;
  * <p>Version-free and Minecraft-free, so it is testable headlessly the way SC-280 §7 asks for:
  * build every screen with a synthetic pack set and assert the line list rather than a screenshot.
  * A backend supplies {@link ViewRenderer} and nothing else.
+ *
+ * <p>It also owns the geometry the mouse needs. Where a row sits and where a dropped row would land
+ * are answered here rather than in the screen, for the same reason the lines are: they are the same
+ * answers on both Minecraft versions, and up here they can be asserted without a client.
  */
 @SpecImpl("SC-280")
 public final class ViewLayout {
@@ -18,6 +23,31 @@ public final class ViewLayout {
     /** One laid-out line. */
     public record Line(String text, int x, int y, int argb) {
     }
+
+    /**
+     * The vertical band a row occupies, for hit testing.
+     *
+     * @param section index into the view's sections
+     * @param row     index into that section's rows, or {@link #SECTION_BODY} for the section itself
+     */
+    public record Region(int section, int row, int top, int bottom) {
+        public boolean contains(double y) {
+            return y >= top && y < bottom;
+        }
+    }
+
+    /**
+     * Where a dragged row would land if released now.
+     *
+     * @param section  the section it would land in
+     * @param position the index among that section's rows, counting the dragged row if it is there
+     * @param y        where to draw the insertion mark
+     */
+    public record Drop(int section, int position, int y) {
+    }
+
+    /** A {@link Region} covering a whole section rather than one of its rows. */
+    public static final int SECTION_BODY = -1;
 
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN_X = 16;
@@ -34,6 +64,8 @@ public final class ViewLayout {
     private static final int INFO = 0xFF6BC6FF;
     private static final int SELECTED = 0xFFFFFFFF;
     private static final int HOTKEY = 0xFF7FD97F;
+    private static final int HELD = 0xFF6B6B6B;
+    private static final int INSERTION = 0xFF7FD9FF;
 
     /** Selects nothing, for a view with no actions and for callers that only want the height. */
     public static final int NOTHING_SELECTED = -1;
@@ -62,41 +94,63 @@ public final class ViewLayout {
      * @param selected an index into {@link ViewModel#actionable()}, or {@link #NOTHING_SELECTED}
      */
     public static List<Line> lay(ViewModel view, int scrollOffset, int selected) {
-        List<Line> lines = new ArrayList<>();
-        int y = MARGIN_Y - scrollOffset;
-        int actionable = 0;
+        return build(view, scrollOffset, selected, new ArrayList<>());
+    }
 
-        lines.add(new Line(view.title(), MARGIN_X, y, TITLE));
-        y += LINE_HEIGHT * 2;
+    /**
+     * The bands every row and section occupy, for hit testing.
+     *
+     * <p>Produced by the same pass that produces the lines, so a row cannot be drawn in one place
+     * and grabbed in another — the failure that makes a hand-written hit test drift from its screen
+     * the first time a row grows a diagnostic.
+     */
+    public static List<Region> regions(ViewModel view, int scrollOffset) {
+        List<Region> regions = new ArrayList<>();
+        build(view, scrollOffset, NOTHING_SELECTED, regions);
+        return regions;
+    }
 
-        for (ViewModel.Section section : view.sections()) {
-            if (section.rows().isEmpty()) {
+    /** The row under a pointer, if any. */
+    public static Optional<Region> rowAt(ViewModel view, int scrollOffset, double y) {
+        return regions(view, scrollOffset).stream()
+                .filter(region -> region.row() != SECTION_BODY && region.contains(y))
+                .findFirst();
+    }
+
+    /**
+     * Where a row released at this height would land.
+     *
+     * <p>The insertion point is decided by which <b>half</b> of a row the pointer is in, not which
+     * row it is over: dropping onto the top half of a row means "before this one" and the bottom
+     * half means "after it". That is what lets a pack be placed at either end of the list, which a
+     * whole-row target cannot express — and it is what the insertion mark drawn at {@link Drop#y}
+     * is showing.
+     *
+     * <p>A pointer in a section's empty space, below its last row, lands at the end. That is how a
+     * pack is dropped into a section that has no rows yet, and refusing it would make the first
+     * pack in an empty list undraggable.
+     */
+    public static Optional<Drop> dropAt(ViewModel view, int scrollOffset, double y) {
+        List<Region> regions = regions(view, scrollOffset);
+        for (Region region : regions) {
+            if (region.row() == SECTION_BODY || !region.contains(y)) {
                 continue;
             }
-            lines.add(new Line(section.heading(), MARGIN_X, y, HEADING));
-            y += LINE_HEIGHT;
-
-            for (ViewModel.Row row : section.rows()) {
-                boolean isSelected = !row.actions().isEmpty() && actionable++ == selected;
-                int colour = isSelected ? SELECTED : row.badge().map(ViewLayout::colourOf).orElse(BODY);
-                lines.add(new Line((isSelected ? "> " : "  ") + row.label(), MARGIN_X + 8, y, colour));
-                if (!row.detail().isEmpty()) {
-                    lines.add(new Line(row.detail(), MARGIN_X + 20, y + LINE_HEIGHT, DETAIL));
-                    y += LINE_HEIGHT;
-                }
-                y += LINE_HEIGHT;
-                for (String note : row.notes()) {
-                    lines.add(new Line(note, MARGIN_X + 20, y, ERROR));
-                    y += LINE_HEIGHT;
-                }
-                if (isSelected) {
-                    lines.add(new Line(keysOf(row), MARGIN_X + 20, y, HOTKEY));
-                    y += LINE_HEIGHT;
-                }
-            }
-            y += LINE_HEIGHT;
+            boolean after = y >= (region.top() + region.bottom()) / 2.0;
+            return Optional.of(new Drop(region.section(), region.row() + (after ? 1 : 0),
+                    after ? region.bottom() : region.top()));
         }
-        return lines;
+        for (Region region : regions) {
+            if (region.row() != SECTION_BODY || !region.contains(y)) {
+                continue;
+            }
+            int rows = view.sections().get(region.section()).rows().size();
+            int end = regions.stream()
+                    .filter(r -> r.section() == region.section() && r.row() != SECTION_BODY)
+                    .mapToInt(Region::bottom).max().orElse(region.top());
+            return Optional.of(new Drop(region.section(), rows, end));
+        }
+        return Optional.empty();
     }
 
     /** Draws a laid-out view through a backend. */
@@ -109,6 +163,27 @@ public final class ViewLayout {
         for (Line line : lay(view, scrollOffset, selected)) {
             renderer.line(line.text(), line.x(), line.y(), line.argb());
         }
+    }
+
+    /**
+     * Draws a view with a drag in progress.
+     *
+     * <p>Two marks, because they answer two different questions. The <b>insertion mark</b> says
+     * where the pack will land — Java Edition's screen answers this only by the pack physically
+     * moving once you have already let go. The <b>held label</b> follows the pointer, so that a drag
+     * across a long list does not lose track of which pack is in hand.
+     */
+    public static void draw(ViewModel view, ViewRenderer renderer, int scrollOffset, int selected,
+            ViewDrag drag) {
+        draw(view, renderer, scrollOffset, selected);
+        if (!drag.dragging()) {
+            return;
+        }
+        drag.target(view, scrollOffset).ifPresent(drop ->
+                renderer.line("-".repeat(48), MARGIN_X + 8, drop.y() - LINE_HEIGHT / 2, INSERTION));
+        drag.heldRow(view).ifPresent(row ->
+                renderer.line("[ " + row.label() + " ]", MARGIN_X + 8,
+                        (int) drag.pointerY() - LINE_HEIGHT / 2, HELD));
     }
 
     /** The total height a view occupies, so a backend can bound its own scrolling. */
@@ -158,6 +233,60 @@ public final class ViewLayout {
             return Math.max(0, end - screenHeight);
         }
         return scrollOffset;
+    }
+
+    /**
+     * The one pass, producing lines and optionally regions.
+     *
+     * <p>One pass rather than two so that a row is grabbed exactly where it is drawn. Two
+     * implementations of the same geometry stay in step until the first time one of them grows a
+     * case the other does not.
+     */
+    private static List<Line> build(ViewModel view, int scrollOffset, int selected,
+            List<Region> regions) {
+        List<Line> lines = new ArrayList<>();
+        int y = MARGIN_Y - scrollOffset;
+        int actionable = 0;
+
+        lines.add(new Line(view.title(), MARGIN_X, y, TITLE));
+        y += LINE_HEIGHT * 2;
+
+        for (int s = 0; s < view.sections().size(); s++) {
+            ViewModel.Section section = view.sections().get(s);
+            if (section.rows().isEmpty() && section.drop().isEmpty()) {
+                continue;
+            }
+            int sectionTop = y;
+            lines.add(new Line(section.heading(), MARGIN_X, y, HEADING));
+            y += LINE_HEIGHT;
+
+            for (int r = 0; r < section.rows().size(); r++) {
+                ViewModel.Row row = section.rows().get(r);
+                int rowTop = y;
+                boolean isSelected = row.draggable() && actionable++ == selected;
+                int colour = isSelected ? SELECTED : row.badge().map(ViewLayout::colourOf).orElse(BODY);
+                lines.add(new Line((isSelected ? "> " : "  ") + row.label(), MARGIN_X + 8, y, colour));
+                if (!row.detail().isEmpty()) {
+                    lines.add(new Line(row.detail(), MARGIN_X + 20, y + LINE_HEIGHT, DETAIL));
+                    y += LINE_HEIGHT;
+                }
+                y += LINE_HEIGHT;
+                for (String note : row.notes()) {
+                    lines.add(new Line(note, MARGIN_X + 20, y, ERROR));
+                    y += LINE_HEIGHT;
+                }
+                if (isSelected) {
+                    lines.add(new Line(keysOf(row), MARGIN_X + 20, y, HOTKEY));
+                    y += LINE_HEIGHT;
+                }
+                regions.add(new Region(s, r, rowTop, y));
+            }
+            // The trailing gap belongs to the section, so that the empty space below the last row is
+            // a place to drop into rather than dead screen.
+            y += LINE_HEIGHT;
+            regions.add(new Region(s, SECTION_BODY, sectionTop, y));
+        }
+        return lines;
     }
 
     /** The selected row's keys, as the keycap and what it does. */

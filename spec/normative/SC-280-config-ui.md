@@ -118,8 +118,8 @@ Not just a list of checkboxes:
 - which packs the current world has enabled, distinct from which are installed;
 - load order, reorderable, since it decides override precedence (SC-100 §5).
 
-Drag-and-drop import of `.mcaddon` / `.mcpack` onto the screen is `TODO(SC-280)` but is close to how
-users expect this to work.
+Drag-and-drop import of a `.mcaddon` / `.mcpack` **file** onto the screen is `TODO(SC-280)` but is
+close to how users expect this to work. (Dragging rows *within* the screen is §5.2 and is required.)
 
 ### 5.1 Three things Java Edition's pack screen makes a user guess
 
@@ -132,18 +132,34 @@ loses on all three counts. Each is a requirement, not a preference:
 | **what a pack contains** | a name and an icon | counts of what the pack provides, per pack |
 | **why a pack is doing nothing** | silent | a severity badge on the row and its diagnostics quoted in full underneath |
 
-### 5.2 Reordering is keys, not dragging
+### 5.2 Reordering is dragging
 
-Java Edition reorders by dragging a pack between two lists. **This is a keyboard interaction here**:
-arrow keys move a selection, one labelled key per action acts on it, and the available keys are drawn
-**under the selected row** rather than in a legend.
+**Packs are reordered by dragging them**, and enabled and disabled by dragging them between the two
+sections. That is what Java Edition does and what anyone opening this screen will reach for; a pack
+list that had to be reordered some other way would be the surprising one.
 
-A drag needs a mouse, needs the pack and its destination visible at once, and reports nothing about
-where the pack landed. Keys work on a list longer than the screen, and every action ends in a message
-naming the pack's new position and the count it is out of. Mouse support may be added; it may not
-replace this.
+What is **not** inherited is that screen's silence. Three requirements, each fixing something it
+leaves the user to work out:
 
-Two consequences are normative:
+- **the landing point is shown while the button is still down.** An insertion mark sits where the
+  pack will go. Java Edition answers this only by the pack physically moving after the drop, so a
+  drag that lands wrong has to be undone before it can be understood;
+- **dropping into the other section enables or disables.** The two lists mean what they look like
+  they mean, so dragging is the whole interaction rather than half of one;
+- **the result is stated in words** — the pack's new position and the count it is out of — because a
+  list whose winning end is only implied is what §5.1 is about.
+
+Two rules follow from those:
+
+- **a drop must land where the mark promised.** Reordering removes the pack before reinserting it, so
+  an index measured against the list as drawn is one too high whenever the pack moves downwards.
+  Landing one place short of the mark reads as the screen ignoring the drop;
+- **a drop that changes nothing sends nothing.** A nudged mouse must not report a reorder.
+
+Keyboard equivalents are provided for every drag: arrows move a selection, one labelled key per
+action acts on it, and the keys are drawn under the selected row rather than in a legend. These are
+not a second mechanism — both produce the same `/sweetcookie` command (§7.1) — and they are what
+makes the screen usable on a list longer than itself, and without a mouse. Two further rules:
 
 - **the selection must never leave the screen** — the list scrolls to follow it, by the least it can;
 - **an action that cannot apply is not offered** — the last pack has no "raise", rather than a
