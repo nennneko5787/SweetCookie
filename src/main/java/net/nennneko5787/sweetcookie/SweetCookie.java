@@ -11,7 +11,7 @@ import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
 import net.nennneko5787.sweetcookie.platform.CommandRegistrar;
 import net.nennneko5787.sweetcookie.runtime.command.SweetCookieCommand;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
-import net.nennneko5787.sweetcookie.runtime.ui.TextView;
+import net.nennneko5787.sweetcookie.core.ui.TextView;
 import net.nennneko5787.sweetcookie.runtime.ui.Views;
 
 /**
@@ -72,7 +72,7 @@ public final class SweetCookie {
         // dedicated server reaches its first server-start immediately anyway.
         lifecycle.onServerStarting(scope -> {
             addons = AddonRegistry.scan(platform.addonDirectory());
-            TextView.render(Views.packs(addons, WorldActivation.current()))
+            TextView.render(Views.packs(addons, WorldActivation.known()))
                     .forEach(line -> System.out.println("[SweetCookie] " + line));
         });
     }

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
+import net.nennneko5787.sweetcookie.core.ui.ViewModel;
 import net.nennneko5787.sweetcookie.core.format.diag.Diagnostic;
 import net.nennneko5787.sweetcookie.core.format.diag.Severity;
+import net.nennneko5787.sweetcookie.core.registry.ActivePacks;
 import net.nennneko5787.sweetcookie.core.registry.BlockLedger;
 import net.nennneko5787.sweetcookie.core.registry.SlotPool;
 import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
@@ -32,7 +34,7 @@ public final class Views {
      * pack, because a badge alone says something is wrong and not what.
      */
     public static ViewModel packs(AddonRegistry addons) {
-        return packs(addons, net.nennneko5787.sweetcookie.core.registry.ActivePacks.NONE);
+        return packs(addons, Optional.of(ActivePacks.NONE));
     }
 
     /**
@@ -42,16 +44,19 @@ public final class Views {
      * three: <b>which end of the order wins</b>, <b>what a pack actually contains</b>, and <b>why a
      * pack is not doing anything</b>. Guessing the first gets you the other pack's texture with no
      * indication why.
+     *
+     * @param active this world's pack set, or empty when this process is not the one running the
+     *               world — a remote client knows what is installed on its disk and nothing about
+     *               what the server enabled, and saying so beats listing everything as disabled
      */
-    public static ViewModel packs(
-            AddonRegistry addons,
-            net.nennneko5787.sweetcookie.core.registry.ActivePacks active) {
+    public static ViewModel packs(AddonRegistry addons, Optional<ActivePacks> active) {
 
         List<ViewModel.Row> enabled = new ArrayList<>();
         List<ViewModel.Row> available = new ArrayList<>();
 
         for (PackSummary pack : addons.packs()) {
-            java.util.Optional<Integer> order = active.orderOf(pack.id());
+            Optional<Integer> order = active.flatMap(packs -> packs.orderOf(pack.id()));
+            String handle = pack.name().isEmpty() ? pack.id().toString() : pack.name();
             String label = order.map(position -> (position + 1) + ". ").orElse("")
                     + (pack.name().isEmpty() ? pack.source() : pack.name());
             String provides = pack.provides().describe();
@@ -69,13 +74,26 @@ public final class Views {
             ViewModel.Row row = pack.badge()
                     .map(badge -> ViewModel.Row.of(label, detail, badge, notes))
                     .orElseGet(() -> ViewModel.Row.of(label, detail));
-            (order.isPresent() ? enabled : available).add(row);
+            if (order.isPresent()) {
+                enabled.add(row.with(enabledActions(handle, order.get(), active.get().size())));
+            } else {
+                // A pack whose activation is unknown gets no actions: offering "enable" against a
+                // list we did not compute would be a control that lies about the current state.
+                available.add(active.isPresent()
+                        ? row.with(List.of(new ViewModel.Action(
+                                "enable", 'E', "sweetcookie enable " + handle)))
+                        : row);
+            }
         }
 
         List<ViewModel.Section> sections = new ArrayList<>();
         if (addons.packs().isEmpty()) {
             sections.add(ViewModel.Section.of("installed",
                     List.of(ViewModel.Row.empty("no add-ons installed"))));
+        } else if (active.isEmpty()) {
+            sections.add(ViewModel.Section.of(
+                    "installed on this client - the server decides which of these this world uses",
+                    available));
         } else {
             // The heading carries the precedence rule. Java Edition's screen puts the direction
             // nowhere, and a user who assumes the wrong end silently gets the other pack's content.
@@ -100,6 +118,33 @@ public final class Views {
                             .toList()));
         }
         return new ViewModel("SweetCookie add-ons", sections);
+    }
+
+    /**
+     * What an enabled pack can do, in the order a user reaches for them.
+     *
+     * <p>Reordering is offered as <b>raise</b> and <b>lower</b> rather than drag-and-drop, which is
+     * the whole of Java Edition's answer. A drag needs a mouse, needs the target visible, and gives
+     * no feedback about how far a pack moved; two keys work from the keyboard, on a list longer than
+     * the screen, and land the pack somewhere the confirmation can name.
+     *
+     * <p>The ends are omitted rather than shown disabled: a key that does nothing is a key a user
+     * presses twice before concluding the screen is broken.
+     */
+    private static List<ViewModel.Action> enabledActions(String handle, int position, int size) {
+        List<ViewModel.Action> actions = new ArrayList<>();
+        actions.add(new ViewModel.Action("disable", 'D', "sweetcookie disable " + handle));
+        if (position + 1 < size) {
+            // "raise" moves towards the winning end, which is the end the heading names. Calling it
+            // "up" would mean the opposite thing to a user reading the list top-down.
+            actions.add(new ViewModel.Action("raise priority", ']',
+                    "sweetcookie order " + (position + 2) + " " + handle));
+        }
+        if (position > 0) {
+            actions.add(new ViewModel.Action("lower priority", '[',
+                    "sweetcookie order " + position + " " + handle));
+        }
+        return actions;
     }
 
     /** The block pool and this world's ledger. SC-120 §6. */

@@ -121,6 +121,43 @@ Not just a list of checkboxes:
 Drag-and-drop import of `.mcaddon` / `.mcpack` onto the screen is `TODO(SC-280)` but is close to how
 users expect this to work.
 
+### 5.1 Three things Java Edition's pack screen makes a user guess
+
+This screen is measured against the one it sits next to, and Java Edition's resource-pack screen
+loses on all three counts. Each is a requirement, not a preference:
+
+| | Java Edition | required here |
+|---|---|---|
+| **which end of the order wins** | stated nowhere; a user who assumes wrong silently gets the other pack's content and has nothing to read that would tell them | the rule is written **in the section heading**, repeated in every confirmation message, and carried in `active.json` as a `_comment` for whoever edits it by hand |
+| **what a pack contains** | a name and an icon | counts of what the pack provides, per pack |
+| **why a pack is doing nothing** | silent | a severity badge on the row and its diagnostics quoted in full underneath |
+
+### 5.2 Reordering is keys, not dragging
+
+Java Edition reorders by dragging a pack between two lists. **This is a keyboard interaction here**:
+arrow keys move a selection, one labelled key per action acts on it, and the available keys are drawn
+**under the selected row** rather than in a legend.
+
+A drag needs a mouse, needs the pack and its destination visible at once, and reports nothing about
+where the pack landed. Keys work on a list longer than the screen, and every action ends in a message
+naming the pack's new position and the count it is out of. Mouse support may be added; it may not
+replace this.
+
+Two consequences are normative:
+
+- **the selection must never leave the screen** — the list scrolls to follow it, by the least it can;
+- **an action that cannot apply is not offered** — the last pack has no "raise", rather than a
+  "raise" that does nothing. A key that does nothing is a key a user presses twice before concluding
+  the screen is broken.
+
+### 5.3 A client that is not running the world says so
+
+Activation is world state, and a client connected to a remote server has not been told it. Such a
+client **must not render the installed list as though everything were disabled** — that is a
+confident wrong answer. It shows what is installed on its own disk, says the server decides which of
+them this world uses, and offers no enable/disable controls until SC-270 §9's handshake gives it the
+real answer.
+
 ## 6. Client-side pack acceptance
 
 When a server offers packs the client lacks (SC-270 §9), the consent prompt lives here. Its policy
@@ -137,3 +174,32 @@ layer over them.
 That layering is deliberate: **every management operation is a `/sweetcookie` command first**, and
 the screen calls it. Dedicated servers get the full feature set with no client UI, and the screen
 cannot drift from the command's semantics.
+
+### 7.1 The screen calls the command by sending it
+
+A screen action carries the command string that performs it, and the screen runs the action by
+sending that string as a command. Not a new packet, and not a shared method call.
+
+This is what makes §7's layering real rather than aspirational — there is no second path to enabling
+a pack — and it settles four things at once: no new wire format to version, the same permission check
+as typing the command (so a non-operator's screen refuses exactly where their keyboard would),
+nothing required of the server but SweetCookie, and **no interaction with ViaVersion at all**, since
+a chat command is vanilla traffic and SC-270's invariant is untouched.
+
+It also gives the text backend something exact to print. `/sweetcookie packs` on a headless server
+prints each row's commands under it, so an operator is told what to type rather than that reordering
+exists.
+
+The screen **rebuilds its description on a timer, not after sending**. The command is answered on
+another thread; redrawing immediately shows the state the action was about to change.
+
+### 7.2 Where the description layer lives
+
+Everything above the pixels — what rows exist, what each says, which can be acted on, where the lines
+go, what the keys do — is in `core/` and is Minecraft-free. Only the call that turns a laid-out line
+into pixels is per version (§3.1).
+
+This is what the testing contract above requires rather than merely permits: 26.2 replaced the screen
+rendering model outright, so a test that needed a `Screen` would have to be written twice and run on
+a client. The line list and the key handling are plain JUnit, in seconds, covering both versions at
+once.

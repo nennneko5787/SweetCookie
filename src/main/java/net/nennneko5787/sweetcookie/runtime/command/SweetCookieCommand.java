@@ -18,8 +18,8 @@ import net.nennneko5787.sweetcookie.core.registry.ActivePacks;
 import net.nennneko5787.sweetcookie.runtime.addon.PackSummary;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.registry.WorldLedger;
-import net.nennneko5787.sweetcookie.runtime.ui.TextView;
-import net.nennneko5787.sweetcookie.runtime.ui.ViewModel;
+import net.nennneko5787.sweetcookie.core.ui.TextView;
+import net.nennneko5787.sweetcookie.core.ui.ViewModel;
 import net.nennneko5787.sweetcookie.runtime.ui.Views;
 
 /**
@@ -92,7 +92,7 @@ public final class SweetCookieCommand {
     }
 
     private static ViewModel packsView() {
-        return Views.packs(SweetCookie.addons(), WorldActivation.current());
+        return Views.packs(SweetCookie.addons(), WorldActivation.known());
     }
 
     private static int enable(CommandContext<CommandSourceStack> context, boolean on) {

@@ -1,4 +1,4 @@
-package net.nennneko5787.sweetcookie.runtime.ui;
+package net.nennneko5787.sweetcookie.core.ui;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +37,16 @@ public final class TextView {
                 // Notes are indented under their row rather than folded into the detail: a
                 // diagnostic is what a user acts on, and a truncated one is worse than none.
                 row.notes().forEach(note -> lines.add("        " + note));
+                // One line for all of a row's actions, spelled as the commands themselves. An
+                // operator on a headless server has no screen to press keys on, and a list that
+                // says reordering exists without saying how to do it has told them nothing. Joined
+                // rather than one line each, because three lines per pack buries the list.
+                if (!row.actions().isEmpty()) {
+                    lines.add("        " + row.actions().stream()
+                            .map(action -> "/" + action.command())
+                            .reduce((a, b) -> a + "  " + b)
+                            .orElseThrow());
+                }
             }
         }
         return lines;

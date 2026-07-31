@@ -33,8 +33,8 @@ public final class SweetCookieNeoForge {
         // both version directories, so shared code that wanted one could just construct it.
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             container.registerExtensionPoint(IConfigScreenFactory.class,
-                    (modContainer, parent) ->
-                            new ViewScreen(parent, Views.packs(SweetCookie.addons(), WorldActivation.current())));
+                    (modContainer, parent) -> new ViewScreen(parent,
+                            () -> Views.packs(SweetCookie.addons(), WorldActivation.known())));
         }
     }
 }

@@ -63,7 +63,7 @@ Read before touching anything:
 
 ```
 core/                    SEPARATE BUILD (includeBuild). Minecraft-free, plain JUnit, --release 21.
-                         api / format / molang / script / testkit.
+                         api / format / molang / registry / script / ui / testkit.
 src/main/java            MC-dependent, compiled by every node. Version-free and loader-free.
 src/fabric/java          Fabric entry point + mixins   } added to the source set by that
 src/neoforge/java        NeoForge entry point + mixins } node's buildscript

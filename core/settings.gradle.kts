@@ -33,4 +33,5 @@ include(":format")    // archive, manifest, JSON -> IR. The largest module in th
 include(":molang")    // mocha binding, 315 query SPI, 106 filter tests
 include(":script")    // JS host SPI and @minecraft/* facade interfaces
 include(":registry")  // logical identifiers, the block slot pool and the world ledger
+include(":ui")      // view descriptions, layout and keyboard cursor. No Minecraft, so testable headlessly.
 include(":testkit")   // conformance case loader, trace comparator, goldens

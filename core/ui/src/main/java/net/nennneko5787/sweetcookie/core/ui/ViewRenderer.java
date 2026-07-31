@@ -1,4 +1,4 @@
-package net.nennneko5787.sweetcookie.client.ui;
+package net.nennneko5787.sweetcookie.core.ui;
 
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 

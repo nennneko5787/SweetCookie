@@ -24,6 +24,9 @@ public final class SweetCookieModMenu implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> new ViewScreen(parent, Views.packs(SweetCookie.addons(), WorldActivation.current()));
+        // A supplier, not a value: the screen rebuilds it every tick so that enabling a pack from
+        // the screen is visible on the screen.
+        return parent -> new ViewScreen(parent,
+                () -> Views.packs(SweetCookie.addons(), WorldActivation.known()));
     }
 }

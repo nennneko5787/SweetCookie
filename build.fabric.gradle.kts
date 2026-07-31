@@ -68,6 +68,7 @@ dependencies {
     // not something `format` depends on - SC-120 is allocation and persistence, not parsing.
     implementation("net.nennneko5787.sweetcookie:format")
     implementation("net.nennneko5787.sweetcookie:registry")
+    implementation("net.nennneko5787.sweetcookie:ui")
 
     // compileOnly: absent ModMenu must not break anything (SC-280 section 3). The entry point is
     // declared in fabric.mod.json and is only ever loaded BY ModMenu, so a client without it never

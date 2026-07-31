@@ -55,6 +55,7 @@ dependencies {
     // not something `format` depends on - SC-120 is allocation and persistence, not parsing.
     implementation("net.nennneko5787.sweetcookie:format")
     implementation("net.nennneko5787.sweetcookie:registry")
+    implementation("net.nennneko5787.sweetcookie:ui")
 }
 
 tasks.withType<JavaCompile>().configureEach {

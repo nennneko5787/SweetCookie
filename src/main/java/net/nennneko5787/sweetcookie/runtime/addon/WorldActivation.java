@@ -40,6 +40,20 @@ public final class WorldActivation {
     }
 
     /**
+     * The activation state, when this process is the one that holds it.
+     *
+     * <p>Empty on a client connected to a remote server, where the world's pack set lives on the
+     * other end of the connection and this process has never seen it. That is a different thing from
+     * "no packs enabled", and {@link #current} cannot tell them apart — a client asked for a list
+     * would otherwise show every installed pack as disabled and be confidently wrong. Callers that
+     * show something to a user want this one; SC-270 §9's handshake is what will eventually let a
+     * remote client answer properly.
+     */
+    public static Optional<ActivePacks> known() {
+        return directory == null ? Optional.empty() : Optional.of(current);
+    }
+
+    /**
      * Applies a change and persists it.
      *
      * <p>Takes a function rather than a new value so that a caller cannot compute its change against
