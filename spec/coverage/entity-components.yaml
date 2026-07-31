@@ -6,7 +6,7 @@
 # project dies. The acceptance add-ons decide the order.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 
 domain: entity-components
 spec: SC-160

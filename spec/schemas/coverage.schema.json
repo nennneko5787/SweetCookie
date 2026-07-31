@@ -93,7 +93,7 @@
           "minLength": 1
         },
         "status": {
-          "description": "See spec/normative/SC-000-conventions.md section 3. A human never writes 'implemented' — specReport promotes it when conformance passes.",
+          "description": "See spec/normative/SC-000-conventions.md section 3. 'implemented' is written by hand and verified by the build (ADR-0011): it requires an impl class, a conformance case that passed, no fidelity note, and an all-ok fields map. 'partial' is never promoted.",
           "enum": ["stub", "partial", "implemented", "unsupported", "wontfix"]
         },
         "impl": {

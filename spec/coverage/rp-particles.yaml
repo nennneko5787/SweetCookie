@@ -1,7 +1,7 @@
 # Nearly every field is Molang. Java's ParticleType/ParticleProvider cannot express this, so SweetCookie ships its own particle engine, simulated in version-free code.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 
 domain: rp-particles
 spec: SC-180

@@ -35,8 +35,9 @@ Read before touching anything:
 - [ ] coverage entry updated: `impl`, `fields`, and a `fidelity` note if not fully faithful
 - [ ] at least one conformance case under `spec/conformance/`, golden committed
 - [ ] `./gradlew specAll` green
-- [ ] **you never write `status: implemented` yourself** — `specReport` promotes it when the
-      conformance tests pass
+- [ ] **`status: implemented` is written by hand and verified by the build** (ADR-0011): it needs an
+      `@SpecImpl` class, a conformance case that *passed*, no `fidelity` note, and an all-`ok`
+      `fields` map. No tool edits `spec/coverage/**`. `partial` is never promoted
 
 ## Hard rules
 

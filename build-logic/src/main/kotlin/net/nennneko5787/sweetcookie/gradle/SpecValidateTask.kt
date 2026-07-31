@@ -117,6 +117,30 @@ abstract class SpecValidateTask : DefaultTask() {
                 if (entry.status == "implemented" && entry.conformance.isEmpty()) {
                     problems.report(at, "status `implemented` with no conformance case")
                 }
+                // ADR-0011: `implemented` is written by a human and verified here. These two rules
+                // are what make it mean what SC-000 section 3 says rather than what its author
+                // hoped. A fidelity note states an observable difference from Bedrock, so an entry
+                // claiming there is none cannot carry one; and a `fields` map holding anything but
+                // `ok` is an enumerated divergence in table form, which says `partial` whatever the
+                // status line says.
+                if (entry.status == "implemented" && entry.fidelity != null) {
+                    problems.report(
+                        at,
+                        "status `implemented` carries a `fidelity` note, which describes a " +
+                            "divergence. Either the note is stale or the status is `partial`."
+                    )
+                }
+                if (entry.status == "implemented") {
+                    val divergent = entry.fields.filterValues { it != "ok" }
+                    if (divergent.isNotEmpty()) {
+                        problems.report(
+                            at,
+                            "status `implemented` with non-`ok` field(s) " +
+                                divergent.keys.sorted().joinToString(", ") +
+                                ". An enumerated divergence is `partial`."
+                        )
+                    }
+                }
                 if (entry.claimsImplementation && entry.impl == null) {
                     problems.report(at, "status `${entry.status}` names no implementation class")
                 }

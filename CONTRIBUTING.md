@@ -63,8 +63,11 @@ or out of scope; see [`spec/process.md`](spec/process.md).
    before the code lands, not after.
 3. Write the conformance case. It fails. That is the point.
 4. Implement, annotated `@SpecImpl("SC-nnn#<feature>")`.
-5. Update the coverage entry — `impl`, `fields`, `fidelity`. **Never write `status: implemented`
-   yourself**; `specReport` promotes it when the tests pass.
+5. Update the coverage entry — `status`, `impl`, `fields`, `fidelity`, `conformance`.
+   **`implemented` is written by hand and verified by the build** (ADR-0011): it needs an `@SpecImpl`
+   class, a conformance case that *passed*, no `fidelity` note, and an all-`ok` `fields` map. No tool
+   edits `spec/coverage/**`. `partial` is never promoted — it is the honest terminal state for work
+   whose divergences are known and stated, which is most work.
 6. `./gradlew specAll && ./gradlew --project-dir core build`. `specAll` runs the conformance corpus
    as part of `specConformance`. If a golden legitimately changed, regenerate it with
    `./gradlew --project-dir core :testkit:test -Dsweetcookie.accept=true` and **read the diff**.

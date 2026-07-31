@@ -2,7 +2,7 @@
 # feature list, so this shard is hand-maintained and has no upstream source.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 #
 # Entries here sit at `partial` rather than at `implemented` because every one of them has a real,
 # stated divergence from Bedrock - extraction limits, configured subpack tiers, inert capabilities,

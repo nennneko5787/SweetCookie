@@ -8,8 +8,9 @@
 # `specUpstreamDiff` fails the build when Mojang ships a feature identifier this ledger does not
 # know about.
 #
-# A human NEVER writes `status: implemented`. `specReport` promotes an entry when its conformance
-# cases pass. See spec/process.md section 4.
+# `status: implemented` is written by hand and VERIFIED by the build (ADR-0011): an @SpecImpl class,
+# a conformance case that actually passed, no `fidelity` note, and an all-`ok` `fields` map. No tool
+# edits this directory. `partial` is never promoted to anything. See spec/process.md section 4.
 #
 # `seeded` says where a shard's entries came from:
 #   upstream  generated from the pinned snapshot and verified by specUpstreamDiff

@@ -124,9 +124,15 @@ source position where one exists. Diagnostics are surfaced in-game, not only in 
 
 ## 9. The ledger may not lie
 
-`spec/coverage/**` is checked by CI, not trusted. A `status: implemented` entry with no
-`@SpecImpl`-annotated class fails the build; so does one with no conformance case. **A human never
-writes `status: implemented`** — `specReport` promotes an entry when its conformance tests pass.
+`spec/coverage/**` is checked by CI, not trusted. **A status is a claim, and every claim is verified
+on every build.** `status: implemented` fails unless it names an `@SpecImpl`-annotated class, names
+at least one conformance case, that case actually ran and passed, no `fidelity` note is present, and
+every entry in `fields` is `ok`.
+
+The rule is that no status survives without evidence — not that a particular field is read-only to
+humans. An earlier revision said `specReport` would promote entries and that a human must never write
+`implemented`; ADR-0011 records why that mechanism could not work and why verification replaced it.
+No tool edits `spec/coverage/**`.
 
 *Why:* a compatibility table nobody can trust is worse than none, because it converts user bug
 reports into arguments.

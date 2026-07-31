@@ -60,6 +60,10 @@ class SpecFixture(val root: File) {
                     appendLine("    conformance:")
                     e.conformance.forEach { appendLine("      - $it") }
                 }
+                if (e.fields.isNotEmpty()) {
+                    appendLine("    fields:")
+                    e.fields.forEach { (k, v) -> appendLine("      $k: $v") }
+                }
             }
         }
     )
@@ -70,6 +74,7 @@ class SpecFixture(val root: File) {
         val impl: String? = null,
         val fidelity: String? = null,
         val conformance: List<String> = emptyList(),
+        val fields: Map<String, String> = emptyMap(),
     )
 
     fun conformanceCase(id: String, yaml: String): SpecFixture = apply {

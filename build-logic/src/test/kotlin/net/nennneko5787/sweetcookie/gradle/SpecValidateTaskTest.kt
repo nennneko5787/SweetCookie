@@ -43,7 +43,8 @@ class SpecValidateTaskTest {
 
     @Test
     fun `implemented without a conformance case is rejected`() {
-        // The whole promotion rule rests on this: `implemented` means a test proves it.
+        // `implemented` means a test proves it. ADR-0011 made that a verification rather than a
+        // promotion, which changed who writes the status and not what it has to be backed by.
         expectFailure(
             SpecFixture(tmp).normative("SC-140").shardOf(
                 "filters", "SC-140",
@@ -51,6 +52,62 @@ class SpecValidateTaskTest {
             ),
             "no conformance case",
         )
+    }
+
+    @Test
+    fun `implemented carrying a fidelity note is rejected`() {
+        // A fidelity note states an observable difference from Bedrock. An entry claiming there is
+        // none cannot have one, or the table and the prose beneath it say opposite things.
+        expectFailure(
+            SpecFixture(tmp).normative("SC-140").shardOf(
+                "filters", "SC-140",
+                SpecFixture.Entry(
+                    "is_family", "implemented",
+                    impl = "net.nennneko5787.sweetcookie.x.C",
+                    conformance = listOf("filter/is_family"),
+                    fidelity = "Bedrock re-evaluates every tick and we re-evaluate every four.",
+                ),
+            ),
+            "carries a `fidelity` note",
+        )
+    }
+
+    @Test
+    fun `implemented with a non-ok field is rejected`() {
+        // A `fields` map holding `missing` is an enumerated divergence in table form. It says
+        // `partial` however confidently the status line says otherwise - and it is the shape a
+        // half-finished entry actually takes, because the author fills the table first.
+        expectFailure(
+            SpecFixture(tmp).normative("SC-140").shardOf(
+                "filters", "SC-140",
+                SpecFixture.Entry(
+                    "is_family", "implemented",
+                    impl = "net.nennneko5787.sweetcookie.x.C",
+                    conformance = listOf("filter/is_family"),
+                    fields = mapOf("subject" to "ok", "operator" to "missing"),
+                ),
+            ),
+            "non-`ok` field(s) operator",
+        )
+    }
+
+    @Test
+    fun `implemented with an all-ok fields map and no fidelity passes`() {
+        // The positive half. Without it the two rules above would be satisfied by refusing every
+        // `implemented` entry, which is a check that cannot pass rather than one that cannot fail.
+        assertDoesNotThrow {
+            run(
+                SpecFixture(tmp).normative("SC-140").shardOf(
+                    "filters", "SC-140",
+                    SpecFixture.Entry(
+                        "is_family", "implemented",
+                        impl = "net.nennneko5787.sweetcookie.x.C",
+                        conformance = listOf("filter/is_family"),
+                        fields = mapOf("subject" to "ok", "operator" to "ok"),
+                    ),
+                )
+            )
+        }
     }
 
     @Test

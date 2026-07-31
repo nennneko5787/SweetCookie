@@ -47,13 +47,13 @@ scoping decision, and both leave a record.
             ├─► amend spec/normative/SC-<domain>.md   ← its own commit
             ├─► write the conformance case first
             ├─► implement, annotated @SpecImpl
-            └─► update the coverage entry (never to `implemented`)
+            └─► update the coverage entry
             │
             ▼
   ./gradlew specAll && ./gradlew test
             │
             ▼
-  PR ──► merge ──► specReport promotes the entry ──► feature dir moves to _archive/
+  PR ──► merge ──► feature dir moves to _archive/
 ```
 
 ### `spec/features/NNNN-slug/`
@@ -87,15 +87,27 @@ community pack, however small, is not acceptable.
 
 ## 4. Coverage entries
 
-Update `impl`, `fields` and `fidelity` in your PR. **Never set `status: implemented` yourself** —
-`specReport` promotes an entry once its conformance cases pass. You may set:
+Update `status`, `impl`, `fields`, `fidelity` and `conformance` in your PR.
 
 | Status | Meaning |
 |---|---|
 | `stub` | recognised and parsed into the IR; runtime behaviour is a diagnostic and a no-op |
+| `implemented` | no known divergence, and the build proves it — see below |
 | `partial` | works for the common case; `fields` and `fidelity` say precisely where it does not |
 | `unsupported` | deliberately not implemented **yet**; `fidelity` states why and what it would take |
 | `wontfix` | will not be implemented; `fidelity` states why (usually: no Java analogue exists) |
+
+**`implemented` is written by hand and verified by the build** (ADR-0011, SC-000 §3.1). No tool
+promotes an entry and no tool edits `spec/coverage/**`. Claiming `implemented` without an `impl`
+class, a passing conformance case, no `fidelity` note and an all-`ok` `fields` map is a red build
+naming exactly what is missing.
+
+Earlier revisions of this document said `specReport` would promote `partial` to `implemented`. That
+mechanism had no legal source state — `partial` requires a `fidelity` note, so an author with no
+divergence to describe had nothing valid to write — and it ran only under `--write`. ADR-0011 records
+why verification replaced it.
+
+**`partial` is never promoted.** It is the terminal state for work with known, stated divergences.
 
 `fidelity` is required for `partial`, `unsupported` and `wontfix`, must be at least 40 characters,
 and must describe an **observable behavioural difference** — not an implementation note. "Not done
@@ -119,7 +131,7 @@ note becomes mandatory.**
 | `specUpstreamDiff` | upstream has a feature ID the ledger does not, and it is not in `spec/upstream/allowlist-missing.yaml` |
 | `specImplCheck` | a non-`stub` entry names a class that does not exist or lacks `@SpecImpl`; or an `@SpecImpl` names a feature ID with no entry |
 | `specConformance` | a case claims to prove a feature with no coverage entry, or an entry above `stub` relies on a case that did not run or did not pass. It runs the corpus first, so there is no path through it that reports success without evidence |
-| `specReport` | `docs/compatibility/**` differs from what the ledger implies |
+| `specReport` | `docs/compatibility/**` differs from what the ledger implies. It generates documentation and nothing else; it does not edit the ledger |
 | `specLanguage` | CJK appears in `spec/**` outside `ja/`, `features/` and fenced code blocks |
 | `adrIndex` | `spec/adr/index.md` is stale, or an ADR links to one that does not exist |
 

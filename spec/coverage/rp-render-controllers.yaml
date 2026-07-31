@@ -1,7 +1,7 @@
 # Per-frame, Molang-driven selection of geometry, textures, materials and bone visibility. Bedrock's answer to Java blockstate JSON plus EntityRenderer subclassing, and it is fully dynamic - there is nothing static to precompute.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 
 domain: rp-render-controllers
 spec: SC-180

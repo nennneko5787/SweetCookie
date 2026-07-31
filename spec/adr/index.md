@@ -14,6 +14,7 @@
 | [0008](0008-mocha-for-molang.md) | Molang runs on `team.unnamed:mocha` | accepted | SC-130, SC-250 | low |
 | [0009](0009-hand-rolled-platform-services.md) | Platform abstraction is a hand-rolled `ServiceLoader` | accepted | SC-220, SC-230 | low |
 | [0010](0010-geometry-submission-needs-no-abstraction.md) | Geometry submission needs no version abstraction | accepted | SC-180, SC-220 | low |
+| [0011](0011-the-ledger-verifies-implemented.md) | The ledger verifies `implemented` rather than promoting it | accepted | SC-000, SC-240 | medium |
 
 ## Open decisions
 

@@ -1,7 +1,7 @@
 # Deferred with the rest of worldgen. See features-featurerules.yaml.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 
 domain: biomes
 spec: SC-190

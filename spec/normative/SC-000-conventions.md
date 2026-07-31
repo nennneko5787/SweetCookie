@@ -51,6 +51,27 @@ the same five values a coverage entry's `status` may take, and they mean the sam
 "Faithful" and "correct" are **not** defined terms and **SHOULD NOT** be used in a normative
 sentence. Say which of the five applies.
 
+### 3.1 `implemented` is written by a human and verified by the build
+
+ADR-0011. An entry **MUST NOT** claim `implemented` unless every one of these holds, and the build
+checks all five:
+
+| Requirement | Checked by |
+|---|---|
+| names an `impl` class carrying a matching `@SpecImpl` | `specLinks` |
+| names at least one conformance case | `specValidate` |
+| every named case ran and passed | `specConformance` |
+| carries **no** `fidelity` note | `specValidate` |
+| every entry in `fields`, if present, is `ok` | `specValidate` |
+
+The last two follow from the definition rather than adding to it. A `fidelity` note states an
+observable difference from Bedrock, so an entry claiming there is none cannot carry one; a `fields`
+map containing `missing` or `partial` is an enumerated divergence in table form, and says `partial`
+whatever the `status` line says.
+
+`partial` is **never** promoted to `implemented` by any tool. It is the terminal state for work whose
+divergences are known and stated, which is most work.
+
 ## 4. Naming Bedrock things
 
 Bedrock identifiers are quoted verbatim, in backticks, with their namespace:

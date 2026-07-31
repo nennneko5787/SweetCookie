@@ -1,7 +1,7 @@
 # The 15 sections of a client entity definition - the binding layer between an entity and its geometry, textures, animations and render controllers.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
-# Never write `implemented` by hand - specReport promotes it. Constitution rule 9.
+# `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 
 domain: rp-client-entity
 spec: SC-180
