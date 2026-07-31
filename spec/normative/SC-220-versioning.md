@@ -106,11 +106,18 @@ set by its buildscript:
 
 ```
 src/main/java            compiled by EVERY node - version-free and loader-free
-src/fabric/java          added by build.fabric.gradle.kts
-src/neoforge/java        added by build.neoforge.gradle.kts
-src/client/gfx-1_21_11   added by the 1.21.11 nodes
-src/client/gfx-26_2      added by the 26.2 nodes
+src/fabric/java          added by build.fabric.gradle.kts        }  the LOADER axis,
+src/neoforge/java        added by build.neoforge.gradle.kts      }  named by loader
+src/1.21.11/java         added by the 1.21.11 nodes              }  the VERSION axis,
+src/26.2/java            added by the 26.2 nodes                 }  named by version
 ```
+
+The two axes are named the same way, by the thing that selects them, and a node adds one directory
+from each. An earlier revision called the version axis `src/client/gfx-<version>`, which came from
+ADR-0004's assumption that geometry rendering would be the divergence that mattered. ADR-0010
+removed that, and the directory's first real inhabitant turned out to be a settings screen — neither
+graphics nor, on a dedicated server, client. The name was describing a plan rather than its
+contents.
 
 This is simpler than subprojects and gives the same physical separation: a Fabric-only class cannot
 be referenced accidentally from shared code, because the NeoForge nodes never compile it. Each

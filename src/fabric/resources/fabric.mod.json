@@ -13,7 +13,8 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["net.nennneko5787.sweetcookie.fabric.SweetCookieFabric"]
+    "main": ["net.nennneko5787.sweetcookie.fabric.SweetCookieFabric"],
+    "modmenu": ["net.nennneko5787.sweetcookie.fabric.SweetCookieModMenu"]
   },
   "depends": {
     "fabricloader": ">=0.19.3",

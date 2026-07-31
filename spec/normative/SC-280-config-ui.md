@@ -45,12 +45,26 @@ A platform service (SC-230 §3), because the entry points differ:
 | Fabric | ModMenu's `ModMenuApi` entry point, declared as `modmenu` in `fabric.mod.json`; **soft dependency** — absent ModMenu must not break anything |
 | NeoForge | `IConfigScreenFactory`, registered as a mod extension point |
 
-```java
-public interface ConfigScreenProvider {          // client-only
-    Screen settings(Screen parent);
-    Screen addonManagement(Screen parent, @Nullable LevelStorageAccess world);
-}
-```
+**There is no `ConfigScreenProvider` service.** An earlier revision of this section specified one.
+It is not needed, because **both loaders pull**: ModMenu calls the `modmenu` entry point and NeoForge
+reads the `IConfigScreenFactory` extension point, so nothing ever asks for a screen through an
+interface. And the screen class has **one name across both version directories** (SC-220 §3), so
+shared code that did want to construct one simply can. SC-230 §2 rule 7 says to add an interface
+only when a method does not fit an existing one; this one fitted nothing because there was no call.
+
+ModMenu is `modCompileOnly` and its version is per Minecraft version, because it tracks them one
+major line each. The versions were read out of each jar's own `fabric.mod.json` rather than inferred:
+
+| ModMenu | declares |
+|---|---|
+| `17.0.0` | `minecraft >=1.21.11 <26` |
+| `20.0.0-beta.2` | `minecraft >=26.2-` |
+
+`ModMenuApi.getModConfigScreenFactory` and `IConfigScreenFactory.createScreen` are identical across
+both versions of each, so only the dependency coordinate diverges, not the integration code.
+
+The NeoForge extension point is registered **only on a physical client**: it returns a `Screen`, and
+touching that class on a dedicated server would pull client rendering into a process that has none.
 
 The screens themselves are built in `common/` from version-free widget descriptions; only
 construction and registration are per loader. Whether to depend on **Cloth Config** is
