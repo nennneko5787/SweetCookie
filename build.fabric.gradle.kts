@@ -47,8 +47,11 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:$fabricLoader")
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApi")
 
-    // The Minecraft-free half, via the `core` composite build. ADR-0001.
+    // The Minecraft-free half, via the `core` composite build. ADR-0001. `format` brings `molang`
+    // and `api` transitively; `registry` is named separately because it is a peer of `format`,
+    // not something `format` depends on - SC-120 is allocation and persistence, not parsing.
     implementation("net.nennneko5787.sweetcookie:format")
+    implementation("net.nennneko5787.sweetcookie:registry")
 }
 
 tasks.withType<JavaCompile>().configureEach {
