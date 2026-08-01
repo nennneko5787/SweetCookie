@@ -61,6 +61,10 @@ public final class SweetCookie {
         SlotPool effective = config.pool();
 
         blockPool = BlockPool.register(effective);
+        // Before the client loads resources on its way to the main menu, which is long before any
+        // world and therefore before anything is bound. Without this every slot is missing a
+        // blockstate at startup and the log fills with one line per state.
+        BlockBinding.publishResources();
         WorldLedger.install(lifecycle, effective);
         WorldActivation.install(lifecycle);
 

@@ -93,39 +93,38 @@ public final class BlockBinding {
                         binding.logicalId(),
                         definition.resolveAll().stream().map(BlockPhysics::of).toList()))));
         BoundBlocks.replace(bound);
-        AddonResourcePack.replace(resourcesFor(bound));
+        publishResources();
     }
 
     /**
-     * The blockstate and model files the bound slots need. SC-150 5, path A.
+     * Rebuilds the generated pack for EVERY registered slot, bound or not.
      *
-     * <p>One blockstate per slot naming one model per state index, and one model per state. States
-     * that look the same still get a file each: vanilla deduplicates the BAKED model, so the cost is
-     * a few hundred bytes and the gain is not having to work out which states match.
+     * <p>Every slot needs a blockstate file or the client reports a missing model for each of its
+     * states - 56,832 lines with the default pool, which is not noise around the log but the log.
+     * An unbound slot gets one catch-all variant pointing at vanilla empty model: it covers all of
+     * that class states in one line, and drawing nothing is what an unclaimed slot should do.
      *
-     * <p>Texture paths point into this mod namespace and the bytes behind them are NOT served yet -
-     * the add-on VFS closes after parsing and keeping every texture in memory is a decision that
-     * needs its own thought. Until then a bound block draws as the missing texture, which is a
-     * visible block in the right place with the wrong surface. That is the honest intermediate
-     * state: it proves the whole chain from .mcaddon to chunk, and it cannot be mistaken for done.
+     * <p>Called at mod init as well as after binding, because the client loads resources on its way
+     * to the main menu - long before any world, and therefore before anything is bound.
      */
-    private static Map<String, String> resourcesFor(Map<BlockSlot, BoundBlocks.Bound> bound) {
+    public static void publishResources() {
         Map<String, String> files = new LinkedHashMap<>();
-        bound.forEach((slot, block) -> {
+        for (BlockSlot slot : SweetCookie.blockPool().slots()) {
             List<String> models = new ArrayList<>();
-            for (int index = 0; index < block.byStateIndex().size(); index++) {
-                String name = "block/" + slot.sizeClass() + "_" + index;
-                files.put("models/" + name + ".json", BlockModels.cubeModelJson(
-                        Map.of("all", "sweetcookie:block/missing")));
-                models.add("sweetcookie:" + name);
-            }
+            BoundBlocks.at(slot).ifPresent(block -> {
+                for (int index = 0; index < block.byStateIndex().size(); index++) {
+                    String name = "block/" + slot.sizeClass() + "_" + index;
+                    files.put("models/" + name + ".json", BlockModels.cubeModelJson(
+                            Map.of("all", "sweetcookie:block/missing")));
+                    models.add("sweetcookie:" + name);
+                }
+            });
             if (models.isEmpty()) {
                 models.add(BlockModels.AIR_MODEL);
             }
-            files.put("blockstates/" + pathOf(slot) + ".json",
-                    BlockModels.blockstateJson(models));
-        });
-        return files;
+            files.put("blockstates/" + pathOf(slot) + ".json", BlockModels.blockstateJson(models));
+        }
+        AddonResourcePack.replace(files);
     }
 
     /** The slot path a blockstate file lives at, matching what BlockPool registered. */
