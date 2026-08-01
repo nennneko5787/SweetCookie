@@ -3,7 +3,6 @@ package net.nennneko5787.sweetcookie.runtime.resource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,10 +64,13 @@ public final class AddonResourcePack implements PackResources {
      * together, and a pack half-updated would draw one block with another's model. Volatile because
      * binding happens on the server thread and resource loading does not.
      */
-    public static void replace(Map<String, String> jsonByPath) {
-        Map<String, byte[]> encoded = new LinkedHashMap<>();
-        jsonByPath.forEach((path, json) -> encoded.put(path, json.getBytes(StandardCharsets.UTF_8)));
-        contents = Map.copyOf(encoded);
+    public static void replace(Map<String, byte[]> byPath) {
+        contents = Map.copyOf(byPath);
+    }
+
+    /** UTF-8, for the callers whose files are JSON they just generated. */
+    public static byte[] utf8(String text) {
+        return text.getBytes(StandardCharsets.UTF_8);
     }
 
     /** How many files the pack currently serves. Zero is the honest state before any world loads. */

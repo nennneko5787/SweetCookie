@@ -285,14 +285,25 @@ have.
 
 ### 8.2 Texture bytes
 
-Not served yet, and the reason is a real constraint rather than an oversight: SC-100 §12 closes an
-add-on's archive after parsing so that an author can replace the file they are editing, which is
-exactly what a resource pack reading textures on demand would undo. Holding every texture resident
-instead is a memory decision that needs its own answer, not a default.
+Read at **bind time**, into memory, and served from the generated pack beside the model that names
+them.
 
-Until then a bound block draws with the missing texture — visible, in the right place, with the
-wrong surface. That is the intermediate state to keep: it proves the chain from `.mcaddon` through
-IR, binding, ledger and pack to a chunk, and it cannot be mistaken for finished.
+An earlier revision of this section said reading them at all would undo SC-100 §12 closing an
+add-on archive. **That was wrong**, and the correction is worth keeping: nothing closes a loaded
+add-on, so every archive is already held open for as long as the registry lives. There was no new
+constraint to weigh — only when to read.
+
+On demand would therefore work. It is still not what happens, because the resource manager asks on
+its own thread at its own time and pinning an archive to that is a lifetime nobody is tracking. A
+block texture is a few kilobytes and there is one per bound state.
+
+`terrain_texture.json` is **merged across the enabled packs**, later winning, rather than consulted
+per pack: Bedrock resolves a key against the whole enabled stack, and a behaviour pack naming a key
+its companion resource pack declares is the normal shape of an `.mcaddon`.
+
+Every step may come up empty and each one answers empty rather than failing. The block then draws
+with the missing texture, which is visible and reportable; refusing a block over an absent picture
+would be neither.
 
 ## 9. JSON UI
 

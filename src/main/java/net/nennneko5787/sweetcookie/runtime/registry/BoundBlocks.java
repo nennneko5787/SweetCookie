@@ -25,10 +25,26 @@ import net.nennneko5787.sweetcookie.core.registry.BlockSlot;
 public final class BoundBlocks {
 
     /** One bound block, with its behaviour already resolved for every state index. */
-    public record Bound(String logicalId, List<BlockPhysics> byStateIndex) {
+    public record Bound(String logicalId, List<BlockPhysics> byStateIndex,
+            List<Optional<byte[]>> texturesByStateIndex) {
 
         public Bound {
             byStateIndex = List.copyOf(byStateIndex);
+            texturesByStateIndex = List.copyOf(texturesByStateIndex);
+        }
+
+        /**
+         * The PNG for one state, when the pack had one.
+         *
+         * <p>Held as bytes rather than read on demand. The add-on archives stay open for as long as
+         * the registry lives, so on-demand would work - but the resource manager asks on its own
+         * thread at its own time, and pinning an archive to that is a lifetime nobody is tracking.
+         * A block texture is a few kilobytes and there is one per bound state.
+         */
+        public Optional<byte[]> textureAt(int index) {
+            return index >= 0 && index < texturesByStateIndex.size()
+                    ? texturesByStateIndex.get(index)
+                    : Optional.empty();
         }
 
         /**

@@ -13,6 +13,8 @@ import net.nennneko5787.sweetcookie.core.format.ir.PackIr;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockDefIr;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockModels;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockPhysics;
+import net.nennneko5787.sweetcookie.core.format.ir.block.TerrainTextures;
+import net.nennneko5787.sweetcookie.core.format.json.JsonValue;
 import net.nennneko5787.sweetcookie.core.format.value.BedrockId;
 import net.nennneko5787.sweetcookie.core.format.value.PackId;
 import net.nennneko5787.sweetcookie.core.registry.BlockLedger;
@@ -36,6 +38,16 @@ import net.nennneko5787.sweetcookie.runtime.resource.AddonResourcePack;
 @SpecImpl({"SC-120", "SC-100"})
 public final class BlockBinding {
 
+    /**
+     * The merged texture index of the enabled packs, rebuilt on every bind.
+     *
+     * <p>Merged rather than per-pack because Bedrock resolves a texture key against the whole
+     * enabled resource-pack stack: a behaviour pack naming a key its companion resource pack
+     * declares is the normal shape of an .mcaddon, not an edge case. Later packs win, which is
+     * SC-100 5 again.
+     */
+    private static TerrainTextures TEXTURES = TerrainTextures.EMPTY;
+
     private BlockBinding() {
     }
 
@@ -58,6 +70,7 @@ public final class BlockBinding {
             return;
         }
 
+        TEXTURES = terrainTextures(ir.get());
         Map<BedrockId, BlockDefIr> definitions = enabledBlocks(ir.get());
         if (definitions.isEmpty()) {
             return;
@@ -89,9 +102,13 @@ public final class BlockBinding {
             Map<BedrockId, String> logical) {
         Map<BlockSlot, BoundBlocks.Bound> bound = new LinkedHashMap<>();
         definitions.forEach((identifier, definition) -> ledger.binding(logical.get(identifier))
-                .ifPresent(binding -> bound.put(binding.slot(), new BoundBlocks.Bound(
-                        binding.logicalId(),
-                        definition.resolveAll().stream().map(BlockPhysics::of).toList()))));
+                .ifPresent(binding -> {
+                    List<Map<BedrockId, JsonValue>> states = definition.resolveAll();
+                    bound.put(binding.slot(), new BoundBlocks.Bound(
+                            binding.logicalId(),
+                            states.stream().map(BlockPhysics::of).toList(),
+                            states.stream().map(BlockBinding::textureOf).toList()));
+                }));
         BoundBlocks.replace(bound);
         publishResources();
     }
@@ -108,21 +125,27 @@ public final class BlockBinding {
      * to the main menu - long before any world, and therefore before anything is bound.
      */
     public static void publishResources() {
-        Map<String, String> files = new LinkedHashMap<>();
+        Map<String, byte[]> files = new LinkedHashMap<>();
         for (BlockSlot slot : SweetCookie.blockPool().slots()) {
             List<String> models = new ArrayList<>();
             BoundBlocks.at(slot).ifPresent(block -> {
                 for (int index = 0; index < block.byStateIndex().size(); index++) {
                     String name = "block/" + slot.sizeClass() + "_" + index;
-                    files.put("models/" + name + ".json", BlockModels.cubeModelJson(
-                            Map.of("all", "sweetcookie:block/missing")));
+                    // The texture is emitted beside the model under the same name, so a model and
+                    // its picture cannot drift apart. Absent, the model still names it and the block
+                    // draws as the missing texture - visible and obviously unfinished.
+                    block.textureAt(index).ifPresent(png ->
+                            files.put("textures/" + name + ".png", png));
+                    files.put("models/" + name + ".json", AddonResourcePack.utf8(
+                            BlockModels.cubeModelJson(Map.of("all", "sweetcookie:" + name))));
                     models.add("sweetcookie:" + name);
                 }
             });
             if (models.isEmpty()) {
                 models.add(BlockModels.AIR_MODEL);
             }
-            files.put("blockstates/" + pathOf(slot) + ".json", BlockModels.blockstateJson(models));
+            files.put("blockstates/" + pathOf(slot) + ".json",
+                    AddonResourcePack.utf8(BlockModels.blockstateJson(models)));
         }
         AddonResourcePack.replace(files);
     }
@@ -147,6 +170,65 @@ public final class BlockBinding {
             ir.byId(pack).map(PackIr::behavior).ifPresent(inPrecedenceOrder::add);
         }
         return merge(inPrecedenceOrder);
+    }
+
+    /** Every enabled pack terrain_texture.json, merged with later packs winning. */
+    private static TerrainTextures terrainTextures(AddonIr ir) {
+        Map<String, java.util.List<String>> merged = new LinkedHashMap<>();
+        for (PackId pack : WorldActivation.current().order()) {
+            ir.byId(pack).ifPresent(packIr -> packIr.source().vfs()
+                    .read("textures/terrain_texture.json")
+                    .ifPresent(source -> {
+                        try {
+                            merged.putAll(TerrainTextures.of(
+                                    net.nennneko5787.sweetcookie.core.format.json.Json.parse(
+                                            source.readUtf8())).byKey());
+                        } catch (java.io.IOException | RuntimeException unreadable) {
+                            // One unreadable index costs that pack textures, not the load.
+                        }
+                    }));
+        }
+        return new TerrainTextures(merged);
+    }
+
+    /**
+     * The PNG behind one state materials, if the packs have one.
+     *
+     * <p>Reads the first texture the state names - material_instances gives a KEY, terrain_texture
+     * turns it into a path, and the pack VFS turns that into bytes. Every step can come up empty and
+     * an empty answer is a block drawn with the missing texture, which is visible and reportable;
+     * refusing the block over an absent picture would not be.
+     */
+    private static Optional<byte[]> textureOf(Map<BedrockId, JsonValue> components) {
+        return BlockModels.materialsOf(components).textureFor("*")
+                .or(() -> BlockModels.materialsOf(components).textureFor("up"))
+                .flatMap(TEXTURES::resolve)
+                .flatMap(BlockBinding::readTexture);
+    }
+
+    /**
+     * Finds a texture path in any enabled pack.
+     *
+     * <p>Searched across packs rather than within the declaring one: Bedrock resolves textures
+     * against the whole enabled resource-pack stack, and a behaviour pack naming a texture its
+     * companion resource pack provides is the normal shape of an .mcaddon, not an edge case.
+     */
+    private static Optional<byte[]> readTexture(String path) {
+        for (String candidate : List.of(path + ".png", path + ".tga", path)) {
+            for (PackIr pack : SweetCookie.addons().ir().map(AddonIr::packs).orElse(List.of())) {
+                Optional<byte[]> bytes = pack.source().vfs().read(candidate).map(source -> {
+                    try {
+                        return source.read();
+                    } catch (java.io.IOException unreadable) {
+                        return null;
+                    }
+                });
+                if (bytes.isPresent()) {
+                    return bytes;
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /** The merge itself, taking plain data so it can be tested without a world. */
