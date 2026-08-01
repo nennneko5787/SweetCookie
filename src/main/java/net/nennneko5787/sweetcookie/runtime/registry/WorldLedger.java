@@ -20,6 +20,7 @@ import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 public final class WorldLedger {
 
     private static BlockLedger current;
+    private static Path directory;
 
     private WorldLedger() {
     }
@@ -27,7 +28,11 @@ public final class WorldLedger {
     /** Installs the load and save callbacks. Call once, from mod init, after services resolve. */
     public static void install(LifecycleHooks hooks, SlotPool pool) {
         hooks.onServerStarting(scope -> load(scope.worldDataDirectory(), pool));
-        hooks.onServerStopping(scope -> save(scope.worldDataDirectory()));
+        hooks.onServerStopping(scope -> {
+            save();
+            current = null;
+            directory = null;
+        });
     }
 
     /**
@@ -41,7 +46,29 @@ public final class WorldLedger {
         return Optional.ofNullable(current);
     }
 
-    private static void load(Path directory, SlotPool registered) {
+    /**
+     * Writes the ledger now.
+     *
+     * <p>Called after every binding, not only at shutdown. A slot allocation that a crash could lose
+     * is worse than one written too often: the next load would hand the same slot to a different
+     * Bedrock block while the old one is still in the chunks, which is the one failure SC-120 6.3
+     * rule 1 exists to make impossible. The file is small and this is not a hot path.
+     */
+    public static void save() {
+        BlockLedger ledger = current;
+        if (ledger == null || directory == null) {
+            return;
+        }
+        try {
+            LedgerJson.write(directory, ledger);
+        } catch (IOException failed) {
+            System.out.println("[SweetCookie] failed to write the ledger at " + directory
+                    + ": " + failed);
+        }
+    }
+
+    private static void load(Path worldData, SlotPool registered) {
+        directory = worldData;
         try {
             Optional<LedgerJson.Contents> saved = LedgerJson.read(directory);
             if (saved.isEmpty()) {
@@ -88,17 +115,4 @@ public final class WorldLedger {
                         + " unresolved until then; nothing is lost."));
     }
 
-    private static void save(Path directory) {
-        BlockLedger ledger = current;
-        current = null;
-        if (ledger == null) {
-            return;
-        }
-        try {
-            LedgerJson.write(directory, ledger);
-        } catch (IOException failed) {
-            System.out.println("[SweetCookie] failed to write the ledger at " + directory
-                    + ": " + failed);
-        }
-    }
 }

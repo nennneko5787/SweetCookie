@@ -8,6 +8,7 @@ import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
 import net.nennneko5787.sweetcookie.runtime.addon.PackKind;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
+import net.nennneko5787.sweetcookie.runtime.registry.BlockBinding;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
 import net.nennneko5787.sweetcookie.platform.CommandRegistrar;
 import net.nennneko5787.sweetcookie.runtime.command.SweetCookieCommand;
@@ -73,6 +74,9 @@ public final class SweetCookie {
         // dedicated server reaches its first server-start immediately anyway.
         lifecycle.onServerStarting(scope -> {
             rescanAddons();
+            // After the scan and after the ledger and the activation set have loaded: binding needs
+            // all three, and the hooks run in the order they were installed.
+            BlockBinding.bindEnabled();
             TextView.render(Views.packs(addons, WorldActivation.known()))
                     .forEach(line -> System.out.println("[SweetCookie] " + line));
         });

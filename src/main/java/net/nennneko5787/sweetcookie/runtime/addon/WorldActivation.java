@@ -8,6 +8,7 @@ import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.core.registry.ActiveJson;
 import net.nennneko5787.sweetcookie.core.registry.ActivePacks;
 import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
+import net.nennneko5787.sweetcookie.runtime.registry.BlockBinding;
 
 /**
  * Which packs the running world uses. SC-120 §8.
@@ -67,6 +68,10 @@ public final class WorldActivation {
         }
         ActivePacks updated = change.apply(current);
         current = updated;
+        // Every activation change rebinds. Doing it here rather than at each call site is what stops
+        // one path - a command, the screen, a future API - from changing the set and leaving the
+        // ledger describing the previous one.
+        BlockBinding.bindEnabled();
         try {
             ActiveJson.write(directory, updated);
         } catch (IOException failed) {
