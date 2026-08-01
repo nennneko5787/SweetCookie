@@ -32,6 +32,8 @@ public final class WorldLedger {
             save();
             current = null;
             directory = null;
+            // A client between worlds must not answer with the last world blocks.
+            BoundBlocks.clear();
         });
     }
 

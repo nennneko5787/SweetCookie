@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
+import net.nennneko5787.sweetcookie.core.registry.BlockSlot;
 
 /**
  * One anonymous block of the slot pool. SC-120 §6.1.
@@ -53,6 +54,7 @@ public final class PoolBlock extends Block {
      */
     private static final Map<Integer, IntegerProperty> INDEX_PROPERTIES = new ConcurrentHashMap<>();
 
+    private final BlockSlot slot;
     private final int sizeClass;
     private final IntegerProperty index;
 
@@ -61,8 +63,10 @@ public final class PoolBlock extends Block {
      *     property at all, because a property over a single value is not expressible and would cost
      *     a palette entry for nothing.
      */
-    public PoolBlock(BlockBehaviour.Properties properties, int sizeClass) {
-        super(begin(properties, sizeClass));
+    public PoolBlock(BlockBehaviour.Properties properties, BlockSlot slot) {
+        super(begin(properties, slot.sizeClass()));
+        this.slot = slot;
+        int sizeClass = slot.sizeClass();
         this.sizeClass = sizeClass;
         this.index = sizeClass > 1 ? indexProperty(sizeClass) : null;
         UNDER_CONSTRUCTION.remove();
@@ -90,6 +94,49 @@ public final class PoolBlock extends Block {
         if (property != null) {
             builder.add(property);
         }
+    }
+
+    /** Which reserved slot this is. The ledger binds a Bedrock block to it; SC-120 6.1. */
+    public BlockSlot slot() {
+        return slot;
+    }
+
+    /**
+     * The state index this BlockState encodes.
+     *
+     * <p>Zero for a size-one class, which carries no property at all - it has exactly one state and
+     * that state is index zero.
+     */
+    public int indexOf(net.minecraft.world.level.block.state.BlockState state) {
+        return index == null ? 0 : state.getValue(index);
+    }
+
+    /**
+     * How hard this block currently is to mine. SC-150 1.
+     *
+     * <p>Overridden rather than baked, because what is bound to a slot changes without the block
+     * being re-registered - which is the entire point of the pool. An UNBOUND slot falls through to
+     * super and stays unbreakable (SC-120 7): a placeholder must not become minable just because
+     * nothing has claimed it.
+     *
+     * <p>The 30 is vanilla constant for "holding the right tool". Bedrock states a time and Java
+     * states a hardness a tool speed divides into, so tool correctness has no Bedrock counterpart to
+     * read; treating every tool as correct is the approximation, and it is the one to revisit when
+     * mining speed is measured against Bedrock rather than eyeballed.
+     */
+    @Override
+    protected float getDestroyProgress(net.minecraft.world.level.block.state.BlockState state,
+            net.minecraft.world.entity.player.Player player,
+            net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos) {
+        var physics = BoundBlocks.physicsOf(state);
+        if (physics.isEmpty()) {
+            return super.getDestroyProgress(state, player, level, pos);
+        }
+        if (physics.get().unbreakable()) {
+            return 0.0f;
+        }
+        float hardness = physics.get().hardness();
+        return hardness <= 0.0f ? 1.0f : player.getDestroySpeed(state) / hardness / 30.0f;
     }
 
     /** How many states this block has. Equal to its size class. */

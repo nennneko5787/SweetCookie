@@ -11,9 +11,11 @@ import net.nennneko5787.sweetcookie.core.format.ir.AddonIr;
 import net.nennneko5787.sweetcookie.core.format.ir.BehaviorIr;
 import net.nennneko5787.sweetcookie.core.format.ir.PackIr;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockDefIr;
+import net.nennneko5787.sweetcookie.core.format.ir.block.BlockPhysics;
 import net.nennneko5787.sweetcookie.core.format.value.BedrockId;
 import net.nennneko5787.sweetcookie.core.format.value.PackId;
 import net.nennneko5787.sweetcookie.core.registry.BlockLedger;
+import net.nennneko5787.sweetcookie.core.registry.BlockSlot;
 import net.nennneko5787.sweetcookie.core.registry.IdMapper;
 import net.nennneko5787.sweetcookie.core.registry.StateSchema;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
@@ -71,10 +73,28 @@ public final class BlockBinding {
 
         report(ledger.get().bindAll(content));
         WorldLedger.save();
+        publish(ledger.get(), definitions, logical);
     }
 
     /**
-     * Every enabled pack's blocks, in precedence order, later winning.
+     * Hands the runtime what each bound slot now behaves like. SC-150 1.
+     *
+     * <p>Resolved HERE, once per bind, rather than when a collision query asks. A permutation can
+     * only see block state, so every state index has a fixed component set and there is nothing left
+     * to decide later; doing it later would mean Molang inside getShape.
+     */
+    private static void publish(BlockLedger ledger, Map<BedrockId, BlockDefIr> definitions,
+            Map<BedrockId, String> logical) {
+        Map<BlockSlot, BoundBlocks.Bound> bound = new LinkedHashMap<>();
+        definitions.forEach((identifier, definition) -> ledger.binding(logical.get(identifier))
+                .ifPresent(binding -> bound.put(binding.slot(), new BoundBlocks.Bound(
+                        binding.logicalId(),
+                        definition.resolveAll().stream().map(BlockPhysics::of).toList()))));
+        BoundBlocks.replace(bound);
+    }
+
+    /**
+     * Every enabled pack blocks, in precedence order, later winning.
      *
      * <p>SC-100 §5: the last pack in the order overrides the ones before it. A {@code LinkedHashMap}
      * walked lowest-first does exactly that — a later definition of the same Bedrock identifier

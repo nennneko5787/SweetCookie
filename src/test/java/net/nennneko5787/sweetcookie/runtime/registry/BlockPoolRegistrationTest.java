@@ -125,6 +125,17 @@ class BlockPoolRegistrationTest {
     }
 
     @Test
+    void aBlockAsksForItsLightBeforeItHasASlotAndSurvives() {
+        // Regression. lightLevel is a function and Minecraft calls it while building the state
+        // definition, which happens inside Block constructor - so the first question every pool
+        // block is ever asked arrives with no slot assigned. Throwing there took the client down on
+        // the first of 2,012 blocks. Reaching this line at all is the assertion; the value is the
+        // dark default an unbound slot should have.
+        PoolBlock block = pool.block(new BlockSlot(4, 0)).orElseThrow();
+        assertEquals(0, block.defaultBlockState().getLightEmission());
+    }
+
+    @Test
     void aRegisteredBlockHasTheIdItWasRegisteredUnder() {
         // The first crash: Properties carries the ResourceKey now and Block's constructor reads it.
         BlockSlot slot = new BlockSlot(4, 0);

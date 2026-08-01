@@ -67,7 +67,7 @@ public final class BlockPool {
                 // set" without it — which is what the first real client launch hit, because nothing
                 // in a headless build ever constructs a Block.
                 PoolBlock block = new PoolBlock(
-                        properties().setId(ResourceKey.create(Registries.BLOCK, id)), sizeClass);
+                        properties().setId(ResourceKey.create(Registries.BLOCK, id)), slot);
                 Registry.register(BuiltInRegistries.BLOCK, id, block);
                 registered.put(slot, block);
             }
@@ -104,6 +104,10 @@ public final class BlockPool {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.NONE)
                 .strength(-1.0f, 3600000.0f)
+                // A FUNCTION, which is what SC-150 1 means by properties built from functions
+                // closing over the live reference: light is asked for per state, every time, so a
+                // pack bound after registration still lights the world.
+                .lightLevel(BoundBlocks::lightOf)
                 .sound(SoundType.STONE);
     }
 
