@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -11,10 +12,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.nennneko5787.sweetcookie.SweetCookie;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 
@@ -69,6 +74,38 @@ public final class AddonResourcePack implements PackResources {
     /** How many files the pack currently serves. Zero is the honest state before any world loads. */
     public static int size() {
         return contents.size();
+    }
+
+    /**
+     * The repository entry both loaders add.
+     *
+     * <p>One builder for the two of them, because the only thing that differs is <b>where</b> it is
+     * added — NeoForge has an event, Fabric needs a mixin (SC-180 §8.1) — and the pack itself must
+     * not diverge along with the hook.
+     *
+     * <p>Required and fixed-position: this is not a pack a user chooses. It is where the models for
+     * their enabled add-ons come from, and switching it off would make every bound block invisible
+     * with no indication why.
+     */
+    @SuppressWarnings("deprecation") // Pack.Metadata: NeoForge deprecates the form Fabric has.
+    public static Pack asPack() {
+        AddonResourcePack pack = new AddonResourcePack();
+        return new Pack(
+                pack.location(),
+                new Pack.ResourcesSupplier() {
+                    @Override
+                    public PackResources openPrimary(PackLocationInfo location) {
+                        return pack;
+                    }
+
+                    @Override
+                    public PackResources openFull(PackLocationInfo location, Pack.Metadata metadata) {
+                        return pack;
+                    }
+                },
+                new Pack.Metadata(pack.location().title(), PackCompatibility.COMPATIBLE,
+                        FeatureFlagSet.of(), List.of()),
+                new PackSelectionConfig(true, Pack.Position.TOP, true));
     }
 
     @Override

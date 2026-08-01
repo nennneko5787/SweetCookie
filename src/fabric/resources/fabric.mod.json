@@ -16,6 +16,9 @@
     "main": ["net.nennneko5787.sweetcookie.fabric.SweetCookieFabric"],
     "modmenu": ["net.nennneko5787.sweetcookie.fabric.SweetCookieModMenu"]
   },
+  "mixins": [
+    "sweetcookie.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
