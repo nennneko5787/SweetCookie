@@ -88,11 +88,23 @@ public final class Views {
 
         List<ViewModel.Section> sections = new ArrayList<>();
         if (addons.packs().isEmpty()) {
-            sections.add(ViewModel.Section.of("installed",
-                    List.of(ViewModel.Row.empty("no add-ons installed"))));
+            // "None installed" and "not looked yet" are different answers, and the first one is a
+            // claim we cannot make before a scan has run. Saying it anyway is how a user concludes
+            // their add-on was rejected when nothing has read the folder at all.
+            //
+            // And when the folder HAS been read, the useful thing is not that it was empty - it is
+            // where to put a file. The path is the whole answer to "how do I install one".
+            sections.add(addons.directory()
+                    .map(path -> ViewModel.Section.of("installed", List.of(ViewModel.Row.of(
+                            "no add-ons installed",
+                            "put .mcaddon or .mcpack files in " + path))))
+                    .orElseGet(() -> ViewModel.Section.of("installed", List.of(ViewModel.Row.empty(
+                            "not scanned yet - add-ons are read when a world loads")))));
         } else if (active.isEmpty()) {
+            // No claim about a server: this branch is also the title screen, where there is no
+            // server to decide anything and the answer is simply that no world is loaded.
             sections.add(ViewModel.Section.of(
-                    "installed on this client - the server decides which of these this world uses",
+                    "installed on this client - a loaded world decides which of these it uses",
                     available));
         } else {
             // The heading carries the precedence rule. This is text, printed lowest-first because

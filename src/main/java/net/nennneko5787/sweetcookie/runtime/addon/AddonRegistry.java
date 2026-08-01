@@ -37,17 +37,19 @@ import net.nennneko5787.sweetcookie.core.format.value.PackId;
 public final class AddonRegistry {
 
     private static final AddonRegistry EMPTY =
-            new AddonRegistry(List.of(), List.of(), Optional.empty());
+            new AddonRegistry(List.of(), List.of(), Optional.empty(), Optional.empty());
 
     private final List<PackSummary> packs;
     private final List<Diagnostic> unattributed;
     private final Optional<AddonIr> ir;
+    private final Optional<Path> directory;
 
-    private AddonRegistry(
-            List<PackSummary> packs, List<Diagnostic> unattributed, Optional<AddonIr> ir) {
+    private AddonRegistry(List<PackSummary> packs, List<Diagnostic> unattributed,
+            Optional<AddonIr> ir, Optional<Path> directory) {
         this.packs = List.copyOf(packs);
         this.unattributed = List.copyOf(unattributed);
         this.ir = ir;
+        this.directory = directory;
     }
 
     public static AddonRegistry empty() {
@@ -64,7 +66,9 @@ public final class AddonRegistry {
     public static AddonRegistry scan(Path directory) {
         List<Path> candidates = candidatesIn(directory);
         if (candidates.isEmpty()) {
-            return EMPTY;
+            // Scanned and empty, which is a different thing from not scanned yet. A screen that
+            // said "no add-ons installed" before any scan would be reporting a fact it did not have.
+            return new AddonRegistry(List.of(), List.of(), Optional.empty(), Optional.of(directory));
         }
 
         LoadedAddon loaded = AddonLoader.load(candidates);
@@ -85,7 +89,7 @@ public final class AddonRegistry {
         for (PackIr pack : parsed.packs()) {
             summaries.add(PackSummary.of(pack, byPack.getOrDefault(pack.id(), List.of())));
         }
-        return new AddonRegistry(summaries, unattributed, Optional.of(parsed));
+        return new AddonRegistry(summaries, unattributed, Optional.of(parsed), Optional.of(directory));
     }
 
     private static List<Path> candidatesIn(Path directory) {
@@ -111,6 +115,11 @@ public final class AddonRegistry {
     /** Diagnostics raised before any pack had an identity. */
     public List<Diagnostic> unattributed() {
         return unattributed;
+    }
+
+    /** Where these came from, or empty when nothing has been scanned yet. */
+    public Optional<Path> directory() {
+        return directory;
     }
 
     /** The parsed content, when anything was loaded. */

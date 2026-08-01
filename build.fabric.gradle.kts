@@ -130,6 +130,47 @@ tasks.named<ProcessResources>("processResources") {
     }
 }
 
+// Every registered block needs a blockstate file or the client's model loader warns about each of
+// its states, once. With the default pool that is 56,832 warnings, which is not noise around the
+// log - it IS the log. The first real launch produced 57,183 lines and 56,832 of them were this.
+//
+// One file per block, all identical, all pointing at minecraft:block/air - a real vanilla model
+// that draws nothing. That is the honest statement for now: vanilla renders these as nothing, and
+// SC-180's own renderer will draw whatever an add-on binds to the slot. "" is the catch-all variant
+// key (vanilla's own air.json uses it), so one line covers all 4,096 states of the largest class.
+//
+// Generated rather than committed: the pool table lives in SlotPool.DEFAULT and this must not
+// become a second copy of it that drifts. It is regenerated whenever that table changes.
+//
+// A user who RAISES sweetcookie.blockPool past the default gets the warnings back for the extra
+// blocks, because these files ship with the jar. Fixing that properly is the virtual resource pack
+// SC-180 already needs; this is not a substitute for it, it is the part that can be done now.
+val poolBlockstates = tasks.register("generatePoolBlockstates") {
+    // Kept in step with SlotPool.DEFAULT by hand, and cheap to check: the totals are logged at
+    // startup and printed by /sweetcookie pool.
+    val classes = mapOf(
+        1 to 1024, 2 to 256, 4 to 256, 8 to 128, 16 to 128, 32 to 64,
+        64 to 64, 128 to 32, 256 to 32, 512 to 16, 1024 to 8, 4096 to 4,
+    )
+    val out = layout.buildDirectory.dir("generated/pool-resources")
+    inputs.property("classes", classes.toString())
+    outputs.dir(out)
+    doLast {
+        val root = out.get().asFile.resolve("assets/sweetcookie/blockstates")
+        root.deleteRecursively()
+        val json = """{"variants":{"":{"model":"minecraft:block/air"}}}"""
+        classes.forEach { (sizeClass, count) ->
+            val dir = root.resolve("block_$sizeClass")
+            dir.mkdirs()
+            for (index in 0 until count) {
+                dir.resolve("%04x.json".format(index)).writeText(json)
+            }
+        }
+    }
+}
+
+sourceSets.named("main") { resources.srcDir(poolBlockstates) }
+
 tasks.withType<JavaCompile>().configureEach {
     options.release = javaVersion
     // Deprecation warnings are on because they found a real one: NeoForge deprecates

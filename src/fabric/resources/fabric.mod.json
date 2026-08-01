@@ -24,5 +24,7 @@
   "suggests": {
     "modmenu": "*"
   },
-  "_comment": "minecraftRange is filled in per node by processResources. Each jar is compiled against exactly one Minecraft version and pinned to it: the classes it calls do not exist on the other one, so a range that spanned the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps adding a version to settings.gradle.kts plus one buildscript entry."
+  "custom": {
+    "sweetcookie:note": "minecraftRange is filled in per node by processResources. Each jar is compiled against exactly one Minecraft version and pinned to it: the classes it calls do not exist on the other one, so a range spanning the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps adding a version to settings.gradle.kts plus one buildscript entry. This sits under \"custom\" because Fabric Loader rejects unknown ROOT entries - it reported the previous _comment as an invalid entry on every launch."
+  }
 }
