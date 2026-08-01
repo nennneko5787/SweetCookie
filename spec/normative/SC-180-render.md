@@ -251,6 +251,49 @@ particle engine is, not before.
   bank) audio is `wontfix`: no usable JVM decoder is known.
 - `fogs/`, client biomes, `font/`, `texts/` — to be assessed.
 
+### 8.1 How the virtual resource pack reaches the client
+
+The pack is **generated, not shipped**: which Bedrock block holds which pool slot is decided per
+world, and a raised `sweetcookie.blockPool` produces more slots than any build-time file set covers.
+Files in the jar are a build-time answer to a runtime question and are a stopgap only.
+
+It is **required and fixed-position**, never a pack a user selects. It is where the models for their
+enabled add-ons come from; switching it off would make every bound block invisible with no
+indication why.
+
+Getting it into the repository is the one place the two loaders genuinely differ:
+
+| Loader | Hook |
+|---|---|
+| NeoForge | `AddPackFindersEvent`, filtered to `PackType.CLIENT_RESOURCES`. Supported, ~40 lines. |
+| Fabric | **a mixin.** There is no API for it. |
+
+That Fabric line is a finding, not an assumption, and is recorded so it is not re-derived. Fabric
+API's `ResourceManagerHelper.registerBuiltinResourcePack` serves a pack **out of the mod jar** and
+cannot serve a generated one; `registerReloadListener` is for listeners, not packs; and Fabric
+Loader's own `ModResourcePack` is likewise built from the jar. Every published mod doing this uses a
+mixin.
+
+The mixin target has one trap worth stating before anyone writes it. `PackRepository` carries no
+`PackType`, so a mixin on its constructor cannot tell the client's repository from the server's and
+would add the pack to both. Adding to both is *nearly* harmless — the pack answers with no
+namespaces for `SERVER_DATA` — but it would list an empty data pack, so the mixin should target the
+client's construction of the repository rather than the class itself.
+
+`TODO(SC-180)`: land the Fabric mixin, and with it the mixin configuration this project does not yet
+have.
+
+### 8.2 Texture bytes
+
+Not served yet, and the reason is a real constraint rather than an oversight: SC-100 §12 closes an
+add-on's archive after parsing so that an author can replace the file they are editing, which is
+exactly what a resource pack reading textures on demand would undo. Holding every texture resident
+instead is a memory decision that needs its own answer, not a default.
+
+Until then a bound block draws with the missing texture — visible, in the right place, with the
+wrong surface. That is the intermediate state to keep: it proves the chain from `.mcaddon` through
+IR, binding, ledger and pack to a chunk, and it cannot be mistaken for finished.
+
 ## 9. JSON UI
 
 `wontfix` for 0.x. It is a complete data-driven UI engine with hundreds of undocumented
