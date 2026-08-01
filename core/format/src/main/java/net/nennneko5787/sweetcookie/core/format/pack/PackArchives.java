@@ -3,6 +3,7 @@ package net.nennneko5787.sweetcookie.core.format.pack;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -110,7 +111,7 @@ public final class PackArchives {
         Provenance where = Provenance.file(PackId.NONE, source.toString());
         ZipFile zip;
         try {
-            zip = new ZipFile(file.toFile(), StandardCharsets.UTF_8);
+            zip = openWithEntryNameFallback(file);
         } catch (IOException e) {
             into.report(FormatDiagnostics.MANIFEST_UNUSABLE.at(where, e.toString()));
             return Optional.empty();
@@ -163,6 +164,67 @@ public final class PackArchives {
     }
 
     /**
+     * Opens a ZIP whose entry names may not be UTF-8.
+     *
+     * <p><b>A real add-on failed on this.</b> A {@code .mcpack} with Japanese file names inside was
+     * rejected outright with {@code invalid CEN header (bad entry name or comment)} — a message that
+     * says "corrupt" and means nothing of the kind. The archive was fine; ZIP only carries a flag
+     * saying names are UTF-8, and an archiver on a Japanese Windows writes them in the system code
+     * page and leaves the flag clear. The JDK assumes UTF-8 and refuses the whole file.
+     *
+     * <p>So: UTF-8 first, because that is what a correct modern archive uses and what the flag,
+     * when set, means. Then the platform's own charset, which is what created the file on the
+     * machine most likely to be reading it. Then ISO-8859-1, which maps every byte to a character
+     * and therefore <b>cannot</b> fail — the names come out as mojibake and the pack loads, which is
+     * the right end of the trade against refusing a working add-on.
+     *
+     * <p>No diagnostic. The names are the author's, not the user's, and there is nothing the person
+     * seeing the message could do about the code page a stranger's archiver used.
+     */
+    private static ZipFile openWithEntryNameFallback(Path file) throws IOException {
+        IOException first = null;
+        for (Charset charset : ENTRY_NAME_CHARSETS) {
+            try {
+                return new ZipFile(file.toFile(), charset);
+            } catch (ZipException | IllegalArgumentException rejected) {
+                // IllegalArgumentException as well as ZipException: the JDK reports an undecodable
+                // entry name as "malformed input", which is not an IOException at all.
+                if (first == null) {
+                    first = rejected instanceof IOException io
+                            ? io
+                            : new ZipException(rejected.toString());
+                }
+            }
+        }
+        throw first;
+    }
+
+    /**
+     * The same ladder for an archive already in memory — a pack nested in an {@code .mcaddon}.
+     *
+     * <p>Chosen by reading the names through once rather than by retrying the real pass, because the
+     * real pass reports diagnostics and running it twice would report them twice. ISO-8859-1 cannot
+     * fail, so the loop always terminates with an answer.
+     */
+    private static Charset entryNameCharset(byte[] archive) {
+        for (Charset charset : ENTRY_NAME_CHARSETS) {
+            try (ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(archive), charset)) {
+                while (in.getNextEntry() != null) {
+                    // Names only. Nothing is decompressed by getNextEntry.
+                }
+                return charset;
+            } catch (IOException | IllegalArgumentException rejected) {
+                // Next charset.
+            }
+        }
+        return StandardCharsets.ISO_8859_1;
+    }
+
+    /** UTF-8, then what this machine writes, then one that maps every byte. See above. */
+    private static final List<Charset> ENTRY_NAME_CHARSETS = List.of(
+            StandardCharsets.UTF_8, Charset.defaultCharset(), StandardCharsets.ISO_8859_1);
+
+    /**
      * Indexes a ZIP held in memory, which is how a pack nested inside an {@code .mcaddon} is read.
      *
      * <p>Contents are decompressed eagerly here, unlike the other two. A nested archive has already
@@ -176,7 +238,7 @@ public final class PackArchives {
         long total = 0;
 
         try (ZipInputStream in = new ZipInputStream(
-                new ByteArrayInputStream(archive), StandardCharsets.UTF_8)) {
+                new ByteArrayInputStream(archive), entryNameCharset(archive))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
                 if (entry.isDirectory()) {

@@ -5,6 +5,7 @@ import net.minecraft.client.gui.components.tabs.GridLayoutTab;
 import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.components.tabs.TabNavigationBar;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.nennneko5787.sweetcookie.runtime.addon.PackKind;
 
@@ -49,6 +50,14 @@ final class PackTabBar {
         // Selected without a sound: this bar is built during init, including the init of the screen
         // the user just arrived at, and announcing a click nobody made is wrong twice over.
         bar.selectTab(current == PackKind.BEHAVIOR ? 0 : 1, false);
+        // SC-280 5.1 item Java Edition never states: which end of the selected column wins. It used
+        // to be the screen title, which duplicated the tab and landed on vanilla drag-and-drop
+        // hint. A tooltip is weaker than a heading and is the best place left once the tab names
+        // the screen.
+        Tooltip rule = Tooltip.create(
+                Component.literal("The top of the selected list wins."));
+        bar.setTabTooltip(0, rule);
+        bar.setTabTooltip(1, rule);
         return bar;
     }
 

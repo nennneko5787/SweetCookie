@@ -37,13 +37,25 @@ public interface PlatformInfo {
     Path configDirectory();
 
     /**
-     * Where installed add-ons live: {@code <game>/sweetcookie/addons}.
+     * Where SweetCookie keeps everything: {@code <game>/sweetcookie}.
      *
-     * <p>Per instance, not per world. Packs are installed once and activated per world (SC-120 §8),
-     * which is as close to Bedrock's model as Java allows.
+     * <p>Installed add-ons live in one folder per kind underneath it, the way Bedrock itself splits
+     * {@code behavior_packs} from {@code resource_packs} — see {@code PackKind}. Per instance, not
+     * per world: packs are installed once and activated per world (SC-120 §8), which is as close to
+     * Bedrock's model as Java allows.
      */
-    default Path addonDirectory() {
-        return gameDirectory().resolve("sweetcookie").resolve("addons");
+    default Path addonRoot() {
+        return gameDirectory().resolve("sweetcookie");
+    }
+
+    /**
+     * The folder add-ons used to live in, before they were split by kind.
+     *
+     * <p>Kept only so that a user who already has files there is told where they went, rather than
+     * finding their packs silently unloaded. Nothing scans it.
+     */
+    default Path legacyAddonDirectory() {
+        return addonRoot().resolve("addons");
     }
 
     /** True on a physical client. Client-only services must not be requested otherwise (SCE-6003). */

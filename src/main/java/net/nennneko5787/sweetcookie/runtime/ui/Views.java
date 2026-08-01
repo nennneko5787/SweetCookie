@@ -94,12 +94,13 @@ public final class Views {
             //
             // And when the folder HAS been read, the useful thing is not that it was empty - it is
             // where to put a file. The path is the whole answer to "how do I install one".
-            sections.add(addons.directory()
-                    .map(path -> ViewModel.Section.of("installed", List.of(ViewModel.Row.of(
-                            "no add-ons installed",
-                            "put .mcaddon or .mcpack files in " + path))))
-                    .orElseGet(() -> ViewModel.Section.of("installed", List.of(ViewModel.Row.empty(
-                            "not scanned yet - add-ons are read when a world loads")))));
+            sections.add(addons.directories().isEmpty()
+                    ? ViewModel.Section.of("installed", List.of(ViewModel.Row.empty(
+                            "not scanned yet - add-ons are read when a world loads")))
+                    : ViewModel.Section.of("installed", addons.directories().stream()
+                            .map(path -> ViewModel.Row.of("no add-ons installed",
+                                    "put .mcaddon, .mcpack or an unpacked folder in " + path))
+                            .toList()));
         } else if (active.isEmpty()) {
             // No claim about a server: this branch is also the title screen, where there is no
             // server to decide anything and the answer is simply that no world is loaded.

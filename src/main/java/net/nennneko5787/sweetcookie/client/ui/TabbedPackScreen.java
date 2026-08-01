@@ -1,15 +1,23 @@
 package net.nennneko5787.sweetcookie.client.ui;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.components.tabs.TabNavigationBar;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.repository.PackRepository;
+import net.nennneko5787.sweetcookie.SweetCookie;
 import net.nennneko5787.sweetcookie.core.api.SpecImpl;
 import net.nennneko5787.sweetcookie.runtime.addon.PackKind;
 
@@ -38,6 +46,9 @@ public final class TabbedPackScreen extends PackSelectionScreen {
      */
     private static final int BAR_HEIGHT = 30;
 
+    /** Wide enough for "Reload packs" without the label being clipped at any GUI scale. */
+    private static final int RELOAD_WIDTH = 90;
+
     private final Screen parent;
     private final PackKind kind;
     private final Consumer<PackKind> switcher;
@@ -65,6 +76,14 @@ public final class TabbedPackScreen extends PackSelectionScreen {
         });
         makeRoomFor(bar);
         addRenderableWidget(bar);
+
+        // Top right, in the empty corner the tab bar leaves. Rescanning is a whole pass over the
+        // add-on folders, so it is a button rather than something that happens on every tick or
+        // every time the screen opens - a user who just edited a JSON by hand presses it, and a
+        // user who did not never pays for it.
+        addRenderableWidget(Button.builder(Component.literal("Reload packs"), button -> reload())
+                .bounds(this.width - RELOAD_WIDTH - 4, 3, RELOAD_WIDTH, 20)
+                .build());
     }
 
     /**
@@ -99,11 +118,102 @@ public final class TabbedPackScreen extends PackSelectionScreen {
             }
             AbstractWidget widget = (AbstractWidget) child;
             widget.setY(widget.getY() + BAR_HEIGHT);
-            if (!(widget instanceof EditBox)) {
-                widget.setHeight(Math.max(BAR_HEIGHT, widget.getHeight() - BAR_HEIGHT));
+            // Only the tall things give up height. The search box and the header labels are one
+            // line each; shrinking them re-centres their text and was what put the search box on
+            // top of the drag-and-drop hint.
+            if (widget.getHeight() > BAR_HEIGHT * 2) {
+                widget.setHeight(widget.getHeight() - BAR_HEIGHT);
+            }
+            if (widget instanceof AbstractSelectionList<?> list) {
+                // A list caches where its contents sit against its own box, and setY/setHeight do
+                // not invalidate that - which is why the first frame drew the rows against the old
+                // geometry and one scroll notch fixed it. Re-setting the scroll amount is the public
+                // way to make it recompute, and 0 is where a freshly opened list already was.
+                list.setScrollAmount(0);
             }
         }
         PackTabBar.place(bar, this.width);
+    }
+
+    /**
+     * Accepts a dropped {@code .mcaddon} or {@code .mcpack}.
+     *
+     * <p>Vanilla's own handler validates a dropped file as a <b>Java</b> pack and refuses anything
+     * without a {@code pack.mcmeta}, so every Bedrock add-on was answered with "not a valid pack".
+     * Overridden rather than worked around: the drop target is the tab's own folder, so a file
+     * dropped on the behaviour tab lands in {@code be_behavior_pack}.
+     *
+     * <p>Copied, then rescanned, then the screen is rebuilt — a pack that has just been installed
+     * has to appear without a restart, which is the loop SC-280 §1 exists for.
+     *
+     * <p>Anything that is not an archive or a folder is skipped rather than copied: the add-on
+     * folder is a place a user looks, and filling it with whatever was dragged over the window
+     * makes it a worse place to look.
+     */
+    @Override
+    public void onFilesDrop(List<Path> files) {
+        List<Path> accepted = files.stream().filter(TabbedPackScreen::looksLikeAnAddon).toList();
+        if (accepted.isEmpty()) {
+            return;
+        }
+        Path target = kind.directoryIn(SweetCookie.platform().addonRoot());
+        for (Path file : accepted) {
+            try {
+                Files.createDirectories(target);
+                copyInto(file, target.resolve(file.getFileName().toString()));
+            } catch (IOException failed) {
+                // Never fatal: the screen stays open and the pack simply does not appear, which is
+                // the same outcome as never dropping it. Constitution rule 5.
+                System.out.println("[SweetCookie] could not install " + file + ": " + failed);
+            }
+        }
+        reload();
+    }
+
+    /**
+     * Copies a file, or a whole folder.
+     *
+     * <p>Folders because an unpacked add-on is one — a {@code manifest.json} beside the content, no
+     * archive anywhere. The loader already reads those (it opens a directory exactly as it opens a
+     * zip), so refusing to install one would have been this screen inventing a restriction the rest
+     * of the mod does not have.
+     */
+    private static void copyInto(Path source, Path target) throws IOException {
+        if (!Files.isDirectory(source)) {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            return;
+        }
+        try (Stream<Path> tree = Files.walk(source)) {
+            for (Path entry : tree.toList()) {
+                Path destination = target.resolve(source.relativize(entry).toString());
+                if (Files.isDirectory(entry)) {
+                    Files.createDirectories(destination);
+                } else {
+                    Files.createDirectories(destination.getParent());
+                    Files.copy(entry, destination, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
+    /**
+     * Reads the add-on folders again and rebuilds the screen.
+     *
+     * <p>Reopening rather than refreshing in place: the repository was built from the previous scan
+     * and every row in both columns came from it, so there is nothing to update — only to replace.
+     */
+    private void reload() {
+        SweetCookie.rescanAddons();
+        switcher.accept(kind);
+    }
+
+    /** Bedrock ships add-ons as zip archives under two extensions, or as an unpacked folder. */
+    private static boolean looksLikeAnAddon(Path file) {
+        if (Files.isDirectory(file)) {
+            return true;
+        }
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".mcaddon") || name.endsWith(".mcpack") || name.endsWith(".zip");
     }
 
     /**

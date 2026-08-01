@@ -37,19 +37,19 @@ import net.nennneko5787.sweetcookie.core.format.value.PackId;
 public final class AddonRegistry {
 
     private static final AddonRegistry EMPTY =
-            new AddonRegistry(List.of(), List.of(), Optional.empty(), Optional.empty());
+            new AddonRegistry(List.of(), List.of(), Optional.empty(), List.of());
 
     private final List<PackSummary> packs;
     private final List<Diagnostic> unattributed;
     private final Optional<AddonIr> ir;
-    private final Optional<Path> directory;
+    private final List<Path> directories;
 
     private AddonRegistry(List<PackSummary> packs, List<Diagnostic> unattributed,
-            Optional<AddonIr> ir, Optional<Path> directory) {
+            Optional<AddonIr> ir, List<Path> directories) {
         this.packs = List.copyOf(packs);
         this.unattributed = List.copyOf(unattributed);
         this.ir = ir;
-        this.directory = directory;
+        this.directories = List.copyOf(directories);
     }
 
     public static AddonRegistry empty() {
@@ -63,12 +63,13 @@ public final class AddonRegistry {
      * problem. Every entry is offered to the loader — archives and unpacked directories alike — and
      * one that is not an add-on simply produces no packs.
      */
-    public static AddonRegistry scan(Path directory) {
-        List<Path> candidates = candidatesIn(directory);
+    public static AddonRegistry scan(List<Path> directories) {
+        List<Path> candidates = new ArrayList<>();
+        directories.forEach(directory -> candidates.addAll(candidatesIn(directory)));
         if (candidates.isEmpty()) {
             // Scanned and empty, which is a different thing from not scanned yet. A screen that
             // said "no add-ons installed" before any scan would be reporting a fact it did not have.
-            return new AddonRegistry(List.of(), List.of(), Optional.empty(), Optional.of(directory));
+            return new AddonRegistry(List.of(), List.of(), Optional.empty(), directories);
         }
 
         LoadedAddon loaded = AddonLoader.load(candidates);
@@ -89,7 +90,7 @@ public final class AddonRegistry {
         for (PackIr pack : parsed.packs()) {
             summaries.add(PackSummary.of(pack, byPack.getOrDefault(pack.id(), List.of())));
         }
-        return new AddonRegistry(summaries, unattributed, Optional.of(parsed), Optional.of(directory));
+        return new AddonRegistry(summaries, unattributed, Optional.of(parsed), directories);
     }
 
     private static List<Path> candidatesIn(Path directory) {
@@ -117,9 +118,9 @@ public final class AddonRegistry {
         return unattributed;
     }
 
-    /** Where these came from, or empty when nothing has been scanned yet. */
-    public Optional<Path> directory() {
-        return directory;
+    /** The folders that were scanned, or empty when nothing has been scanned yet. */
+    public List<Path> directories() {
+        return directories;
     }
 
     /** The parsed content, when anything was loaded. */

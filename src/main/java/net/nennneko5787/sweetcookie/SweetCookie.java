@@ -5,6 +5,7 @@ import net.nennneko5787.sweetcookie.platform.LifecycleHooks;
 import net.nennneko5787.sweetcookie.platform.PlatformInfo;
 import net.nennneko5787.sweetcookie.platform.Services;
 import net.nennneko5787.sweetcookie.runtime.addon.AddonRegistry;
+import net.nennneko5787.sweetcookie.runtime.addon.PackKind;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
 import net.nennneko5787.sweetcookie.runtime.config.SweetCookieConfig;
 import net.nennneko5787.sweetcookie.runtime.registry.BlockPool;
@@ -71,10 +72,21 @@ public final class SweetCookie {
         // parsing an add-on folder is real work and mod init is on the path to the main menu; a
         // dedicated server reaches its first server-start immediately anyway.
         lifecycle.onServerStarting(scope -> {
-            addons = AddonRegistry.scan(platform.addonDirectory());
+            rescanAddons();
             TextView.render(Views.packs(addons, WorldActivation.known()))
                     .forEach(line -> System.out.println("[SweetCookie] " + line));
         });
+    }
+
+    /**
+     * Reads the add-on folders again.
+     *
+     * <p>Called at server start and after the selection screen copies a dropped file in, because a
+     * pack that has just been installed has to appear without a restart - that is the whole loop
+     * SC-280 section 1 is scheduled around.
+     */
+    public static void rescanAddons() {
+        addons = AddonRegistry.scan(PackKind.directoriesIn(platform.addonRoot()));
     }
 
     /**

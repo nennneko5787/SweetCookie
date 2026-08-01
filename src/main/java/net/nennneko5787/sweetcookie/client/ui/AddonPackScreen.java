@@ -97,11 +97,11 @@ public final class AddonPackScreen {
                 kind,
                 repositoryOf(active, kind),
                 committed -> apply(committed, kind),
-                SweetCookie.platform().addonDirectory(),
-                // The title is the one part of this screen we write, so it carries the thing Java
-                // Edition's own pack screen never says: which end of the selected list wins. A user
-                // who assumes the wrong one silently gets the other pack's content (SC-280 §5.1).
-                Component.literal(kind.title() + " - the top of the selected list wins"),
+                kind.directoryIn(SweetCookie.platform().addonRoot()),
+                // EMPTY. The tab already names the screen, and a title here lands on top of
+                // vanilla drag-and-drop hint once the tab bar has pushed the header down. SC-280
+                // 5.1 still item - which end of the order wins - moved to the tab tooltip.
+                Component.empty(),
                 chosen -> Minecraft.getInstance().setScreenAndShow(selection(parent, chosen)));
     }
 
