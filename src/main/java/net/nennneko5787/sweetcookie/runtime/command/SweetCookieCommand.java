@@ -44,6 +44,23 @@ public final class SweetCookieCommand {
                     SweetCookie.addons().packs().stream().map(SweetCookieCommand::handleOf).toList(),
                     builder);
 
+    /**
+     * Suggests LOGICAL identifiers, which is the only kind a command may name.
+     *
+     * <p>Constitution rule 12: a slot appears in chunk storage and the ledger and nowhere else -
+     * not in a command. /setblock sweetcookie:block_16/0037 works and is exactly what this exists to
+     * stop anyone needing to type.
+     */
+    private static final SuggestionProvider<CommandSourceStack> BOUND_BLOCKS =
+            (context, builder) -> SharedSuggestionProvider.suggest(
+                    WorldLedger.current()
+                            .map(ledger -> ledger.bindings().stream()
+                                    .map(net.nennneko5787.sweetcookie.core.registry.BlockLedger
+                                            .Binding::logicalId)
+                                    .toList())
+                            .orElse(List.of()),
+                    builder);
+
     private SweetCookieCommand() {
     }
 
@@ -69,6 +86,14 @@ public final class SweetCookieCommand {
                         .suggests(INSTALLED_PACKS)
                         .executes(context -> enable(context, false))));
 
+        root.then(Commands.literal("place")
+                .requires(SweetCookieCommand::mayManagePacks)
+                .then(Commands.argument("block", StringArgumentType.greedyString())
+                        .suggests(BOUND_BLOCKS)
+                        .executes(context -> place(context,
+                                net.minecraft.core.BlockPos.containing(
+                                        context.getSource().getPosition())))));
+
         root.then(Commands.literal("order")
                 .requires(SweetCookieCommand::mayManagePacks)
                 .then(Commands.argument("position", IntegerArgumentType.integer(1))
@@ -89,6 +114,37 @@ public final class SweetCookieCommand {
      */
     private static boolean mayManagePacks(CommandSourceStack source) {
         return Commands.LEVEL_GAMEMASTERS.check(source.permissions());
+    }
+
+    /**
+     * Places a bound block. SC-120 6, and the only legitimate way to do so today.
+     *
+     * <p>There was none. A bound block has no item and no creative entry yet (SC-170 is M3), so the
+     * only way to put one in the world was /setblock with a POOL SLOT id - which works, and which
+     * constitution rule 12 forbids: a slot is chunk storage and the ledger, never a command.
+     *
+     * <p>State index zero. Choosing a state needs Bedrock state NAMES rather than the index, which
+     * is the same rule again in a smaller place, and is worth doing properly rather than by exposing
+     * the number.
+     */
+    private static int place(CommandContext<CommandSourceStack> context,
+            net.minecraft.core.BlockPos pos) {
+        String logicalId = StringArgumentType.getString(context, "block");
+        var binding = WorldLedger.current().flatMap(ledger -> ledger.binding(logicalId));
+        if (binding.isEmpty()) {
+            return message(context, "no block called \"" + logicalId + "\" is bound in this world."
+                    + " /sweetcookie pool lists what is.");
+        }
+        var block = SweetCookie.blockPool().block(binding.get().slot());
+        if (block.isEmpty()) {
+            // SCE-4013 territory: the ledger remembers a slot this build did not register.
+            return message(context, logicalId + " is bound to " + binding.get().slot()
+                    + ", which is outside the registered pool. Raise sweetcookie.blockPool."
+                    + binding.get().slot().sizeClass() + " and restart.");
+        }
+        context.getSource().getLevel().setBlockAndUpdate(pos, block.get().defaultBlockState());
+        return message(context, "placed " + logicalId + " at "
+                + pos.getX() + " " + pos.getY() + " " + pos.getZ());
     }
 
     private static ViewModel packsView() {
