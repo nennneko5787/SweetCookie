@@ -38,12 +38,23 @@ val specLinks = tasks.register<SpecLinkTask>("specLinks") {
     group = "specification"
     description = "Verify @SpecImpl/@ProvesSpec against the ledger, in both directions."
     specDir.set(specDirectory)
-    // Every compiled class the build produces, wherever it lands. Scanning nothing is tolerated
-    // so that a fresh clone is not told its ledger is broken; CI compiles first.
+    // Every compiled class the build produces, wherever it lands.
     classDirs.from(
         layout.projectDirectory.dir("core").asFileTree.matching { include("**/build/classes/**") },
         layout.projectDirectory.dir("versions").asFileTree.matching { include("**/build/classes/**") },
     )
+    // COMPILE FIRST, explicitly. This used to say "scanning nothing is tolerated, CI compiles
+    // first" - which made the check pass by finding no annotations whenever it happened to run
+    // before the compile, exactly the shape of failure this project keeps finding and refusing.
+    // Gradle caught it as an undeclared dependency the first time specAll and chiseledBuild ran in
+    // one invocation; without the dependency the ORDER decided the result.
+    // chiseledBuild, not chiseledCompile: the scanned tree is the whole versions/ directory, so
+    // every task that writes anywhere under it - test classes, generated resources - is a producer
+    // of this task input, and Gradle refuses to guess the order for any of them.
+    dependsOn("chiseledBuild")
+    listOf("api", "format", "molang", "registry", "script", "ui", "testkit").forEach { module ->
+        dependsOn(gradle.includedBuild("core").task(":$module:classes"))
+    }
     mustRunAfter(specValidate)
 }
 

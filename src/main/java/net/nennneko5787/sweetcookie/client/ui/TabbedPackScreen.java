@@ -7,12 +7,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.components.tabs.TabNavigationBar;
+import net.minecraft.client.gui.screens.AlertScreen;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
@@ -146,16 +149,56 @@ public final class TabbedPackScreen extends PackSelectionScreen {
      * <p>Copied, then rescanned, then the screen is rebuilt — a pack that has just been installed
      * has to appear without a restart, which is the loop SC-280 §1 exists for.
      *
-     * <p>Anything that is not an archive or a folder is skipped rather than copied: the add-on
-     * folder is a place a user looks, and filling it with whatever was dragged over the window
-     * makes it a worse place to look.
+     * <p>Anything that is not an archive or a folder is skipped rather than copied, and SAID so
+     * through vanilla "not a pack" alert: the add-on folder is a place a user looks, and filling it
+     * with whatever was dragged over the window makes it a worse place to look.
      */
     @Override
     public void onFilesDrop(List<Path> files) {
         List<Path> accepted = files.stream().filter(TabbedPackScreen::looksLikeAnAddon).toList();
+        List<Path> rejected = files.stream().filter(file -> !looksLikeAnAddon(file)).toList();
+
         if (accepted.isEmpty()) {
+            showRejected(rejected, () -> this.minecraft.setScreenAndShow(this));
             return;
         }
+        // Vanilla's own dialog, down to the translation keys, so it is the prompt a user has already
+        // seen when adding a resource pack and it is already in their language. Asking at all is the
+        // point: a drop copies files into the game directory, and doing that without a word is a
+        // surprise even when it is what the user meant.
+        this.minecraft.setScreenAndShow(new ConfirmScreen(
+                confirmed -> {
+                    if (!confirmed) {
+                        this.minecraft.setScreenAndShow(this);
+                        return;
+                    }
+                    install(accepted);
+                    // Rejected entries are reported AFTER the install, not instead of it: dropping
+                    // four packs and a stray text file should install the four and then say which
+                    // one was skipped.
+                    showRejected(rejected, this::reload);
+                },
+                Component.translatable("pack.dropConfirm"),
+                Component.literal(accepted.stream()
+                        .map(file -> file.getFileName().toString())
+                        .collect(Collectors.joining("\n")))));
+    }
+
+    /** Shows vanilla's "not a pack" alert, or runs {@code next} straight away when there is none. */
+    private void showRejected(List<Path> rejected, Runnable next) {
+        if (rejected.isEmpty()) {
+            next.run();
+            return;
+        }
+        this.minecraft.setScreenAndShow(new AlertScreen(
+                next,
+                Component.translatable("pack.dropRejected.title"),
+                Component.translatable("pack.dropRejected.message", rejected.stream()
+                        .map(file -> file.getFileName().toString())
+                        .collect(Collectors.joining(", ")))));
+    }
+
+    private void install(List<Path> accepted) {
         Path target = kind.directoryIn(SweetCookie.platform().addonRoot());
         for (Path file : accepted) {
             try {
@@ -167,7 +210,6 @@ public final class TabbedPackScreen extends PackSelectionScreen {
                 System.out.println("[SweetCookie] could not install " + file + ": " + failed);
             }
         }
-        reload();
     }
 
     /**
