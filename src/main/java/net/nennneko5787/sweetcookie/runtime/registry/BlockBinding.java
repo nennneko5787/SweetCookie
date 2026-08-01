@@ -11,6 +11,7 @@ import net.nennneko5787.sweetcookie.core.format.ir.AddonIr;
 import net.nennneko5787.sweetcookie.core.format.ir.BehaviorIr;
 import net.nennneko5787.sweetcookie.core.format.ir.PackIr;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockDefIr;
+import net.nennneko5787.sweetcookie.core.format.ir.block.BlockModels;
 import net.nennneko5787.sweetcookie.core.format.ir.block.BlockPhysics;
 import net.nennneko5787.sweetcookie.core.format.value.BedrockId;
 import net.nennneko5787.sweetcookie.core.format.value.PackId;
@@ -19,6 +20,7 @@ import net.nennneko5787.sweetcookie.core.registry.BlockSlot;
 import net.nennneko5787.sweetcookie.core.registry.IdMapper;
 import net.nennneko5787.sweetcookie.core.registry.StateSchema;
 import net.nennneko5787.sweetcookie.runtime.addon.WorldActivation;
+import net.nennneko5787.sweetcookie.runtime.resource.AddonResourcePack;
 
 /**
  * Gives every enabled pack's blocks a slot in this world. SC-120 §6.
@@ -91,6 +93,45 @@ public final class BlockBinding {
                         binding.logicalId(),
                         definition.resolveAll().stream().map(BlockPhysics::of).toList()))));
         BoundBlocks.replace(bound);
+        AddonResourcePack.replace(resourcesFor(bound));
+    }
+
+    /**
+     * The blockstate and model files the bound slots need. SC-150 5, path A.
+     *
+     * <p>One blockstate per slot naming one model per state index, and one model per state. States
+     * that look the same still get a file each: vanilla deduplicates the BAKED model, so the cost is
+     * a few hundred bytes and the gain is not having to work out which states match.
+     *
+     * <p>Texture paths point into this mod namespace and the bytes behind them are NOT served yet -
+     * the add-on VFS closes after parsing and keeping every texture in memory is a decision that
+     * needs its own thought. Until then a bound block draws as the missing texture, which is a
+     * visible block in the right place with the wrong surface. That is the honest intermediate
+     * state: it proves the whole chain from .mcaddon to chunk, and it cannot be mistaken for done.
+     */
+    private static Map<String, String> resourcesFor(Map<BlockSlot, BoundBlocks.Bound> bound) {
+        Map<String, String> files = new LinkedHashMap<>();
+        bound.forEach((slot, block) -> {
+            List<String> models = new ArrayList<>();
+            for (int index = 0; index < block.byStateIndex().size(); index++) {
+                String name = "block/" + slot.sizeClass() + "_" + index;
+                files.put("models/" + name + ".json", BlockModels.cubeModelJson(
+                        Map.of("all", "sweetcookie:block/missing")));
+                models.add("sweetcookie:" + name);
+            }
+            if (models.isEmpty()) {
+                models.add(BlockModels.AIR_MODEL);
+            }
+            files.put("blockstates/" + pathOf(slot) + ".json",
+                    BlockModels.blockstateJson(models));
+        });
+        return files;
+    }
+
+    /** The slot path a blockstate file lives at, matching what BlockPool registered. */
+    private static String pathOf(BlockSlot slot) {
+        String name = slot.toString();
+        return name.substring(name.indexOf(58) + 1).toLowerCase(java.util.Locale.ROOT);
     }
 
     /**
