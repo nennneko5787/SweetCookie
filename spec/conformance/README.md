@@ -69,7 +69,7 @@ Domains match the coverage shards: `packaging`, `block`, `entity`, `item`, `mola
    implementation is coming in the same PR.
 5. Implement.
 6. Regenerate goldens with
-   `./gradlew --project-dir core :testkit:test -Dsweetcookie.accept=true` and **read the diff**
+   `./gradlew --project-dir core :testkit:test -Dlepus.accept=true` and **read the diff**
    before committing it. A golden accepted without being read is worse than no golden, because it
    converts a future regression into a green build.
 

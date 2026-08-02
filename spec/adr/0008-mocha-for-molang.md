@@ -22,7 +22,7 @@ Four JVM implementations exist:
 
 ## Decision
 
-Use `team.unnamed:mocha`, behind a thin SweetCookie-owned facade so it can be replaced.
+Use `team.unnamed:mocha`, behind a thin Lepus-owned facade so it can be replaced.
 
 ## Consequences
 
@@ -52,7 +52,7 @@ availability on Maven Central and more recent activity.
 ## Reversal cost
 
 **Low**, by construction — the facade exists precisely so this can change. Expressions are parsed
-into SweetCookie's own `MolangExpr` at ingest (SC-110 §7), so the dependency is confined to
+into Lepus's own `MolangExpr` at ingest (SC-110 §7), so the dependency is confined to
 compilation and evaluation, not to the IR.
 
 `TODO`: verify mocha's construct coverage and metaspace behaviour before the render stack lands.

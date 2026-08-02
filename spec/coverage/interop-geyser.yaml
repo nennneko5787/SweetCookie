@@ -1,5 +1,5 @@
 # Geyser does not support behavior packs and says so - which is the gap this project fills. Geyser
-# owns the Bedrock client's PRESENTATION; SweetCookie owns behaviour on the Java server.
+# owns the Bedrock client's PRESENTATION; Lepus owns behaviour on the Java server.
 #
 # The highest-value, lowest-cost item here is serving the add-on's own resource pack half UNCHANGED:
 # a .mcaddon's RP is already exactly what a Bedrock client wants, so there is no conversion and no

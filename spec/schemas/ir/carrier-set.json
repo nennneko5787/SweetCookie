@@ -24,7 +24,7 @@
   },
 
   "items": {
-    "$comment": "The SERVER-side carrier is always sweetcookie:item (SC-120 section 4). These are the WIRE carriers only, chosen for plausible stack size and category on a client that never applies the overlay.",
+    "$comment": "The SERVER-side carrier is always lepus:item (SC-120 section 4). These are the WIRE carriers only, chosen for plausible stack size and category on a client that never applies the overlay.",
     "generic": ["minecraft:paper", "minecraft:stick", "minecraft:clay_ball", "minecraft:brick"],
     "tool": ["minecraft:wooden_pickaxe", "minecraft:wooden_sword", "minecraft:wooden_shovel"],
     "armor": ["minecraft:leather_helmet", "minecraft:leather_chestplate",

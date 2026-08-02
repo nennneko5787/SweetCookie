@@ -30,7 +30,7 @@ follow.
 
 | Screen | Purpose | Reached from |
 |---|---|---|
-| **Add-on management** | list installed packs, enable/disable per world, reorder, see per-pack diagnostics, import a file, open the add-ons folder | world creation, world settings, `/sweetcookie packs`, and the settings screen |
+| **Add-on management** | list installed packs, enable/disable per world, reorder, see per-pack diagnostics, import a file, open the add-ons folder | world creation, world settings, `/lepus packs`, and the settings screen |
 | **Settings** | block pool sizes, subpack memory ceiling, diagnostic verbosity, pack-download consent policy, performance toggles | ModMenu / NeoForge mod list |
 
 The management screen is world-scoped and only meaningful with a world loaded or being created. The
@@ -95,7 +95,7 @@ is exactly what §1's development loop needs — enable, watch it fail, read why
 
 ## 4. Configuration file
 
-`config/sweetcookie.json`, the shape sketched in SC-120 §10.
+`config/lepus.json`, the shape sketched in SC-120 §10.
 
 Requirements: comments preserved on rewrite, unknown keys preserved (the same discipline as SC-110
 §5 — a user who downgrades must not lose settings), atomic writes, and a documented default for
@@ -226,7 +226,7 @@ no exception and that the widget tree matches a golden description. Behaviour �
 actually enables it — is a T2 case against the underlying commands, since the screen is a thin
 layer over them.
 
-That layering is deliberate: **every management operation is a `/sweetcookie` command first**, and
+That layering is deliberate: **every management operation is a `/lepus` command first**, and
 the screen calls it. Dedicated servers get the full feature set with no client UI, and the screen
 cannot drift from the command's semantics.
 
@@ -238,10 +238,10 @@ sending that string as a command. Not a new packet, and not a shared method call
 This is what makes §7's layering real rather than aspirational — there is no second path to enabling
 a pack — and it settles four things at once: no new wire format to version, the same permission check
 as typing the command (so a non-operator's screen refuses exactly where their keyboard would),
-nothing required of the server but SweetCookie, and **no interaction with ViaVersion at all**, since
+nothing required of the server but Lepus, and **no interaction with ViaVersion at all**, since
 a chat command is vanilla traffic and SC-270's invariant is untouched.
 
-It also gives the text backend something exact to print. `/sweetcookie packs` on a headless server
+It also gives the text backend something exact to print. `/lepus packs` on a headless server
 prints each row's commands under it, so an operator is told what to type rather than that reordering
 exists.
 

@@ -27,7 +27,7 @@ entries:
   - id: "chemistry:*"
     reason: >-
       The Education Edition chemistry feature set. Gated behind a manifest capability that
-      SweetCookie reports as unsupported, and it depends on Education-only blocks and UI that do not
+      Lepus reports as unsupported, and it depends on Education-only blocks and UI that do not
       exist in either Java Edition or standard Bedrock.
     source: metadata/vanilladata_modules/
     since: "2026-07-31"

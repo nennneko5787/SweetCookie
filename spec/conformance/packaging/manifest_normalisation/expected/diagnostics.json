@@ -3,7 +3,7 @@
     "at": "/modules/1",
     "code": "SCE-1022",
     "count": 1,
-    "messageKey": "sweetcookie.diagnostic.manifest.script_entry_defaulted",
+    "messageKey": "lepus.diagnostic.manifest.script_entry_defaulted",
     "path": "pack!b_modern_v3/manifest.json",
     "severity": "WARNING"
   },
@@ -11,14 +11,14 @@
     "at": "/header",
     "code": "SCE-1028",
     "count": 1,
-    "messageKey": "sweetcookie.diagnostic.manifest.no_min_engine_version",
+    "messageKey": "lepus.diagnostic.manifest.no_min_engine_version",
     "path": "pack!c_skin_v1/manifest.json",
     "severity": "INFO"
   },
   {
     "code": "SCE-2005",
     "count": 1,
-    "messageKey": "sweetcookie.diagnostic.pack.script_module_unsupported",
+    "messageKey": "lepus.diagnostic.pack.script_module_unsupported",
     "pack": "5c000002-0000-4000-8000-000000000002",
     "path": "manifest.json",
     "severity": "WARNING"

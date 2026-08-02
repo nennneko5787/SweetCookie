@@ -53,7 +53,7 @@ pack, never the game (constitution rule 1).
 The largest single risk, and the reason scripting is a separate optional artifact (SC-200 §1).
 
 Prohibited, without exception: filesystem access, network access, reflection into Java, access to
-Minecraft or SweetCookie internals, `eval` and the `Function` constructor, access to another pack's
+Minecraft or Lepus internals, `eval` and the `Function` constructor, access to another pack's
 state, native code, thread creation.
 
 Enforced by: the GraalJS host-access policy denying everything not explicitly exposed, a module
@@ -82,7 +82,7 @@ SC-270 §9 is implemented.
 
 ## 6. Commands and permissions
 
-`/sweetcookie` subcommands that change global state — `enable`, `disable`, `order`, `reload`,
+`/lepus` subcommands that change global state — `enable`, `disable`, `order`, `reload`,
 `prune` — require operator permission. `prune` additionally requires typed confirmation naming the
 content, because it discards a ledger entry (SC-120 §7).
 

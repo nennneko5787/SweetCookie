@@ -23,7 +23,7 @@ immediately, with implicit ordering. 26.2 removed `MultiBufferSource` entirely f
 — `FeatureRenderer<SUBMIT>`, `SubmitNode` — on a Vulkan-capable Blaze3D, where nodes are immutable,
 submission is deferred, and static meshes are rewarded.
 
-SweetCookie must render Bedrock geometry, skeletal animation, render controllers and a particle
+Lepus must render Bedrock geometry, skeletal animation, render controllers and a particle
 engine on both. Roughly ninety per cent of that work — geometry traversal, bone matrices, animation
 sampling, state machines, Molang, particle simulation — is genuinely version-independent, and
 belongs in shared code behind an abstraction.

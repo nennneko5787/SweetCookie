@@ -70,7 +70,7 @@ or out of scope; see [`spec/process.md`](spec/process.md).
    whose divergences are known and stated, which is most work.
 6. `./gradlew specAll && ./gradlew --project-dir core build`. `specAll` runs the conformance corpus
    as part of `specConformance`. If a golden legitimately changed, regenerate it with
-   `./gradlew --project-dir core :testkit:test -Dsweetcookie.accept=true` and **read the diff**.
+   `./gradlew --project-dir core :testkit:test -Dlepus.accept=true` and **read the diff**.
 7. **If you moved, renamed or removed anything public in `core/`, also run
    `./gradlew chiseledCompile`.** `core` is a separate build (`includeBuild`), so its own `build`
    task cannot see the Minecraft nodes that consume it — a moved class compiles clean locally and
@@ -81,7 +81,7 @@ or out of scope; see [`spec/process.md`](spec/process.md).
 - **Throwing on bad add-on input.** Unknown components, goals, queries, filters and
   `format_version`s log a diagnostic and become a no-op. One `NullPointerException` in a 171-goal
   registry takes down a world. This outranks fidelity.
-- **A silent degradation.** If SweetCookie does less than Bedrock would, it says so with an
+- **A silent degradation.** If Lepus does less than Bedrock would, it says so with an
   `SCE-####` code naming the pack, the file and the feature.
 - **Registering anything named after a Bedrock feature.** Items are one carrier item plus a data
   component; entities are a fixed set of types plus NBT; blocks bind to anonymous pool slots. Packs
@@ -89,8 +89,8 @@ or out of scope; see [`spec/process.md`](spec/process.md).
 - **Putting custom content on the wire.** Every custom block, item and entity travels as a vanilla
   carrier plus a name-addressed sideband. This is what makes ViaVersion work perfectly instead of
   not at all. See [SC-270](spec/normative/SC-270-wire-protocol.md).
-- **Confusing logical identity with a storage slot.** `sweetcookie:wizardry.magic_block` is the
-  identity; `sweetcookie:block_16/0037` is where it happens to live in this world's chunk palettes.
+- **Confusing logical identity with a storage slot.** `lepus:wizardry.magic_block` is the
+  identity; `lepus:block_16/0037` is where it happens to live in this world's chunk palettes.
   Slots appear in the ledger and nowhere else.
 - **Copying GPL code.** Blockbench and Snowstorm are the de-facto specifications for the model and
   particle formats and you are welcome to read them. You may not copy them. A file informed by one

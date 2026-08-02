@@ -2,7 +2,7 @@
 
 **Status:** outline · **Since:** 0.1.0 · **Supersedes:** —
 
-How Bedrock clients connecting through Geyser see SweetCookie content. This is the case the project
+How Bedrock clients connecting through Geyser see Lepus content. This is the case the project
 exists to serve as much as the Java one: on a Geyser server, the players the add-on was written for
 are already connecting.
 
@@ -12,7 +12,7 @@ are already connecting.
 
 **Geyser does not support behavior packs, and says so.** Its own documentation: executing them
 "would require modifications on the Java server side, which isn't possible when Geyser is used on a
-proxy." That is precisely the gap SweetCookie fills — SweetCookie owns behaviour on the Java server;
+proxy." That is precisely the gap Lepus fills — Lepus owns behaviour on the Java server;
 Geyser owns the Bedrock client's presentation.
 
 Geyser does provide, as of 2.11.0:
@@ -28,7 +28,7 @@ Geyser does provide, as of 2.11.0:
 
 ## 2. Decisions already taken
 
-**`geyser-api` is a `compileOnly` soft dependency.** SweetCookie works without Geyser and must never
+**`geyser-api` is a `compileOnly` soft dependency.** Lepus works without Geyser and must never
 fail to load because Geyser is absent or a different version.
 
 **The whole bridge sits behind one interface**, `GeyserBridge`, with a no-op implementation.
@@ -49,9 +49,9 @@ direction.
 
 ## 3. The mirror
 
-| SweetCookie content | Bedrock representation |
+| Lepus content | Bedrock representation |
 |---|---|
-| Custom item | `NonVanillaCustomItemDefinition` — our carrier is `sweetcookie:item`, which has no vanilla base, so the non-vanilla builder is the correct one |
+| Custom item | `NonVanillaCustomItemDefinition` — our carrier is `lepus:item`, which has no vanilla base, so the non-vanilla builder is the correct one |
 | Custom block | `CustomBlockData` with components and permutations built from the same IR that drives the Java side |
 | Custom entity | `CustomEntityDefinition` plus `GeyserDefineEntityPropertiesEvent`; the RP already defines its geometry and animations |
 | Entity properties | mirrored as Geyser entity properties, subject to its caps |
@@ -75,7 +75,7 @@ the main argument for doing the mirror at all rather than shipping a separate Ge
 
 ## 5. Ordering
 
-Registration into Geyser happens after SweetCookie's own binding (SC-120) and before Geyser
+Registration into Geyser happens after Lepus's own binding (SC-120) and before Geyser
 completes initialisation. Pack activation changes at runtime (SC-120 §8) must propagate: Geyser's
 registration events are lifecycle-scoped and may not re-fire, so `TODO(SC-210)` is whether Bedrock
 clients need a reconnect after a pack change, and how to tell them so.

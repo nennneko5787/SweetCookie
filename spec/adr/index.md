@@ -16,7 +16,7 @@
 | [0010](0010-geometry-submission-needs-no-abstraction.md) | Geometry submission needs no version abstraction | accepted | SC-180, SC-220 | low |
 | [0011](0011-the-ledger-verifies-implemented.md) | The ledger verifies `implemented` rather than promoting it | accepted | SC-000, SC-240 | medium |
 | [0012](0012-molang-arithmetic-width.md) | Molang evaluates in `double`, and the divergence is stated | **superseded by 0013** | SC-000, SC-130, SC-250 | — |
-| [0013](0013-own-the-molang-pipeline.md) | SweetCookie owns the Molang pipeline, and it is `float` | accepted | SC-000, SC-130, SC-250 | low one way, medium the other |
+| [0013](0013-own-the-molang-pipeline.md) | Lepus owns the Molang pipeline, and it is `float` | accepted | SC-000, SC-130, SC-250 | low one way, medium the other |
 
 ## Open decisions
 

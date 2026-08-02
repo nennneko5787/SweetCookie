@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/block.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/block.schema.json",
   "title": "BlockDefIr",
   "description": "A Bedrock block definition. SC-150. Storage and slot binding are SC-120 section 6 and are not represented here — the IR describes the add-on, not the world.",
 

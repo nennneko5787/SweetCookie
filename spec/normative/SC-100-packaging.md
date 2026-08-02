@@ -200,7 +200,7 @@ The IR records the resolved order explicitly; nothing downstream may re-derive i
 
 ## 6. `min_engine_version` gating
 
-`min_engine_version` states the oldest Bedrock engine the pack claims to need. SweetCookie declares
+`min_engine_version` states the oldest Bedrock engine the pack claims to need. Lepus declares
 a **target Bedrock engine version** (a single constant, currently `1.26.30`, recorded in
 `spec/upstream/bedrock-samples.lock.json`).
 
@@ -222,7 +222,7 @@ that (SC-110 §3), and the two disagree constantly in real packs.
 One `memory_tier` unit is 0.25 GiB. Files under `subpacks/<folder_name>/` **override** same-path
 files in the pack root when that subpack is selected.
 
-**Selection is a configuration decision, not an automatic one.** SweetCookie **MUST NOT** infer a
+**Selection is a configuration decision, not an automatic one.** Lepus **MUST NOT** infer a
 tier from the host's RAM: Java clients and servers have unrelated memory characteristics, and a
 server picking a tier on the client's behalf is wrong in a multiplayer context. The default is to
 select the **highest-tier subpack whose `memory_tier` does not exceed a configured ceiling**, with
@@ -335,7 +335,7 @@ Everything else is deferred to SC-110's parser dispatch, which reads through `vf
 
 ## 12. Reload
 
-A pack is re-ingested from `source` on `/sweetcookie reload`. The VFS is discarded and rebuilt; the
+A pack is re-ingested from `source` on `/lepus reload`. The VFS is discarded and rebuilt; the
 `PackId` is stable because it comes from the manifest. A pack whose manifest changed such that its
 UUID or version differs is treated as a **different pack** for ledger purposes (SC-120), which is
 what makes schema-drift detection possible.

@@ -2,7 +2,7 @@
 
 **Status:** outline · **Since:** 0.1.0 · **Supersedes:** —
 
-Bedrock's 44 item components, mapped onto Java data components and SweetCookie behaviour hooks.
+Bedrock's 44 item components, mapped onto Java data components and Lepus behaviour hooks.
 Registration is SC-120 §4: **one** carrier `Item`, identity in `minecraft:custom_data`.
 
 ---
@@ -61,7 +61,7 @@ modern versions. Normalisation is SC-110 §3's job; this document specifies the 
 ## 4. Behaviour hooks
 
 The carrier item overrides Java's item behaviour methods and dispatches to the IR for stacks
-carrying `sweetcookie` custom data:
+carrying `lepus` custom data:
 
 | Java | Bedrock source |
 |---|---|
@@ -92,7 +92,7 @@ given first-person hand rendering differs substantially.
 ## 6. Creative menu
 
 Bedrock's `item_catalog/crafting_item_catalog.json` groups items for the creative menu. Java uses
-`CreativeModeTab`. Tabs are SweetCookie-owned, built from the catalogue, and their **contents** are
+`CreativeModeTab`. Tabs are Lepus-owned, built from the catalogue, and their **contents** are
 hot-reloadable even though the tab objects are not (SC-120).
 
 ## 7. Geyser
@@ -100,7 +100,7 @@ hot-reloadable even though the tab objects are not (SC-120).
 Custom items are the best-supported case in Geyser's API (SC-210): `CustomItemDefinition` with
 predicates that mirror Java's `items/` model-definition dispatch almost one to one, and
 `NonVanillaCustomItemDefinition` for items with no vanilla base — which is our case, since the
-carrier is `sweetcookie:item`.
+carrier is `lepus:item`.
 
 ## 8. Testing contract
 

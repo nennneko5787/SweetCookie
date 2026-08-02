@@ -85,7 +85,7 @@ Typed, declared in `description.properties`: `bool`, `int` with range, `float`, 
 `q.property('ns:x')`, settable by `set_property` in events, exposed to the Script API. The closest
 Bedrock analogue to Java's synched data, but declarative.
 
-Stored in SweetCookie's own per-entity state, persisted in entity NBT, synced over the sideband.
+Stored in Lepus's own per-entity state, persisted in entity NBT, synced over the sideband.
 Geyser mirrors them through `GeyserDefineEntityPropertiesEvent` — noting Geyser's caps of 32
 properties per type, 16 enum values, 32-character names (SC-210).
 

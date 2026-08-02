@@ -65,7 +65,7 @@ override same-path files in the pack root.
 
 **Trait** — an engine-provided automatic block state, e.g. `minecraft:placement_direction`.
 
-## SweetCookie terms
+## Lepus terms
 
 **Carrier** — the vanilla block state, item or entity type that custom content masquerades as on the
 network. See SC-270.
@@ -88,7 +88,7 @@ schema, used for placeholder registration and drift detection.
 **Node** — one Minecraft version in the Stonecutter build tree (`1.21.11`, `26.2`). A **branch** is
 one loader (`common`, `fabric`, `neoforge`).
 
-**Sideband** — SweetCookie's own plugin-channel transport, carrying the real identity and state of
+**Sideband** — Lepus's own plugin-channel transport, carrying the real identity and state of
 carrier-disguised content, addressed by name. SC-270.
 
 **Tier 1 / Tier 2** — content that must be registered before the registry freezes and therefore

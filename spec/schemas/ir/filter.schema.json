@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/filter.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/filter.schema.json",
   "title": "Filter",
   "description": "Bedrock's declarative predicate system, 106 tests. SC-140. NOT Molang — filters accept no expressions, only structured comparisons. Compiled at ingest into a typed predicate tree because filters run on the AI hot path.",
 

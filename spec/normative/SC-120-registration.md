@@ -26,7 +26,7 @@ is visible on the wire.
 
 | | Logical identity | Physical slot |
 |---|---|---|
-| Example | `sweetcookie:wizardry.magic_block` | `sweetcookie:block_16` state index 37 |
+| Example | `lepus:wizardry.magic_block` | `lepus:block_16` state index 37 |
 | Derived or allocated | **derived**, pure function of the Bedrock id | **allocated**, recorded in the ledger |
 | Where it appears | commands, sideband, coverage, diagnostics, config, logs, everything a human reads | chunk palettes, and nowhere else a human sees |
 | Stable across | machines, restarts, pack reordering, reinstalls | one world's ledger only |
@@ -37,16 +37,16 @@ Confusing them is a review-blocking defect (constitution rule 4).
 ## 3. Logical identity
 
 ```
-sweetcookie:<sanitise(bedrock namespace)>.<sanitise(bedrock path)>
+lepus:<sanitise(bedrock namespace)>.<sanitise(bedrock path)>
 ```
 
 `sanitise` = lowercase with `Locale.ROOT`, then map every character outside `[a-z0-9_.-]` to `_`.
 
 | Bedrock | Logical |
 |---|---|
-| `wizardry:magic_wand` | `sweetcookie:wizardry.magic_wand` |
-| `my_pack:fire/ember_block` | `sweetcookie:my_pack.fire_ember_block` |
-| `Cool-Pack:Thing` | `sweetcookie:cool-pack.thing` |
+| `wizardry:magic_wand` | `lepus:wizardry.magic_wand` |
+| `my_pack:fire/ember_block` | `lepus:my_pack.fire_ember_block` |
+| `Cool-Pack:Thing` | `lepus:cool-pack.thing` |
 
 The hyphen **survives**: it is inside `[a-z0-9_.-]` and is legal in a Java namespace. An earlier
 revision of this table mapped it to `_`, contradicting the rule one line above it. Replacing a legal
@@ -67,26 +67,26 @@ existing world keeps its assignment (§6.3).
 
 ### 3.2 One implementation
 
-The transformation exists once, in `net.nennneko5787.sweetcookie.runtime.registry.IdMapper`.
+The transformation exists once, in `net.nennneko5787.lepus.runtime.registry.IdMapper`.
 Reimplementing it elsewhere is a review-blocking defect. It is a pure function with no dependency on
 load order except through the collision rule, which takes load order as an explicit argument.
 
 ## 4. Items — one registration
 
-A single `Item` is registered: `sweetcookie:item`.
+A single `Item` is registered: `lepus:item`.
 
 Every Bedrock item is an `ItemStack` of that item carrying:
 
 | Data component | Holds |
 |---|---|
-| `minecraft:custom_data` | `{"sweetcookie": {"id": "wizardry:magic_wand", "v": 1, …}}` |
+| `minecraft:custom_data` | `{"lepus": {"id": "wizardry:magic_wand", "v": 1, …}}` |
 | `minecraft:max_stack_size`, `max_damage`, `damage`, `food`, `tool`, `enchantable`, `rarity`, `item_name`, `item_model`, `equippable`, … | translated from the Bedrock item components (SC-170) |
 
 *Why a dedicated carrier rather than a vanilla item:* a vanilla base would silently participate in
 vanilla recipes and tags — a custom item based on `minecraft:paper` would craft into a book. A
 dedicated item is in no tag and no recipe, so vanilla never touches it.
 
-*Why this does not contradict SC-270:* `sweetcookie:item` is the **server-side** identity. The
+*Why this does not contradict SC-270:* `lepus:item` is the **server-side** identity. The
 **wire** carrier is a vanilla item chosen from `vanilla_fallback`, substituted at encode time. The
 two layers are independent and both are required.
 
@@ -99,7 +99,7 @@ Consequences:
   display name, model — is a data component, i.e. per stack, i.e. hot-reloadable (1.20.5+, so both
   supported Minecraft versions qualify).
 - Behaviour Java bakes into `Item` subclasses (use, `useOn`, attack) is intercepted for stacks
-  carrying `sweetcookie` custom data and dispatched through the IR. SC-170 specifies the hooks.
+  carrying `lepus` custom data and dispatched through the IR. SC-170 specifies the hooks.
 - An item whose pack is unloaded keeps its stack and its NBT verbatim; it renders as a placeholder
   and states which add-on it needs (§7).
 
@@ -110,15 +110,15 @@ A fixed, version-independent set of `EntityType`s is registered at startup, one 
 
 | Class family | Java base | Registered as |
 |---|---|---|
-| `MOB` | `PathfinderMob` | `sweetcookie:mob_<category>` for each `MobCategory` |
-| `PROJECTILE` | `Projectile` | `sweetcookie:projectile` |
-| `OBJECT` | `Entity` | `sweetcookie:object` |
+| `MOB` | `PathfinderMob` | `lepus:mob_<category>` for each `MobCategory` |
+| `PROJECTILE` | `Projectile` | `lepus:projectile` |
+| `OBJECT` | `Entity` | `lepus:object` |
 
 `MobCategory` is baked into `EntityType` and governs natural-spawn caps, so it cannot be dynamic —
 hence one type per category. That is roughly sixteen registrations in total, fixed forever,
 independent of how many add-ons are installed.
 
-The Bedrock identity lives in the entity's NBT (`sweetcookie:{id, v}`), synced to the client over
+The Bedrock identity lives in the entity's NBT (`lepus:{id, v}`), synced to the client over
 the sideband (SC-270), never in the entity type.
 
 ### 5.1 What is per-instance, and therefore free
@@ -160,13 +160,13 @@ and custom state travels on the sideband where we control the rate anyway (SC-27
 
 This third one is a **real, permanent limitation** and is documented as such. It does **not** affect
 Bedrock add-ons themselves: Bedrock's own grouping mechanism is `minecraft:type_family`, an
-independent string-tag system that SweetCookie implements directly (SC-160). What it affects is
+independent string-tag system that Lepus implements directly (SC-160). What it affects is
 interoperation with *Java* content — a data pack predicate or another mod testing
 `#minecraft:undead` will not match a Bedrock skeleton. `SCE-2020` is emitted once per entity
 definition whose components imply a vanilla tag we cannot grant, naming the tag.
 
 `TODO(SC-120)`: a future opt-in could let a pack declare vanilla tag membership through a
-SweetCookie-specific manifest field, implemented by injecting into the tag's contents at data-pack
+Lepus-specific manifest field, implemented by injecting into the tag's contents at data-pack
 build time. Not in 0.x.
 
 ### 5.3 Consequences of identity living in NBT
@@ -175,9 +175,9 @@ build time. Not in 0.x.
   which `EntityType` was written to its NBT. If a pack update moves an entity from `monster` to
   `creature`, already-spawned individuals keep the old category until they are removed. `SCE-2021`,
   informational. Everything else about them updates live.
-- **Spawn eggs** are SweetCookie items (§4), not vanilla `SpawnEggItem`, so they are unaffected.
-- `/summon sweetcookie:mob_monster` with no Bedrock identity in its NBT produces an inert entity and
-  `SCE-3020`. `/sweetcookie summon <bedrockId>` is the supported command.
+- **Spawn eggs** are Lepus items (§4), not vanilla `SpawnEggItem`, so they are unaffected.
+- `/summon lepus:mob_monster` with no Bedrock identity in its NBT produces an inert entity and
+  `SCE-3020`. `/lepus summon <bedrockId>` is the supported command.
 
 An entity whose pack is unloaded becomes inert — invisible, immobile, not ticking, NBT preserved —
 and is restored when the pack returns (§7).
@@ -189,13 +189,13 @@ property values, so they are the only content that needs reserved registry entri
 
 ### 6.1 Structure
 
-At startup, SweetCookie registers **anonymous pool blocks** grouped into **size classes**. A size
+At startup, Lepus registers **anonymous pool blocks** grouped into **size classes**. A size
 class of size *N* is a `Block` whose state definition is a single `IntegerProperty` named `i` with
 range `0 .. N-1`. Size classes are powers of two.
 
 ```
-sweetcookie:block_1/0000 … sweetcookie:block_1/03ff       (N = 1,    1024 slots)
-sweetcookie:block_16/0000 … sweetcookie:block_16/007f     (N = 16,    128 slots)
+lepus:block_1/0000 … lepus:block_1/03ff       (N = 1,    1024 slots)
+lepus:block_16/0000 … lepus:block_16/007f     (N = 16,    128 slots)
 …
 ```
 
@@ -278,7 +278,7 @@ blocks exactly. Nothing is lost in the meantime; the blocks simply do not resolv
 Slot assignment is **allocated, persisted and never recomputed**. It lives in the world save:
 
 ```
-<world>/data/sweetcookie/ledger.json
+<world>/data/lepus/ledger.json
 ```
 
 ```jsonc
@@ -287,10 +287,10 @@ Slot assignment is **allocated, persisted and never recomputed**. It lives in th
   "pool": { "1": 1024, "16": 128, "64": 64 },        // sizes this world requires
   "entries": [
     {
-      "logicalId": "sweetcookie:wizardry.magic_block",
+      "logicalId": "lepus:wizardry.magic_block",
       "bedrockId": "wizardry:magic_block",
       "kind": "block",
-      "slot": { "sizeClass": 16, "index": 55 },       // -> sweetcookie:block_16/0037
+      "slot": { "sizeClass": 16, "index": 55 },       // -> lepus:block_16/0037
       "stateSchema": [
         { "name": "wizardry:charge", "type": "int",  "values": [0, 1, 2, 3] },
         { "name": "wizardry:lit",    "type": "bool", "values": [false, true] }
@@ -349,7 +349,7 @@ Disabling or removing a pack **MUST NOT** destroy anything (constitution rule 5)
 | Item | The stack keeps its `custom_data` verbatim. It renders as a placeholder and its tooltip names the required add-on. It cannot be used, crafted with, or consumed. |
 | Entity | Becomes invisible, immobile, non-ticking, invulnerable and non-collidable. NBT is preserved untouched. |
 
-Placeholders are **never pruned automatically**. `/sweetcookie prune <logicalId>` removes a ledger
+Placeholders are **never pruned automatically**. `/lepus prune <logicalId>` removes a ledger
 entry and frees its slot, and requires a typed confirmation naming the content.
 
 Because items and entities carry their identity in data rather than a registry entry, they need no
@@ -362,9 +362,9 @@ Packs are installed **per instance** and activated **per world**, matching Bedro
 closely as Java allows.
 
 ```
-<gamedir>/sweetcookie/addons/            installed packs, shared by every world
-<world>/data/sweetcookie/active.json     which packs this world uses, and in what order
-<world>/data/sweetcookie/ledger.json     §6.3
+<gamedir>/lepus/addons/            installed packs, shared by every world
+<world>/data/lepus/active.json     which packs this world uses, and in what order
+<world>/data/lepus/ledger.json     §6.3
 ```
 
 `active.json` records an ordered list of `{packUuid, version}`. Order is authoritative for SC-100 §5
@@ -381,7 +381,7 @@ Activation and deactivation take effect **immediately**, without a restart:
 | 5 | The sideband announces the change; clients rebuild their local bindings and re-render loaded chunks (SC-270 §8). |
 | 6 | Newly-orphaned content becomes a placeholder (§7); newly-restored content is un-placeholdered. |
 
-Commands: `/sweetcookie pack list | enable <id> | disable <id> | order <id> <n> | reload | prune`.
+Commands: `/lepus pack list | enable <id> | disable <id> | order <id> <n> | reload | prune`.
 A world-creation screen and an in-game screen offer the same operations; a dedicated server exposes
 only the commands.
 
@@ -390,7 +390,7 @@ only the commands.
 Exactly one thing, and it **MUST** be reported with numbers rather than as a generic failure:
 
 > Pool class 64 is full (64/64 slots used). `nature_pack` needs 3 more.
-> Set `sweetcookie.blockPool.64 = 96` in `config/sweetcookie.json` and restart. `SCE-4010`
+> Set `lepus.blockPool.64 = 96` in `config/lepus.json` and restart. `SCE-4010`
 
 Nothing else. Adding, removing, reordering, updating or downgrading packs, and every kind of content
 other than blocks, is live.

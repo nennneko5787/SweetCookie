@@ -10,7 +10,7 @@ and vanilla does most of the work.
 ## 1. Decisions already taken
 
 **Everything here is served through a virtual data pack**, not a bespoke system:
-`SweetCookieDataPackSource implements RepositorySource` synthesises vanilla-format JSON from the IR
+`LepusDataPackSource implements RepositorySource` synthesises vanilla-format JSON from the IR
 on demand, installed via `PackFinderInstaller` (SC-230).
 
 This buys, for free: vanilla `/reload`, vanilla client sync of recipes and tags, correct interaction
@@ -46,7 +46,7 @@ Notes: Bedrock routes recipes to stations via a `tags` array (`["crafting_table"
 aux/data values; there is no recipe unlocking or advancement integration; and creative-menu grouping
 comes from `item_catalog/` rather than a recipe book.
 
-Brewing has no data-driven Java equivalent and needs a SweetCookie-side implementation.
+Brewing has no data-driven Java equivalent and needs a Lepus-side implementation.
 
 `TODO(SC-190)`: per-type mapping and the ingredient-matching rule for custom items, which are all
 one carrier `Item` distinguished by a data component (SC-120 §4) — vanilla ingredient matching is by
@@ -59,7 +59,7 @@ implementation starts.
 
 `trading/*.json` with tiers and trades. Java made villager trades data-driven at 26.1
 (`data/<ns>/villager_trade/`), which helps on 26.2 but not on 1.21.11, so the translation targets
-SweetCookie's own trade evaluation with the data pack used only where it fits.
+Lepus's own trade evaluation with the data pack used only where it fits.
 
 `TODO(SC-190)`: whether to use 26.1's data-driven trades on the node that has them, given SC-220 §5
 forbids version-conditional *behaviour*. Likely answer: no — implement it once, ourselves, so both
@@ -75,7 +75,7 @@ though several embed it:
 `mob_event_filter`, `player_in_village_filter`, `weight`, `herd`, `density_limit`, `permute_type`,
 `spawns_lava`, `disallow_spawns_in_bubble`.
 
-Mapped onto Java's `SpawnPlacements` plus a SweetCookie spawner pass. Bedrock's spawn density and
+Mapped onto Java's `SpawnPlacements` plus a Lepus spawner pass. Bedrock's spawn density and
 herd semantics differ from Java's mob caps; the divergence goes in `fidelity` notes rather than
 being approximated.
 

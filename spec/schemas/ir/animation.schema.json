@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/animation.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/animation.schema.json",
   "title": "AnimationIr",
   "description": "A Bedrock skeletal animation. SC-180 section 4. A general keyframe system over named bones with MOLANG-VALUED keyframes — Java has no entity equivalent. Also used for server-side animations, which are the same format with a restricted Molang query set.",
 

@@ -1,4 +1,4 @@
-# Nearly every field is Molang. Java's ParticleType/ParticleProvider cannot express this, so SweetCookie ships its own particle engine, simulated in version-free code.
+# Nearly every field is Molang. Java's ParticleType/ParticleProvider cannot express this, so Lepus ships its own particle engine, simulated in version-free code.
 #
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.

@@ -53,11 +53,11 @@ both loaders in the same commit.
 | `PlatformInfo` | loader name and version, physical side, dev environment, game and config directories |
 | `RegistryBootstrap` | register the carrier item, the fixed entity types and the block slot pool at the correct init phase (SC-120) |
 | `PackFinderInstaller` | install the virtual data pack and virtual resource pack as a `RepositorySource` |
-| `NetworkChannel` | register the `sweetcookie:` plugin channels, send and receive, per-connection |
+| `NetworkChannel` | register the `lepus:` plugin channels, send and receive, per-connection |
 | `PacketEncodeHooks` | the encode-time carrier substitution points (SC-270); backed by mixins |
 | `LifecycleHooks` | server start/stop, world load/unload, `/reload`, tick phases, client connect/disconnect |
-| `CommandRegistrar` | register `/sweetcookie` |
-| `CreativeTabHooks` | build and refresh SweetCookie creative tabs |
+| `CommandRegistrar` | register `/lepus` |
+| `CreativeTabHooks` | build and refresh Lepus creative tabs |
 | `ConfigScreenProvider` | expose the settings and add-on management screens through ModMenu (Fabric) and `IConfigScreenFactory` (NeoForge); both soft dependencies *(client)* — SC-280 |
 | `EntityRendererRegistrar` | bind the pool entity types to their renderer *(client)* |
 | `ClientTickHooks` | frame and client tick callbacks *(client)* |

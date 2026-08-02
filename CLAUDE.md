@@ -1,4 +1,4 @@
-# SweetCookie — agent instructions
+# Lepus — agent instructions
 
 Runs Minecraft **Bedrock** add-ons (`.mcaddon`/`.mcpack`) inside Minecraft **Java** Edition.
 Fabric + NeoForge, MC 26.2 and 1.21.11, required on client and server.
@@ -55,8 +55,8 @@ Read before touching anything:
   Packs must attach and detach at runtime, per world.
 - Custom content must never occupy a vanilla network registry ID (SC-270). If you find yourself
   writing a custom ID into a vanilla packet, stop.
-- Logical identity (`sweetcookie:wizardry.magic_block`) and physical slot
-  (`sweetcookie:block_16/0037`) are different things. Slots appear in chunk storage and the ledger,
+- Logical identity (`lepus:wizardry.magic_block`) and physical slot
+  (`lepus:block_16/0037`) are different things. Slots appear in chunk storage and the ledger,
   nowhere else — never in a spec, command, annotation or packet.
 
 ## Layout
@@ -81,4 +81,4 @@ a source directory, not a project.
 `./gradlew chiseledCompile` compiles all four. `./gradlew --project-dir core build` runs the
 Minecraft-free half in seconds.
 
-Package root `net.nennneko5787.sweetcookie`. Mod id and resource namespace: `sweetcookie`.
+Package root `net.nennneko5787.lepus`. Mod id and resource namespace: `lepus`.

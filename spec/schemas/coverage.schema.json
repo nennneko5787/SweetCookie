@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/coverage.schema.json",
-  "title": "SweetCookie coverage shard",
+  "$id": "https://lepus.nennneko5787.net/schemas/coverage.schema.json",
+  "title": "Lepus coverage shard",
   "description": "One shard of the feature ledger. Validated by ./gradlew specValidate. See spec/process.md and spec/constitution.md rule 9. A shard is a YAML array of entries; this schema describes the parsed JSON.",
 
   "type": "object",
@@ -72,7 +72,7 @@
     "fqcn": {
       "description": "Fully qualified Java class name, which must carry a matching @SpecImpl annotation.",
       "type": "string",
-      "pattern": "^net\\.nennneko5787\\.sweetcookie\\.[A-Za-z0-9_.$]+$"
+      "pattern": "^net\\.nennneko5787\\.lepus\\.[A-Za-z0-9_.$]+$"
     },
 
     "conformanceRef": {
@@ -117,7 +117,7 @@
           "minItems": 1
         },
         "since": {
-          "description": "SweetCookie version in which this reached its current status.",
+          "description": "Lepus version in which this reached its current status.",
           "type": "string"
         },
         "bedrockSince": {

@@ -15,7 +15,7 @@ drift from the fixture over time.
 ## UUIDs
 
 Fixture UUIDs are fixed and follow the pattern `5c00c1e0-0000-4000-8000-0000000000NN`
-(`5c00c1e0` ≈ "SweetCookie"). They are deliberately recognisable in a log, so that a diagnostic
+(`5c00c1e0` ≈ "Lepus"). They are deliberately recognisable in a log, so that a diagnostic
 naming one is instantly identifiable as coming from the test corpus rather than a user's pack.
 
 A case needing its own pack identity allocates from `5c00c1e0-0001-4000-8000-…` and records it in

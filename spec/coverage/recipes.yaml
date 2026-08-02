@@ -21,7 +21,7 @@ entries:
   - id: "minecraft:recipe_brewing_mix"
     status: stub
     notes: >-
-      Java has no data-driven brewing; needs a SweetCookie-side implementation.
+      Java has no data-driven brewing; needs a Lepus-side implementation.
   - id: "minecraft:recipe_brewing_container"
     status: stub
   - id: "minecraft:recipe_smithing_transform"

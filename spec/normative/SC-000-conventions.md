@@ -37,7 +37,7 @@ contain a `TODO` that affects observable behaviour.
 
 ## 3. Fidelity vocabulary
 
-These five words describe the relationship between SweetCookie's behaviour and Bedrock's. They are
+These five words describe the relationship between Lepus's behaviour and Bedrock's. They are
 the same five values a coverage entry's `status` may take, and they mean the same thing in prose.
 
 | Term | Definition |
@@ -86,10 +86,10 @@ When a Bedrock term collides with a Java term, use the disambiguated form from `
 
 ## 5. Java-side naming
 
-- Package root: `net.nennneko5787.sweetcookie`
-- Mod id and resource namespace: `sweetcookie`
-- `core/` packages: `net.nennneko5787.sweetcookie.core.<format|molang|script|testkit|api>`
-- Minecraft-dependent: `net.nennneko5787.sweetcookie.<runtime|client|platform|compat>`
+- Package root: `net.nennneko5787.lepus`
+- Mod id and resource namespace: `lepus`
+- `core/` packages: `net.nennneko5787.lepus.core.<format|molang|script|testkit|api>`
+- Minecraft-dependent: `net.nennneko5787.lepus.<runtime|client|platform|compat>`
 
 Class names in a specification are written fully qualified on first use in a document and by simple
 name afterwards.
@@ -119,7 +119,7 @@ Molang is float-typed and so is much of the Bedrock format. Unless a document sa
 - Comparisons of Molang results use `float` semantics, including its rounding. Do **not** widen to
   `double` "for accuracy" — it changes which branch a pack takes. This holds for **intermediates**,
   not only for results: `0.1 + 0.2 > 0.3` is false in `float` and true in `double`, and Bedrock is
-  `float`. ADR-0013 records why SweetCookie owns its expression compiler rather than accepting a
+  `float`. ADR-0013 records why Lepus owns its expression compiler rather than accepting a
   `double` one.
 - Positions, rotations and pivots are `float`. World coordinates on the Java side are `double`;
   conversion happens at the boundary and is specified per site.

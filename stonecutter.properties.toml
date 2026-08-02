@@ -8,16 +8,16 @@
 # per node, which is what lets one buildscript span the 26.1 deobfuscation seam.
 loomx.loom_version = "1.17.17"
 
-mod.id            = "sweetcookie"
-mod.name          = "SweetCookie"
+mod.id            = "lepus"
+mod.name          = "Lepus"
 mod.group         = "net.nennneko5787"
 mod.version       = "0.1.0"
 mod.description   = "Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition."
 mod.authors       = ["nennneko5787"]
 mod.license.name  = "MIT"
 mod.license.url   = "https://opensource.org/licenses/MIT"
-mod.sources_url   = "https://github.com/nennneko5787/SweetCookie"
-mod.issues_url    = "https://github.com/nennneko5787/SweetCookie/issues"
+mod.sources_url   = "https://github.com/nennneko5787/Lepus"
+mod.issues_url    = "https://github.com/nennneko5787/Lepus/issues"
 # Required on both sides: Bedrock geometry, Molang and particles are client-side work.
 mod.environment   = "both"
 

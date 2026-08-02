@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/render-controller.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/render-controller.schema.json",
   "title": "RenderControllerIr",
   "description": "Chooses, PER FRAME and via Molang, which geometry, textures and materials an entity renders with, which bones are visible, and its tinting. SC-180 section 6. This is Bedrock's answer to Java blockstate JSON plus EntityRenderer subclassing, and it is fully dynamic — there is no static equivalent to precompute.",
 

@@ -132,7 +132,7 @@ entries:
   - id: "minecraft:conditional_bandwidth_optimization"
     status: wontfix
     fidelity: >-
-      A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by SweetCookie's
+      A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by Lepus's
       own sideband scheduling instead, so declaring it has no observable effect.
 
   # --- Added from the pinned upstream snapshot -----------------------------

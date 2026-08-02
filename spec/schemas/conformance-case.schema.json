@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/conformance-case.schema.json",
-  "title": "SweetCookie conformance case",
+  "$id": "https://lepus.nennneko5787.net/schemas/conformance-case.schema.json",
+  "title": "Lepus conformance case",
   "description": "spec/conformance/<domain>/<case>/case.yaml. Describes one executable statement of the form 'given this add-on, this must happen'. See spec/conformance/README.md.",
 
   "type": "object",

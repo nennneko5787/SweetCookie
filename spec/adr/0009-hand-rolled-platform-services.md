@@ -6,7 +6,7 @@
 
 ## Context
 
-SweetCookie targets Fabric and NeoForge, and separately targets multiple Minecraft versions. These
+Lepus targets Fabric and NeoForge, and separately targets multiple Minecraft versions. These
 are two independent axes and conflating them produces unmaintainable predicates.
 
 For the loader axis, three approaches are current in 2026:

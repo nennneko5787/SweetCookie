@@ -50,5 +50,5 @@ Ledger: [`spec/coverage/item-components.yaml`](../../spec/coverage/item-componen
 | `minecraft:can_destroy_in_creative` | stub |  |
 | `minecraft:dyeable` | stub | Java minecraft:dyed_color. |
 | `minecraft:record` | stub | Java minecraft:jukebox_playable. |
-| `minecraft:tags` | stub | Bedrock item tags are ad-hoc strings; Java tags are registry-backed and bind to Item, which is one shared carrier here. Tag membership must therefore be evaluated by SweetCookie, not vanilla. |
+| `minecraft:tags` | stub | Bedrock item tags are ad-hoc strings; Java tags are registry-backed and bind to Item, which is one shared carrier here. Tag membership must therefore be evaluated by Lepus, not vanilla. |
 | `minecraft:custom_components` | stub | Script-registered custom components. Depends on SC-200. |

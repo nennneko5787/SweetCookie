@@ -1,4 +1,4 @@
-// The Minecraft-free half of SweetCookie, as its own build.
+// The Minecraft-free half of Lepus, as its own build.
 //
 // This is a SEPARATE BUILD rather than a set of subprojects, and that is the point: it has no
 // access to the Minecraft repositories, no loader plugins and no Stonecutter. A parser that

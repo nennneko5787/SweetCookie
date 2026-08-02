@@ -1,5 +1,5 @@
 plugins {
-    id("sweetcookie.spec")
+    id("lepus.spec")
     alias(libs.plugins.stonecutter)
     alias(libs.plugins.loom.back.compat).apply(false)
     // Declared but never applied here. loom-back-compat applies exactly one of them per node,
@@ -26,13 +26,13 @@ stonecutter parameters {
 // Build every node. CI runs this on every push: a change may land on one combination
 // first, but one that breaks another combination's build is rejected (SC-220 section 9).
 tasks.register("chiseledBuild") {
-    group = "sweetcookie"
+    group = "lepus"
     description = "Build every (Minecraft version x loader) node."
     dependsOn(stonecutter.tasks.named("build"))
 }
 
 tasks.register("chiseledCompile") {
-    group = "sweetcookie"
+    group = "lepus"
     description = "Compile every node without packaging. The cheap CI gate."
     dependsOn(stonecutter.tasks.named("compileJava"))
 }

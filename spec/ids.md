@@ -7,7 +7,7 @@ of design error. This document is normative.
 |---|---|---|
 | **Specification IDs** | `SC-160`, `SC-160#minecraft:behavior.melee_attack` | this document |
 | **Diagnostic codes** | `SCE-1042` | SC-240 |
-| **Content identifiers** | `sweetcookie:wizardry.magic_wand` | derived, SC-120 |
+| **Content identifiers** | `lepus:wizardry.magic_wand` | derived, SC-120 |
 
 A fourth space — Bedrock's own identifiers (`minecraft:behavior.melee_attack`, `wizardry:magic_wand`)
 — is not ours to allocate. We only consume it.
@@ -131,14 +131,14 @@ Fully specified in SC-120; summarised here because it is the rule most often nee
 guessed at.
 
 ```
-sweetcookie:<sanitised bedrock namespace>.<sanitised bedrock path>
+lepus:<sanitised bedrock namespace>.<sanitised bedrock path>
 ```
 
 | Bedrock | Java |
 |---|---|
-| `wizardry:magic_wand` | `sweetcookie:wizardry.magic_wand` |
-| `my_pack:fire/ember_block` | `sweetcookie:my_pack.fire_ember_block` |
-| `Cool-Pack:Thing` | `sweetcookie:cool_pack.thing` |
+| `wizardry:magic_wand` | `lepus:wizardry.magic_wand` |
+| `my_pack:fire/ember_block` | `lepus:my_pack.fire_ember_block` |
+| `Cool-Pack:Thing` | `lepus:cool_pack.thing` |
 
 Sanitisation: lowercase, then map every character outside `[a-z0-9_.-]` to `_`. The namespace and
 path are joined with a single `.`; any `.` already present in either part is preserved, which is
@@ -153,7 +153,7 @@ set of packs, which is the property that matters.
 The transformation exists in exactly one place in the codebase. Reimplementing it anywhere else is a
 review-blocking defect.
 
-### The namespace is always `sweetcookie`
+### The namespace is always `lepus`
 
 Not the add-on's namespace. Using the add-on's namespace would let two add-ons collide in the Java
 registry, would make it impossible to tell our content from another mod's, and would break the

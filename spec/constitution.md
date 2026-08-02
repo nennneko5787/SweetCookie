@@ -48,7 +48,7 @@ here for exactly this reason.
 ## 4. Logical identity is derived, never allocated
 
 The logical identifier for Bedrock content is a pure function of its Bedrock identifier
-(`sweetcookie:<namespace>.<path>`, SC-120). It is what commands, the sideband protocol, the coverage
+(`lepus:<namespace>.<path>`, SC-120). It is what commands, the sideband protocol, the coverage
 ledger, diagnostics and every internal lookup use. There is no counter, no allocation table, and no
 negotiation between client and server.
 
@@ -59,7 +59,7 @@ allocation scheme eventually produces a split brain.
 specifies one.
 
 **Physical storage slots are a separate concept and they *are* allocated.** A block occupying pool
-slot `sweetcookie:block_16/0037` is a storage detail recorded in the per-world ledger, never a
+slot `lepus:block_16/0037` is a storage detail recorded in the per-world ledger, never a
 logical identity, never sent over the network, and never written into a specification, a command or
 an annotation. Confusing the two is a review-blocking defect.
 
@@ -79,7 +79,7 @@ maintained forever.
 ## 6. Custom content never occupies a vanilla network registry ID
 
 On the wire, every custom block, item and entity is a vanilla carrier; its real identity and state
-travel by name over SweetCookie's own channel (SC-270). Custom entity state **MUST NOT** use
+travel by name over Lepus's own channel (SC-270). Custom entity state **MUST NOT** use
 `SynchedEntityData`. Custom entries **MUST NOT** appear in vanilla dynamic-registry sync.
 
 *Why:* it is what makes ViaVersion / ViaBackwards work perfectly rather than not at all, it removes
@@ -89,7 +89,7 @@ an entire class of client kicks, and it gives graceful behaviour to clients that
 
 ## 7. Packs attach and detach at runtime, per world
 
-Bedrock lets you drop an add-on into a world and toggle it. SweetCookie **MUST** offer the same,
+Bedrock lets you drop an add-on into a world and toggle it. Lepus **MUST** offer the same,
 per world, without restarting Minecraft — because a compatibility layer that is clumsier than the
 thing it is compatible with will not be used.
 

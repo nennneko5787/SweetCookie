@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/molang-expr.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/molang-expr.schema.json",
   "title": "MolangExpr AST dump",
   "description": "The parsed form of a Molang expression. SC-130. Most IR consumers only need the summary form in common.schema.json#/$defs/molangExpr; this schema describes the full AST dump used by golden tests, so that a parser change shows up as a reviewable diff rather than a behavioural surprise.",
 

@@ -56,7 +56,7 @@ Ledger: [`spec/coverage/entity-components.yaml`](../../spec/coverage/entity-comp
 | `minecraft:projectile` | stub |  |
 | `minecraft:explode` | stub |  |
 | `minecraft:burns_in_daylight` | stub |  |
-| `minecraft:conditional_bandwidth_optimization` | wontfix | A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by SweetCookie's own sideband scheduling instead, so declaring it has no observable effect. |
+| `minecraft:conditional_bandwidth_optimization` | wontfix | A Bedrock network-tuning hint with no Java analogue. Entity update rates are governed by Lepus's own sideband scheduling instead, so declaring it has no observable effect. |
 | `minecraft:admire_item` | stub |  |
 | `minecraft:annotation.break_door` | stub |  |
 | `minecraft:annotation.open_door` | stub |  |

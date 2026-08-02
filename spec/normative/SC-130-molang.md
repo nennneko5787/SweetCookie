@@ -78,7 +78,7 @@ sufficient**: a trailing operator is discarded (`1 +` evaluates to 1) and a tern
 branch becomes 0, and neither reaches the handler. A pack with a truncated expression therefore
 loads looking healthy.
 
-Gaps 2 and 3 are closed by binding SweetCookie implementations over mocha's, which is work the
+Gaps 2 and 3 are closed by binding Lepus implementations over mocha's, which is work the
 coverage ledger already tracks as 61 `math.*` entries. Gap 4 is closed by installing the handler and
 raising our own diagnostic with provenance; the silent-truncation half is recorded as a fidelity
 divergence, because detecting it needs a parser we do not own.

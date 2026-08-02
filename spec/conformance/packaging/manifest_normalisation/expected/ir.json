@@ -4,7 +4,7 @@
       "at": "/modules/1",
       "code": "SCE-1022",
       "count": 1,
-      "messageKey": "sweetcookie.diagnostic.manifest.script_entry_defaulted",
+      "messageKey": "lepus.diagnostic.manifest.script_entry_defaulted",
       "path": "pack!b_modern_v3/manifest.json",
       "severity": "WARNING"
     },
@@ -12,14 +12,14 @@
       "at": "/header",
       "code": "SCE-1028",
       "count": 1,
-      "messageKey": "sweetcookie.diagnostic.manifest.no_min_engine_version",
+      "messageKey": "lepus.diagnostic.manifest.no_min_engine_version",
       "path": "pack!c_skin_v1/manifest.json",
       "severity": "INFO"
     },
     {
       "code": "SCE-2005",
       "count": 1,
-      "messageKey": "sweetcookie.diagnostic.pack.script_module_unsupported",
+      "messageKey": "lepus.diagnostic.pack.script_module_unsupported",
       "pack": "5c000002-0000-4000-8000-000000000002",
       "path": "manifest.json",
       "severity": "WARNING"
@@ -44,7 +44,7 @@
         "baseGameVersion": "0.0.0",
         "description": "A format_version 2 pack providing both halves. Original content.",
         "minEngineVersion": "1.21.0",
-        "name": "SweetCookie Conformance: classic",
+        "name": "Lepus Conformance: classic",
         "scope": "ANY",
         "version": "1.0.0"
       },
@@ -96,7 +96,7 @@
         "baseGameVersion": "0.0.0",
         "description": "A format_version 3 pack. Versions are SemVer strings, not arrays.",
         "minEngineVersion": "1.21.30",
-        "name": "SweetCookie Conformance: modern",
+        "name": "Lepus Conformance: modern",
         "scope": "ANY",
         "version": "2.1.0"
       },
@@ -144,7 +144,7 @@
         "baseGameVersion": "0.0.0",
         "description": "",
         "minEngineVersion": "1.16.0",
-        "name": "SweetCookie Conformance: skins",
+        "name": "Lepus Conformance: skins",
         "scope": "ANY",
         "version": "3.0.0"
       },

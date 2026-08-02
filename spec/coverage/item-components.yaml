@@ -194,7 +194,7 @@ entries:
     status: stub
     notes: >-
       Bedrock item tags are ad-hoc strings; Java tags are registry-backed and bind to Item, which is
-      one shared carrier here. Tag membership must therefore be evaluated by SweetCookie, not vanilla.
+      one shared carrier here. Tag membership must therefore be evaluated by Lepus, not vanilla.
 
   - id: minecraft:custom_components
     status: stub

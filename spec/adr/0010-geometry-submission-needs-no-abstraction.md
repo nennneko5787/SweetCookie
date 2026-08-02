@@ -52,7 +52,7 @@ rather than guessed at:
 
 | Path | 1.21.11 vs 26.2 |
 |---|---|
-| `submitCustomGeometry` | **identical** — this is the path SweetCookie lives on |
+| `submitCustomGeometry` | **identical** — this is the path Lepus lives on |
 | `submitModelPart`, `submitModel` | differing overloads |
 | `submitBlockModel` | `BlockStateModel` vs `List<BlockStateModelPart>` |
 | `submitItem` | `BakedQuad` moved package |
@@ -65,7 +65,7 @@ Each gets an abstraction **when it is first needed**, sized to the actual differ
 ## Consequences
 
 **Good.** Roughly 1,200 lines of planned backend code do not get written. The largest client risk in
-the project is closed. And the callback shape suits SweetCookie better than the imagined one would
+the project is closed. And the callback shape suits Lepus better than the imagined one would
 have: Bedrock render controllers choose geometry, texture and material *per frame* through Molang,
 so an upload-immutable-meshes API would have fought the format the whole way.
 

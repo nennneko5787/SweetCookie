@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
-issueTrackerURL = "https://github.com/nennneko5787/SweetCookie/issues"
+issueTrackerURL = "https://github.com/nennneko5787/Lepus/issues"
 
 # minecraftVersion is filled in per node by processResources. Each jar is compiled against exactly
 # one Minecraft version and is pinned to it: the classes it calls do not exist on the other one, so
@@ -9,9 +9,9 @@ issueTrackerURL = "https://github.com/nennneko5787/SweetCookie/issues"
 # adding a version down to settings.gradle.kts plus one buildscript entry.
 
 [[mods]]
-modId = "sweetcookie"
+modId = "lepus"
 version = "0.1.0"
-displayName = "SweetCookie"
+displayName = "Lepus"
 authors = "nennneko5787"
 description = '''
 Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.
@@ -21,14 +21,14 @@ Java Edition: custom blocks, items, entities with their component and AI-goal de
 skeletal models and animations, Molang, Snowstorm particles, loot tables, recipes and spawn rules.
 '''
 
-[[dependencies.sweetcookie]]
+[[dependencies.lepus]]
 modId = "neoforge"
 type = "required"
 versionRange = "[1,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.sweetcookie]]
+[[dependencies.lepus]]
 modId = "minecraft"
 type = "required"
 # Pinned to exactly the version this jar was compiled against - see fabric.mod.json for why.

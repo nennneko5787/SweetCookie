@@ -10,7 +10,7 @@ Ledger: [`spec/coverage/recipes.yaml`](../../spec/coverage/recipes.yaml)
 | `minecraft:recipe_shaped` | stub |  |
 | `minecraft:recipe_shapeless` | stub |  |
 | `minecraft:recipe_furnace` | stub |  |
-| `minecraft:recipe_brewing_mix` | stub | Java has no data-driven brewing; needs a SweetCookie-side implementation. |
+| `minecraft:recipe_brewing_mix` | stub | Java has no data-driven brewing; needs a Lepus-side implementation. |
 | `minecraft:recipe_brewing_container` | stub |  |
 | `minecraft:recipe_smithing_transform` | stub |  |
 | `minecraft:recipe_smithing_trim` | stub |  |

@@ -1,4 +1,4 @@
-# SweetCookie
+# Lepus
 
 **Minecraft 統合版のアドオンを Java 版で動かす MOD。**
 
@@ -22,14 +22,14 @@
 そして [Geyser](https://geysermc.org/) サーバーには統合版プレイヤーが既に接続してきています。
 彼らが本来遊ぶはずだったアドオンがそのまま動く方が自然です。
 **Geyser はビヘイビアパックを意図的にサポートしません** — 実行には Java サーバー側の改変が必要で、
-プロキシにはそれができないからです。SweetCookie は、その欠けている Java サーバー側です。
+プロキシにはそれができないからです。Lepus は、その欠けている Java サーバー側です。
 
 ## 設計の要点
 
 - **フォーマット解析層は Minecraft に依存しない。**`core/` は `net.minecraft.*` 無しでコンパイル
   されるので、4 万行規模になるアドオン解析コードが数秒でユニットテストでき、全 Minecraft バージョンで
   そのまま共有されます。
-- **識別子は割り当てず導出する。**`wizardry:magic_wand` は必ず `sweetcookie:wizardry.magic_wand`
+- **識別子は割り当てず導出する。**`wizardry:magic_wand` は必ず `lepus:wizardry.magic_wand`
   になります。割り当てテーブルも ID 交渉も、クライアントとサーバーの食い違いも発生しません。
 - **統合版と同じで、パックはワールドごとに実行中つけ外しできる。**Bedrock の機能に Java の
   レジストリ枠を一つも割り当てません。アイテムはデータコンポーネントの中だけに、エンティティは
@@ -50,7 +50,7 @@
 
 ## 対応状況
 
-SweetCookie は他人が決めた仕様を実装するプロジェクトなので、「何が動くか」は主張ではなく明示的に
+Lepus は他人が決めた仕様を実装するプロジェクトなので、「何が動くか」は主張ではなく明示的に
 追跡します。全ての Bedrock feature ID が [`spec/coverage/`](spec/coverage/) に、状態・実装クラス・
 忠実度の注記・conformance テストへのリンクと共に登録され、そのリンクが嘘をついていれば CI が落ちます。
 
@@ -58,14 +58,14 @@ SweetCookie は他人が決めた仕様を実装するプロジェクトなの�
 
 - **Geyser** — `geyser-api` のカスタムアイテム / ブロック / エンティティイベント経由で変換済み
   コンテンツを登録し、アドオン自身のリソースパック半分を統合版クライアントへ無変換で配信します。
-- **ViaVersion / ViaBackwards** — 後付けではなく一級の対応対象です。SweetCookie が入っている
+- **ViaVersion / ViaBackwards** — 後付けではなく一級の対応対象です。Lepus が入っている
   クライアントは、Minecraft のバージョンがサーバーと一致していてもいなくても同じ挙動になります。
 
 ## ライセンスと帰属
 
 **MIT** — [LICENSE](LICENSE) を参照。
 
-SweetCookie は Mojang のコンテンツを一切同梱しません。Bedrock のスキーマメタデータはビルド時に
+Lepus は Mojang のコンテンツを一切同梱しません。Bedrock のスキーマメタデータはビルド時に
 取得してコード生成にのみ使い、再配布はしません。サードパーティの帰属表示と、GPL ソースを
 「読むが写さない」方針は [NOTICE](NOTICE) に、その理由は
 [ADR-0006](spec/adr/0006-licensing-and-attribution.md) にあります。

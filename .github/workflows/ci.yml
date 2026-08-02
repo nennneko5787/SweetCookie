@@ -63,7 +63,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sweetcookie-${{ matrix.node }}
+          name: lepus-${{ matrix.node }}
           path: versions/${{ matrix.node }}/build/libs/*.jar
           if-no-files-found: error
 

@@ -3,7 +3,7 @@
     {
       "code": "SCE-1031",
       "count": 1,
-      "messageKey": "sweetcookie.diagnostic.ir.version_sniffed",
+      "messageKey": "lepus.diagnostic.ir.version_sniffed",
       "pack": "5c00c1e0-0000-4000-8000-000000000011",
       "path": "models/entity/sc_lying_declaration.geo.json",
       "severity": "INFO"
@@ -22,7 +22,7 @@
         "baseGameVersion": "0.0.0",
         "description": "Minimal valid resource pack. Original content, authored for this project.",
         "minEngineVersion": "1.21.0",
-        "name": "SweetCookie Conformance RP",
+        "name": "Lepus Conformance RP",
         "scope": "ANY",
         "version": "1.0.0"
       },

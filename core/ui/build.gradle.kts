@@ -1,4 +1,4 @@
-// The description layer behind every SweetCookie screen and command. SC-280 §3.1.
+// The description layer behind every Lepus screen and command. SC-280 §3.1.
 //
 // In core/ because none of it is Minecraft. What rows exist, what each says, which can be acted on,
 // where the lines go and what the keys do are all decided here; a per-version backend does nothing

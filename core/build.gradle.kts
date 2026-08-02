@@ -11,7 +11,7 @@ plugins {
 subprojects {
     apply(plugin = "java-library")
 
-    group = "net.nennneko5787.sweetcookie"
+    group = "net.nennneko5787.lepus"
     version = "0.1.0"
 
     extensions.configure<JavaPluginExtension> {

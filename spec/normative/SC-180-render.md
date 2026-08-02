@@ -232,7 +232,7 @@ Emitter components (`emitter_rate_*`, `emitter_lifetime_*`, `emitter_shape_*`,
 `bezier_chain`, `catmull_rom`) and `events`.
 
 Nearly every field is Molang. Java's `ParticleType`/`ParticleProvider` cannot express this, so
-SweetCookie ships its own particle engine, simulated in version-free code.
+Lepus ships its own particle engine, simulated in version-free code.
 
 Particle **submission** is one of the paths that genuinely diverges (§2.1):
 `submitParticleGroup(ParticleGroupRenderer)` on 1.21.11 versus
@@ -254,7 +254,7 @@ particle engine is, not before.
 ### 8.1 How the virtual resource pack reaches the client
 
 The pack is **generated, not shipped**: which Bedrock block holds which pool slot is decided per
-world, and a raised `sweetcookie.blockPool` produces more slots than any build-time file set covers.
+world, and a raised `lepus.blockPool` produces more slots than any build-time file set covers.
 Files in the jar are a build-time answer to a runtime question and are a stopgap only.
 
 It is **required and fixed-position**, never a pack a user selects. It is where the models for their

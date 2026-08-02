@@ -29,7 +29,7 @@ val modMenu = mapOf(
 group = "net.nennneko5787"
 // One file per (Minecraft version x loader), which is what Modrinth and CurseForge expect.
 version = "0.1.0+$mc-fabric"
-base.archivesName = "sweetcookie"
+base.archivesName = "lepus"
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
@@ -103,9 +103,9 @@ dependencies {
     // The Minecraft-free half, via the `core` composite build. ADR-0001. `format` brings `molang`
     // and `api` transitively; `registry` is named separately because it is a peer of `format`,
     // not something `format` depends on - SC-120 is allocation and persistence, not parsing.
-    coreBundle("net.nennneko5787.sweetcookie:format")
-    coreBundle("net.nennneko5787.sweetcookie:registry")
-    coreBundle("net.nennneko5787.sweetcookie:ui")
+    coreBundle("net.nennneko5787.lepus:format")
+    coreBundle("net.nennneko5787.lepus:registry")
+    coreBundle("net.nennneko5787.lepus:ui")
 
     // compileOnly: absent ModMenu must not break anything (SC-280 section 3). The entry point is
     // declared in fabric.mod.json and is only ever loaded BY ModMenu, so a client without it never

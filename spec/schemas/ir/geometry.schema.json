@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/geometry.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/geometry.schema.json",
   "title": "GeometryIr",
   "description": "A Bedrock model, normalised from BOTH file families into one shape. SC-180 section 3. The 1.8.0 family (top-level geometry.* keys, box UV) and the 1.12.0+ family (minecraft:geometry array, per-face UV, poly_mesh, binding) are structurally incompatible; family selection is by STRUCTURAL SNIFFING, not the declared format_version, because authoring tools have shipped mismatched declarations for years. Box UV normalises to per-face UV, since the reverse is not expressible.",
 

@@ -13,7 +13,7 @@ Two obvious schemes exist. Derive the identifier from the Bedrock one by a pure 
 allocate identifiers from a counter and persist the mapping.
 
 Allocation has a well-known failure mode: two machines that allocate independently disagree, and
-reconciling them is either a negotiation protocol or a corrupted world. Since SweetCookie must run on
+reconciling them is either a negotiation protocol or a corrupted world. Since Lepus must run on
 both a client and a server that may have been set up independently, that failure is not hypothetical.
 
 Derivation has its own problem: it cannot express "this content used to be at this storage location",
@@ -23,7 +23,7 @@ which is exactly what a chunk palette needs when a block's identity is opaque.
 
 Use both, for different things, and never confuse them.
 
-**Logical identity is derived**: `sweetcookie:<sanitise(ns)>.<sanitise(path)>`, a pure function of
+**Logical identity is derived**: `lepus:<sanitise(ns)>.<sanitise(path)>`, a pure function of
 the Bedrock identifier. It is what every human-visible and network-visible surface uses.
 
 **Physical storage slots are allocated** and recorded in the per-world ledger. They appear in chunk

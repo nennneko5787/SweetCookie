@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/pack.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/pack.schema.json",
   "title": "AddonIr",
   "description": "The root of the intermediate representation. SC-110 section 8. Deterministic: the same pack files must produce a byte-identical canonical dump, including collection order (SC-110 section 10).",
 

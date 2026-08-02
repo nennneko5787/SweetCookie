@@ -4,7 +4,7 @@
 
 Bedrock's JavaScript API. `@minecraft/server` 2.8.0 alone is 439 exported classes and 25 600 lines
 of type declarations, executed by a QuickJS runtime with a watchdog. Reimplementing all of it is a
-project comparable in size to the rest of SweetCookie.
+project comparable in size to the rest of Lepus.
 
 **Scope: the core subset only**, and it is sequenced last.
 
@@ -73,7 +73,7 @@ better and changes observable behaviour, so the former wins unless it is unusabl
 ## 5. Watchdog
 
 Bedrock terminates on `hang`, `stackOverflow`, `exceededMemoryLimit` (about 250 MB) and
-`exceededTimeLimit`. SweetCookie must do the same, with configurable limits, and must survive
+`exceededTimeLimit`. Lepus must do the same, with configurable limits, and must survive
 termination: a killed script realm unloads its pack's scripting without taking the server down
 (constitution rule 1).
 
@@ -94,7 +94,7 @@ being an advanced feature.
 
 An add-on is untrusted code (SC-260). No filesystem, no network, no reflection into Java, no access
 to other packs' state, and a memory ceiling. The Java bridge exposes only the facade objects, never
-Minecraft or SweetCookie internals.
+Minecraft or Lepus internals.
 
 ## 8. Testing contract
 

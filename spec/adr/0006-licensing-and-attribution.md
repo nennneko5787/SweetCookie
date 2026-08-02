@@ -6,7 +6,7 @@
 
 ## Context
 
-SweetCookie interoperates with a legally heterogeneous ecosystem, and some of the most useful
+Lepus interoperates with a legally heterogeneous ecosystem, and some of the most useful
 reference material is under licences that constrain what may be read, copied or shipped.
 
 | Source | Licence | Usable how |
@@ -49,7 +49,7 @@ maintained deliberately and be defensible, because the risk is real and asymmetr
 
 The alternatives were LGPL-3.0-or-later (modifications stay open, other mods may still depend on it,
 but more friction for modpack and server redistribution) and GPL-3.0 (strongest copyleft, but it
-would force every dependent mod to be GPL, making SweetCookie unusable as a library).
+would force every dependent mod to be GPL, making Lepus unusable as a library).
 
 MIT matches the projects this one interoperates with and borrows most from — Geyser, FabricRock,
 hephaestus, mocha — which matters if code ever flows back upstream, and a compatibility layer
@@ -57,7 +57,7 @@ benefits from being maximally embeddable.
 
 One consequence worth naming: `com.viaversion:viaversion-api` is GPL-3.0. It is a **`compileOnly`**
 dependency used for optional runtime detection; no ViaVersion code is linked into or distributed
-with SweetCookie, which is why its licence does not propagate. If that ever changes — if any
+with Lepus, which is why its licence does not propagate. If that ever changes — if any
 ViaVersion code is shaded or redistributed — this ADR must be revisited before the change lands.
 
 ## Consequences

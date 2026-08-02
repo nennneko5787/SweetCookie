@@ -10,7 +10,7 @@ Bedrock's Script API is executed by a QuickJS runtime inside the game. `@minecra
 alone exports 439 classes across 25 600 lines of type declarations, plus `-server-ui`, `-server-net`,
 `-server-admin` and `-gametest`.
 
-Reimplementing it is a project of comparable size to the rest of SweetCookie. Meanwhile, a large
+Reimplementing it is a project of comparable size to the rest of Lepus. Meanwhile, a large
 fraction of real add-ons use no scripting at all, and every JSON-only add-on would pay for a
 JavaScript engine it never invokes.
 

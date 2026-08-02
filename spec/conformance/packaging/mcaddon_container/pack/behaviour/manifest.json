@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "uuid": "5c000011-0000-4000-8000-000000000011",
-    "name": "SweetCookie Conformance: nested behaviour pack",
+    "name": "Lepus Conformance: nested behaviour pack",
     "version": [1, 0, 0],
     "min_engine_version": [1, 21, 0]
   },

@@ -1,4 +1,4 @@
-# The requirement: a client running SweetCookie behaves IDENTICALLY whether or not its Minecraft
+# The requirement: a client running Lepus behaves IDENTICALLY whether or not its Minecraft
 # version matches the server's.
 #
 # This is achieved by giving Via nothing to get wrong - custom content never occupies a vanilla

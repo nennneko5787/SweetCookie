@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/upstream-lock.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/upstream-lock.schema.json",
   "title": "Upstream metadata lock",
   "description": "spec/upstream/bedrock-samples.lock.json. Pins the Mojang metadata snapshot the build generates from. NO CONTENT IS VENDORED — constitution rule 10. This file records hashes so the fetch is reproducible and tamper-evident.",
 

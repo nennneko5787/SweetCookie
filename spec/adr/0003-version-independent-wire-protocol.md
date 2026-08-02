@@ -6,7 +6,7 @@
 
 ## Context
 
-The project requires that a client running SweetCookie behave **identically whether or not its
+The project requires that a client running Lepus behave **identically whether or not its
 Minecraft version matches the server's** — that is, through ViaVersion and ViaBackwards.
 
 ViaVersion rewrites packets using generated tables of **vanilla** registry identifiers. Mod-added
@@ -27,7 +27,7 @@ Custom content **never** occupies a vanilla network registry identifier and neve
 dynamic-registry synchronisation.
 
 On the wire, every custom block, item and entity is a **vanilla carrier**. Its real identity and
-state travel over the `sweetcookie:` plugin channel, addressed by name and interned to session-scoped
+state travel over the `lepus:` plugin channel, addressed by name and interned to session-scoped
 handles. Custom entity state does not use `SynchedEntityData`.
 
 Substitution happens at packet-encode time, so the server's world model still contains real custom

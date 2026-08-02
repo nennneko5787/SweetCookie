@@ -75,7 +75,7 @@ turns into an argument when a user reports it.
 **Good.** The dependency stays, the compiler stays, SC-250's budget keeps its foundation, and the
 difference is written where users can read it.
 
-**Bad, and accepted.** SweetCookie is not bit-identical to Bedrock for expressions that compare near
+**Bad, and accepted.** Lepus is not bit-identical to Bedrock for expressions that compare near
 a float boundary. No conformance case can currently detect this, because detecting it requires
 observing a real pack take a different branch; the first one that does becomes the case, and this
 ADR becomes reversible evidence rather than a judgement call.
@@ -86,7 +86,7 @@ rather than a hypothetical one.
 
 ## Reversal cost
 
-**Medium.** `MolangExpr` is SweetCookie's own type and the boundary is already narrow (ADR-0008's
+**Medium.** `MolangExpr` is Lepus's own type and the boundary is already narrow (ADR-0008's
 facade), so replacing what is behind it does not touch the IR or any caller. What is not cheap is
 the replacement itself: a float Molang compiler meeting SC-250's budget. The cost is in building the
 alternative, not in switching to it.

@@ -1,4 +1,4 @@
-# SweetCookie specification
+# Lepus specification
 
 This directory is **normative**. Where the code and this directory disagree, this directory is
 right and the code is a bug — or the specification is amended first, deliberately, in its own
@@ -9,7 +9,7 @@ Javadoc is a convenience.
 
 ## Why a specification at all
 
-SweetCookie implements someone else's format. Mojang's add-on documentation is incomplete,
+Lepus implements someone else's format. Mojang's add-on documentation is incomplete,
 occasionally wrong, versioned per-file with `format_version` values spanning `1.8.0` to `1.26.30`
 *inside a single pack*, and changes without notice. The interesting question about this project is
 never "does it work" but **"which of the ~2,500 Bedrock feature identifiers work, how faithfully,

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/entity.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/entity.schema.json",
   "title": "EntityDefIr",
   "description": "A Bedrock entity definition: a data-driven entity-component system with 120 components, 171 AI goals, component groups mutated at runtime by events, and typed properties. SC-160. Registration is SC-120 section 5.",
 

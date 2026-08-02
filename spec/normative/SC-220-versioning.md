@@ -2,7 +2,7 @@
 
 **Status:** complete · **Since:** 0.1.0 · **Supersedes:** —
 
-How SweetCookie spans multiple Minecraft versions, what may diverge and where, and the checklist for
+How Lepus spans multiple Minecraft versions, what may diverge and where, and the checklist for
 adding a version. Constitution rule 12.
 
 ---

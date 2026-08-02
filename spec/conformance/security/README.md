@@ -2,7 +2,7 @@
 
 SC-260. An add-on is untrusted input, and on a client it may have arrived **from the server the user
 just joined** (SC-270 §9). That second case is what makes this directory necessary rather than
-prudent: installing SweetCookie must not mean executing content from anyone whose server you visit.
+prudent: installing Lepus must not mean executing content from anyone whose server you visit.
 
 Every case here asserts four things, not one:
 

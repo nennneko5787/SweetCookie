@@ -85,7 +85,7 @@
         "baseGameVersion": "0.0.0",
         "description": "Minimal valid behaviour pack. Original content, authored for this project.",
         "minEngineVersion": "1.21.0",
-        "name": "SweetCookie Conformance BP",
+        "name": "Lepus Conformance BP",
         "scope": "ANY",
         "version": "1.0.0"
       },

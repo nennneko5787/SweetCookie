@@ -19,10 +19,10 @@ dependencies {
 tasks.withType<Test>().configureEach {
     // The corpus lives outside this build. `core` is a separate build (ADR-0001), so it has no
     // rootProject pointing at the repository root and the path has to be handed in.
-    systemProperty("sweetcookie.specDir", rootProject.projectDir.parentFile.resolve("spec").path)
-    systemProperty("sweetcookie.conformanceResults",
+    systemProperty("lepus.specDir", rootProject.projectDir.parentFile.resolve("spec").path)
+    systemProperty("lepus.conformanceResults",
         layout.buildDirectory.file("conformance-results.json").get().asFile.path)
-    // Regenerate goldens: ./gradlew --project-dir core :testkit:test -Dsweetcookie.accept=true
-    System.getProperty("sweetcookie.accept")?.let { systemProperty("sweetcookie.accept", it) }
+    // Regenerate goldens: ./gradlew --project-dir core :testkit:test -Dlepus.accept=true
+    System.getProperty("lepus.accept")?.let { systemProperty("lepus.accept", it) }
     outputs.upToDateWhen { false } // the corpus is an input this task cannot declare
 }

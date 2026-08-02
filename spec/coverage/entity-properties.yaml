@@ -1,7 +1,7 @@
 # Typed entity properties (description.properties) plus the 49 flag-like components.
 #
 # Properties are queryable as q.property(), settable by events, and mirrored to Geyser subject to its
-# caps of 32 per type, 16 enum values and 32-character names. They are synced over SweetCookie's own
+# caps of 32 per type, 16 enum values and 32-character names. They are synced over Lepus's own
 # sideband, NEVER SynchedEntityData (constitution rule 6) - which is what removes the entire class of
 # ViaVersion metadata-index failures.
 #

@@ -1,4 +1,4 @@
-# ADR-0013 — SweetCookie owns the Molang pipeline, and it is `float`
+# ADR-0013 — Lepus owns the Molang pipeline, and it is `float`
 
 **Status:** accepted
 **Date:** 2026-07-31
@@ -24,7 +24,7 @@ The measurement (SC-130 §2.6, `MochaCapabilityTest`) established what the gaps 
 ADR-0012 proposed absorbing the first of those as a stated fidelity divergence, on the argument that
 replacing the compiler was an unbounded schedule risk on the hottest path.
 
-**That trade was rejected on review, and correctly.** SweetCookie's entire purpose is to run Bedrock
+**That trade was rejected on review, and correctly.** Lepus's entire purpose is to run Bedrock
 add-ons as Bedrock runs them. A numeric model that takes the other branch of a comparison is not a
 rounding footnote — it is the product failing at the thing it exists to do, in a way that surfaces to
 an author as "my animation is wrong here and right on my phone" with no way to act on it. The
@@ -32,7 +32,7 @@ gaps proved large. ADR-0008's own revisit condition is met.
 
 ## Decision
 
-**SweetCookie owns the whole Molang pipeline: lexer, parser, folding, compilation and evaluation. It
+**Lepus owns the whole Molang pipeline: lexer, parser, folding, compilation and evaluation. It
 is `float` throughout, per SC-000 §7. The `team.unnamed:mocha` dependency is removed.**
 
 Consequences of owning it, in the order they matter:

@@ -1,8 +1,8 @@
-# SweetCookie
+# Lepus
 
 **Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.**
 
-SweetCookie loads `.mcaddon` / `.mcpack` files — behavior packs *and* resource packs — and executes
+Lepus loads `.mcaddon` / `.mcpack` files — behavior packs *and* resource packs — and executes
 them inside Java Edition: custom blocks, items, entities with their component/AI-goal definitions,
 Bedrock skeletal models and animations, Molang, Snowstorm particles, loot tables, recipes and
 spawn rules.
@@ -23,7 +23,7 @@ system with a state machine on top, Molang, and the Snowstorm particle engine.
 And on a [Geyser](https://geysermc.org/) server, Bedrock players are already connecting — so
 running the add-on they were built for is the natural thing to do. **Geyser deliberately does not
 support behavior packs**, because executing them requires changes on the Java server, which a proxy
-cannot make. SweetCookie is the Java server side that Geyser is missing.
+cannot make. Lepus is the Java server side that Geyser is missing.
 
 ## Design highlights
 
@@ -31,7 +31,7 @@ cannot make. SweetCookie is the Java server side that Geyser is missing.
   classpath, so ~40k lines of add-on parsing are unit-testable in seconds and shared verbatim across
   every Minecraft version.
 - **Identifiers are derived, never allocated.** `wizardry:magic_wand` always becomes
-  `sweetcookie:wizardry.magic_wand`. No allocation table, no ID negotiation, no split-brain between
+  `lepus:wizardry.magic_wand`. No allocation table, no ID negotiation, no split-brain between
   client and server.
 - **Packs attach and detach at runtime, per world — like they do on Bedrock.** No Bedrock feature
   ever gets a Java registry entry of its own: items live entirely in a data component, entities in
@@ -51,23 +51,23 @@ See [`spec/`](spec/) for the normative specification and
 
 ## Compatibility
 
-SweetCookie implements someone else's specification, so "what works" is tracked explicitly rather
+Lepus implements someone else's specification, so "what works" is tracked explicitly rather
 than claimed. Every Bedrock feature ID has an entry in [`spec/coverage/`](spec/coverage/) with a
 status, the implementing class, a fidelity note and a link to its conformance test — and CI fails if
 any of those links are dishonest.
 
 ## Interoperability
 
-- **Geyser** — SweetCookie registers translated content through the `geyser-api` custom item / block
+- **Geyser** — Lepus registers translated content through the `geyser-api` custom item / block
   / entity events and serves the add-on's own resource pack half to Bedrock clients unmodified.
 - **ViaVersion / ViaBackwards** — supported as a first-class case, not an afterthought. A client
-  running SweetCookie behaves identically whether or not its Minecraft version matches the server's.
+  running Lepus behaves identically whether or not its Minecraft version matches the server's.
 
 ## Licensing and attribution
 
 **MIT** — see [LICENSE](LICENSE).
 
-SweetCookie ships no Mojang content. Bedrock schema metadata is fetched at build time and used only
+Lepus ships no Mojang content. Bedrock schema metadata is fetched at build time and used only
 to generate code; it is never redistributed. Third-party attributions and the read-only-reference
 policy for GPL sources are in [NOTICE](NOTICE); the reasoning is
 [ADR-0006](spec/adr/0006-licensing-and-attribution.md).
@@ -85,7 +85,7 @@ Minecraft 統合版のアドオン（`.mcaddon` / `.mcpack`）を Java 版で動
 テーブル・レシピ・湧き条件を Java 版の中で実行します。
 
 Geyser はビヘイビアパックを原理的にサポートしません（実行には Java サーバー側の改変が必要で、
-プロキシ構成では不可能だから）。SweetCookie はその欠けている「Java サーバー側」です。
+プロキシ構成では不可能だから）。Lepus はその欠けている「Java サーバー側」です。
 
 **現在はプレアルファ（仕様策定と足場作りの段階）で、まだ動きません。**
 

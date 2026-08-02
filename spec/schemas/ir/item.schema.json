@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/item.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/item.schema.json",
   "title": "ItemDefIr",
   "description": "A Bedrock item definition, 44 components. SC-170. Mojang rewrote the shape at 1.20.50, moving all behaviour under components; the IR models the modern shape and older files upgrade into it (SC-110 section 3.2). Registration is SC-120 section 4: one carrier Item, identity in a data component.",
 
@@ -47,7 +47,7 @@
     "unknown": { "$ref": "common.schema.json#/$defs/unknown" },
 
     "vanillaFallback": {
-      "description": "Wire carrier item. SC-270 section 4. Distinct from the SERVER-side carrier, which is always sweetcookie:item.",
+      "description": "Wire carrier item. SC-270 section 4. Distinct from the SERVER-side carrier, which is always lepus:item.",
       "type": ["string", "null"]
     }
   }

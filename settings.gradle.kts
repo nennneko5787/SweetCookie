@@ -17,7 +17,7 @@ plugins {
     id("dev.kikugie.stonecutter") version "0.9.7"
 }
 
-rootProject.name = "SweetCookie"
+rootProject.name = "Lepus"
 
 // ── core/ is a SEPARATE BUILD ────────────────────────────────────────────────
 // Not a subproject. A composite build makes ADR-0001 structural rather than

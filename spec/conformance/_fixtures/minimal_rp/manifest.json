@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "header": {
-    "name": "SweetCookie Conformance RP",
+    "name": "Lepus Conformance RP",
     "description": "Minimal valid resource pack. Original content, authored for this project.",
     "uuid": "5c00c1e0-0000-4000-8000-000000000011",
     "version": [1, 0, 0],
@@ -15,7 +15,7 @@
     }
   ],
   "metadata": {
-    "authors": ["SweetCookie"],
+    "authors": ["Lepus"],
     "license": "MIT"
   }
 }

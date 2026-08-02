@@ -10,11 +10,11 @@ How custom content reaches a client. The short version: it does not travel as cu
 
 ## 1. The invariant
 
-> **SweetCookie content MUST NOT occupy a vanilla network registry identifier, and MUST NOT appear
+> **Lepus content MUST NOT occupy a vanilla network registry identifier, and MUST NOT appear
 > in vanilla dynamic-registry synchronisation.**
 >
 > On the wire, every custom block, item and entity is a **vanilla carrier**. Its real identity and
-> state travel over the `sweetcookie:` plugin channel, addressed **by name**.
+> state travel over the `lepus:` plugin channel, addressed **by name**.
 
 Constitution rule 6. Everything in this document follows from it.
 
@@ -32,7 +32,7 @@ malformed component payload **kicked the client** rather than degrading — item
 entity/block-entity data in items, sound ids inside instrument components. A mod that puts custom
 data on the wire and hopes Via copes is a mod that disconnects people.
 
-The requirement is that **a client running SweetCookie behaves identically whether or not its
+The requirement is that **a client running Lepus behaves identically whether or not its
 Minecraft version matches the server's**. There is exactly one way to get that: give Via nothing to
 get wrong.
 
@@ -56,8 +56,8 @@ Three distinct identifier layers. Confusing them is the standard failure mode.
 
 | Layer | Example | Scope |
 |---|---|---|
-| **Logical identity** | `sweetcookie:wizardry.magic_block` | global, derived (SC-120 §3) |
-| **Storage slot** | `sweetcookie:block_16/0037` + index 55 | one world's ledger (SC-120 §6) |
+| **Logical identity** | `lepus:wizardry.magic_block` | global, derived (SC-120 §3) |
+| **Storage slot** | `lepus:block_16/0037` + index 55 | one world's ledger (SC-120 §6) |
 | **Session handle** | `int 41` | one connection, negotiated at handshake (§5) |
 | **Wire carrier** | `minecraft:stone` | one packet |
 
@@ -86,11 +86,11 @@ downgrade target lacks recreates exactly the problem this document exists to avo
 
 Items are the one case where a carrier can transport meaningful data by itself.
 `minecraft:custom_data` is an opaque NBT compound that has existed since 1.20.5 and that Via
-converts to and from pre-component root NBT reliably. It is the **only** component SweetCookie may
+converts to and from pre-component root NBT reliably. It is the **only** component Lepus may
 place custom data in.
 
 ```jsonc
-"minecraft:custom_data": { "sweetcookie": { "h": 41, "v": 1 } }
+"minecraft:custom_data": { "lepus": { "h": 41, "v": 1 } }
 ```
 
 `h` is the session handle, `v` the payload version. The full stack state arrives over the sideband;
@@ -98,7 +98,7 @@ the handle is embedded in the stack so that a stack moving through vanilla inven
 containers, hoppers, drops, shulker boxes — carries its identity without the server having to track
 positions.
 
-Custom data **MUST NOT** be placed in any other component, and SweetCookie **MUST NOT** define its
+Custom data **MUST NOT** be placed in any other component, and Lepus **MUST NOT** define its
 own component type. A mod-namespaced component has no downgrade path and is a kick waiting to happen.
 
 ## 5. Handshake
@@ -106,20 +106,20 @@ own component type. A mod-namespaced component has no downgrade path and is a ki
 On login, before any world data:
 
 ```
-S → C   sweetcookie:hello        protocolVersion, serverMcVersion, features[]
-C → S   sweetcookie:hello_ack    protocolVersion, clientMcVersion, packs[{uuid, version, sha256}]
-S → C   sweetcookie:session      handles[], missingPacks[], activeSet
+S → C   lepus:hello        protocolVersion, serverMcVersion, features[]
+C → S   lepus:hello_ack    protocolVersion, clientMcVersion, packs[{uuid, version, sha256}]
+S → C   lepus:session      handles[], missingPacks[], activeSet
 ```
 
-- **Protocol version is SweetCookie's own** and is independent of Minecraft's. A mismatch outside
+- **Protocol version is Lepus's own** and is independent of Minecraft's. A mismatch outside
   the supported range disconnects with a readable message naming both versions (`SCE-5001`).
-- `sweetcookie:session` interns every logical identity the active pack set defines into a dense
+- `lepus:session` interns every logical identity the active pack set defines into a dense
   `int` handle space, in ascending logical-identity order so it is deterministic and diffable.
   Handles are **session-scoped**: not persisted, not stable across reconnects, meaningless elsewhere.
 - Handle 0 is reserved for "no custom content".
 - Interning is what keeps the sideband small: a block overlay carries `int` handles, not strings.
 
-A client that does not answer `sweetcookie:hello` within the configured window is treated as
+A client that does not answer `lepus:hello` within the configured window is treated as
 vanilla and, in 0.x, disconnected with an explanatory message (`SCE-5002`). The seam for supporting
 it properly is §11.
 
@@ -129,7 +129,7 @@ Chunk sections and block updates are rewritten at encode time: every custom `Blo
 carrier. The client then applies a **sparse overlay**.
 
 ```
-S → C   sweetcookie:chunk_overlay
+S → C   lepus:chunk_overlay
         chunkX, chunkZ, ledgerRevision,
         sections[ { sectionY, palette[handle…], bitsPerEntry, data[…] } ]
 ```
@@ -137,7 +137,7 @@ S → C   sweetcookie:chunk_overlay
 - Only sections containing at least one custom block appear. A chunk with none sends no overlay.
 - The section encoding mirrors vanilla's palette-plus-packed-array format so the client's existing
   bit-unpacking is reusable and the size is comparable to a vanilla section.
-- `sweetcookie:block_update` carries `(pos, handle, stateIndex)` and is sent alongside the vanilla
+- `lepus:block_update` carries `(pos, handle, stateIndex)` and is sent alongside the vanilla
   update for the carrier, in the same tick, ordered after it.
 - The client stores the overlay beside its `ClientLevel` and binds each handle to its own local pool
   slot (SC-120 §9), then re-meshes the affected sections.
@@ -154,7 +154,7 @@ request a resend rather than render stale content.
 The carrier stack already contains its handle (§4.1). The sideband supplies everything else:
 
 ```
-S → C   sweetcookie:item_state   handle, componentsBlob
+S → C   lepus:item_state   handle, componentsBlob
 ```
 
 sent once per handle per session, not per stack. Per-stack mutable state (damage, custom name,
@@ -169,8 +169,8 @@ payload by 36 for data that is identical across them.
 Custom entity state **MUST NOT** use `SynchedEntityData` (constitution rule 6). It travels here:
 
 ```
-S → C   sweetcookie:entity_bind    entityId, handle
-S → C   sweetcookie:entity_state   entityId, propertiesDelta, molangVarsDelta, animStateDelta
+S → C   lepus:entity_bind    entityId, handle
+S → C   lepus:entity_state   entityId, propertiesDelta, molangVarsDelta, animStateDelta
 ```
 
 - `entity_bind` is sent immediately after the vanilla spawn packet for the carrier type.
@@ -189,10 +189,10 @@ The handshake tells the server which packs the client lacks. The server offers t
 
 - **Preferred:** an operator-configured HTTP(S) base URL; the client fetches by
   `{uuid}/{version}.mcpack` and verifies the sha256 from the handshake.
-- **Fallback:** a chunked transfer over `sweetcookie:pack_data`, rate-limited, off by default on
+- **Fallback:** a chunked transfer over `lepus:pack_data`, rate-limited, off by default on
   dedicated servers because it is expensive.
 
-The client writes the pack into `<gamedir>/sweetcookie/addons/`, binds it live (SC-120 §9) and
+The client writes the pack into `<gamedir>/lepus/addons/`, binds it live (SC-120 §9) and
 continues. **It does not restart** — a client keeps no ledger, so it has nothing to honour.
 
 Integrity is mandatory: a pack whose sha256 does not match the handshake is discarded with
@@ -213,11 +213,11 @@ model, and it is one of the reasons for that choice.
 
 | Situation | Behaviour |
 |---|---|
-| Client has SweetCookie, same MC version | full fidelity |
-| Client has SweetCookie, different MC version, via Via | **full fidelity — identical to the above** |
-| Client has SweetCookie, missing packs | fetched live (§9), then full fidelity |
-| Client has SweetCookie, refuses the packs | carriers only, clearly marked, playable |
-| Client has no SweetCookie | 0.x: disconnected with an explanation. The carrier layer already makes the alternative possible; it is a policy decision, not a technical gap. |
+| Client has Lepus, same MC version | full fidelity |
+| Client has Lepus, different MC version, via Via | **full fidelity — identical to the above** |
+| Client has Lepus, missing packs | fetched live (§9), then full fidelity |
+| Client has Lepus, refuses the packs | carriers only, clearly marked, playable |
+| Client has no Lepus | 0.x: disconnected with an explanation. The carrier layer already makes the alternative possible; it is a policy decision, not a technical gap. |
 
 ## 12. One transport, not two
 

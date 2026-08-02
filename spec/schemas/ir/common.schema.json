@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sweetcookie.nennneko5787.net/schemas/ir/common.schema.json",
+  "$id": "https://lepus.nennneko5787.net/schemas/ir/common.schema.json",
   "title": "IR shared value types",
-  "description": "Shared definitions for the SweetCookie intermediate representation. Normative half of SC-110 section 6. These schemas describe the CANONICAL JSON DUMP of the IR (SC-000 section 6), which is what golden tests compare — not an on-disk format the mod reads.",
+  "description": "Shared definitions for the Lepus intermediate representation. Normative half of SC-110 section 6. These schemas describe the CANONICAL JSON DUMP of the IR (SC-000 section 6), which is what golden tests compare — not an on-disk format the mod reads.",
 
   "$defs": {
     "bedrockId": {
@@ -14,7 +14,7 @@
     "logicalId": {
       "description": "The derived Java identifier. SC-120 section 3.",
       "type": "string",
-      "pattern": "^sweetcookie:[a-z0-9_.-]+$"
+      "pattern": "^lepus:[a-z0-9_.-]+$"
     },
 
     "semanticVersion": {

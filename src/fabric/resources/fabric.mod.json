@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "id": "sweetcookie",
+  "id": "lepus",
   "version": "0.1.0",
-  "name": "SweetCookie",
+  "name": "Lepus",
   "description": "Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.",
   "authors": ["nennneko5787"],
   "contact": {
-    "homepage": "https://github.com/nennneko5787/SweetCookie",
-    "sources": "https://github.com/nennneko5787/SweetCookie",
-    "issues": "https://github.com/nennneko5787/SweetCookie/issues"
+    "homepage": "https://github.com/nennneko5787/Lepus",
+    "sources": "https://github.com/nennneko5787/Lepus",
+    "issues": "https://github.com/nennneko5787/Lepus/issues"
   },
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["net.nennneko5787.sweetcookie.fabric.SweetCookieFabric"],
-    "modmenu": ["net.nennneko5787.sweetcookie.fabric.SweetCookieModMenu"]
+    "main": ["net.nennneko5787.lepus.fabric.LepusFabric"],
+    "modmenu": ["net.nennneko5787.lepus.fabric.LepusModMenu"]
   },
   "mixins": [
-    "sweetcookie.mixins.json"
+    "lepus.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.19.3",
@@ -28,6 +28,6 @@
     "modmenu": "*"
   },
   "custom": {
-    "sweetcookie:note": "minecraftRange is filled in per node by processResources. Each jar is compiled against exactly one Minecraft version and pinned to it: the classes it calls do not exist on the other one, so a range spanning the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps adding a version to settings.gradle.kts plus one buildscript entry. This sits under \"custom\" because Fabric Loader rejects unknown ROOT entries - it reported the previous _comment as an invalid entry on every launch."
+    "lepus:note": "minecraftRange is filled in per node by processResources. Each jar is compiled against exactly one Minecraft version and pinned to it: the classes it calls do not exist on the other one, so a range spanning the 1.21.11/26.2 seam would let the mod load and then die. SC-220 section 6 keeps adding a version to settings.gradle.kts plus one buildscript entry. This sits under \"custom\" because Fabric Loader rejects unknown ROOT entries - it reported the previous _comment as an invalid entry on every launch."
   }
 }

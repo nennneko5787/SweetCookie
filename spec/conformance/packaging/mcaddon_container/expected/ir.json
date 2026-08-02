@@ -3,7 +3,7 @@
     {
       "code": "SCE-1010",
       "count": 1,
-      "messageKey": "sweetcookie.diagnostic.pack.nested_manifest",
+      "messageKey": "lepus.diagnostic.pack.nested_manifest",
       "path": "pack.mcaddon",
       "severity": "INFO"
     }
@@ -21,7 +21,7 @@
         "baseGameVersion": "0.0.0",
         "description": "",
         "minEngineVersion": "1.21.0",
-        "name": "SweetCookie Conformance: nested behaviour pack",
+        "name": "Lepus Conformance: nested behaviour pack",
         "scope": "ANY",
         "version": "1.0.0"
       },
@@ -62,7 +62,7 @@
         "baseGameVersion": "0.0.0",
         "description": "",
         "minEngineVersion": "1.21.0",
-        "name": "SweetCookie Conformance: deeply nested resource pack",
+        "name": "Lepus Conformance: deeply nested resource pack",
         "scope": "ANY",
         "version": "1.0.0"
       },

@@ -35,7 +35,7 @@ public record Diagnostic(
 |---|---|---|
 | `ERROR` | content did not load, or something is broken | in-game on join for operators; always logged |
 | `WARNING` | content loaded with reduced fidelity | in-game summary; logged |
-| `INFO` | a normal, expected difference | `/sweetcookie diagnostics` only; logged at debug |
+| `INFO` | a normal, expected difference | `/lepus diagnostics` only; logged at debug |
 
 An unimplemented feature that a pack uses is `WARNING`, not `ERROR`: the pack still works, mostly.
 Reserving `ERROR` for genuine breakage is what keeps it meaningful.
@@ -73,8 +73,8 @@ checkable if allocation happens somewhere a test can enumerate.
 |---|---|
 | Log | everything, one line each, with the code first for greppability |
 | Join message | for operators and in single-player: a one-line summary with counts and a pointer to the command |
-| `/sweetcookie diagnostics [pack] [severity]` | the full list, paginated, clickable to copy |
-| `/sweetcookie why <bedrockId>` | why one specific piece of content is not behaving — the most useful command in the mod |
+| `/lepus diagnostics [pack] [severity]` | the full list, paginated, clickable to copy |
+| `/lepus why <bedrockId>` | why one specific piece of content is not behaving — the most useful command in the mod |
 | Add-on management screen | a per-pack badge |
 
 `TODO(SC-240)`: the exact wording rules. A diagnostic must name what was affected, what happened

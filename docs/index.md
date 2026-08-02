@@ -1,4 +1,4 @@
-# SweetCookie documentation
+# Lepus documentation
 
 **Nothing here is normative.** The specification is [`spec/`](../spec/); this directory is either
 generated from it or written for users.
@@ -12,7 +12,7 @@ generated from it or written for users.
 
 ## Compatibility
 
-SweetCookie implements someone else's specification, so "what works" is tracked explicitly rather
+Lepus implements someone else's specification, so "what works" is tracked explicitly rather
 than claimed. [`compatibility/summary.md`](compatibility/summary.md) is produced by `specReport`
 from [`spec/coverage/`](../spec/coverage/), and CI fails if it is stale.
 
@@ -28,7 +28,7 @@ file by hand will be reverted by the next build.
 
 ## Diagnostics
 
-Every degradation SweetCookie performs emits a code. Searching for `SCE-2001` should land on a page
+Every degradation Lepus performs emits a code. Searching for `SCE-2001` should land on a page
 in `troubleshooting/` explaining what it means and what, if anything, an add-on author can do about
 it. That is the payment for constitution rule 1: unknown input degrades silently *to the game*, but
 never silently *to the user*.
