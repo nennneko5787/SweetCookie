@@ -31,6 +31,11 @@ sourceSets {
         // The VERSION axis, named by version exactly as the loader axis above is named by loader.
         // A directory rather than //? comments, per SC-220 section 3.
         java.srcDir(rootProject.file("src/$mc/java"))
+
+        // The INTERSECTION, named as the node is. See the Fabric buildscript for the divergence
+        // that opened this axis; NeoForge has the directory for symmetry, and because the same
+        // thing — a loader API changing between Minecraft versions — can happen here too.
+        java.srcDir(rootProject.file("src/$mc-neoforge/java"))
     }
 }
 
@@ -63,6 +68,19 @@ neoForge {
     // Loom puts Minecraft on every source set; ModDevGradle only on the ones it is told about. The
     // headless registration test needs the game on its classpath to construct a Block at all.
     addModdingDependenciesTo(sourceSets["test"])
+
+    // A client to launch. Loom gives the Fabric nodes `runClient` for nothing, so its absence here
+    // went unnoticed until somebody asked to test on NeoForge and found there was no task at all —
+    // which meant every NeoForge-only path in the mod had been compiled and never run.
+    //
+    // The game directory is the node's own `run`, matching where Loom puts the Fabric ones, so the
+    // add-ons a tester installs sit beside the loader they are testing.
+    runs {
+        register("client") {
+            client()
+            gameDirectory = file("run")
+        }
+    }
 }
 
 

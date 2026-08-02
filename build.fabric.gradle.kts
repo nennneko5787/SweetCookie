@@ -46,6 +46,15 @@ sourceSets {
         // The VERSION axis, named by version exactly as the loader axis above is named by loader.
         // A directory rather than //? comments, per SC-220 section 3.
         java.srcDir(rootProject.file("src/$mc/java"))
+
+        // The INTERSECTION, named as the node is. For a divergence that is neither purely a version
+        // difference nor purely a loader one — a loader's API changing between Minecraft versions.
+        //
+        // The case that opened it: Fabric API renamed LivingEntityFeatureRendererRegistrationCallback
+        // to LivingEntityRenderLayerRegistrationCallback at 26.2. Neither of the other two
+        // directories can hold that — src/fabric is compiled by both versions, and src/26.2 by both
+        // loaders — so without this axis the only options were reflection or nothing.
+        java.srcDir(rootProject.file("src/$mc-fabric/java"))
     }
 }
 
