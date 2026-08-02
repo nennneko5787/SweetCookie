@@ -1,6 +1,7 @@
 package net.nennneko5787.lepus.core.format.ir.geometry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.ir.UnknownData;
@@ -17,6 +18,7 @@ import net.nennneko5787.lepus.core.format.value.Vec3f;
  * @param textureHeight likewise
  * @param visibleBounds the culling box, when the model declares one
  * @param bones         a flat list in declaration order; the hierarchy is by {@code parent} name
+ * @param itemDisplay   {@code item_display_transforms} by context, empty when the model states none
  * @param provenance    pack, file, position, declared and effective version (SC-110 §4)
  * @param unknown       keys this build does not recognise, kept verbatim (SC-110 §5)
  */
@@ -29,6 +31,7 @@ public record GeometryIr(
         int textureHeight,
         Optional<VisibleBounds> visibleBounds,
         List<BoneIr> bones,
+        Map<String, ItemDisplay> itemDisplay,
         Provenance provenance,
         UnknownData unknown) {
 
@@ -42,6 +45,11 @@ public record GeometryIr(
 
     public GeometryIr {
         bones = List.copyOf(bones);
+        // Insertion order kept, and NOT Map.copyOf: that map's iteration order is unspecified and
+        // randomised per JVM run. Nothing downstream depends on it today — the transpile emits the
+        // contexts in its own fixed order and canonical JSON sorts keys — but an IR whose order
+        // changes between two runs of the same input is a golden waiting to churn.
+        itemDisplay = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(itemDisplay));
     }
 
     /** The culling box, SC-180 §3. */

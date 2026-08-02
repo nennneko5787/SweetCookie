@@ -41,6 +41,47 @@ Sections to write:
 - 2.4 Newer constructs: `loop(count, {…})`, `for_each(v.x, array.y, {…})`, `break`, `continue`.
 - 2.5 Arrays and structs; `->` dereference chains such as
   `q.get_nearby_entities(...)->q.health`.
+
+### 2.6 `this`
+
+A value on its own, taking no scope and no dot — a keyword, not a variable. Microsoft's syntax guide
+defines it as **"the current value that this expression will ultimately write to (context
+specific)"**, and the parenthesis is the whole design: *which* value it is belongs to whatever is
+evaluating.
+
+| Evaluator | What `this` is |
+|---|---|
+| an animation channel | the offset that channel already carries — what the animations below it wrote |
+| anything with nothing underneath it | zero |
+
+So the compiler emits a read and the **context answers**. A context that cannot is not lying by
+returning zero: an animation applied straight onto a bind pose genuinely has nothing beneath it.
+
+Real packs depend on this. `query.target_x_rotation - 110.0 - this` aims an arm relative to wherever
+it already was, and without `this` the *whole expression* fails to compile — taking the `- 110.0`
+with it and dropping the arm to zero. A missing keyword is not a missing term.
+
+### 2.7 Molang is gated by `min_engine_version`
+
+**The same expression does not mean the same thing in every pack.** Bedrock changed the language and
+kept the old behaviour for packs declaring an older `min_engine_version`, so the manifest is part of
+the parse.
+
+| Since | Change |
+|---|---|
+| `1.18.10` | ternary associativity fixed: `A ? B : C ? D : E` now groups as `A ? B : (C ? D : E)` |
+| `1.18.20` | precedence changed: logical `AND` binds before `OR`, and comparison before equality |
+| `1.19.60` | division by a dynamically negative value uses the absolute value |
+| `1.20.10` | `block_property` queries renamed to `block_state` |
+| `1.20.40`, `1.20.50` | `block_property` deprecated, then removed |
+
+The first two are **parser** behaviour and this project implements one of each — the modern one. A
+pack declaring less than `1.18.20` and relying on the old precedence is therefore read differently
+here than by Bedrock.
+
+`TODO(SC-130)`: neither threshold is implemented as a fork. The parse is version-free today, and
+what it would take is the manifest's `min_engine_version` reaching the compiler — which nothing
+passes it. Recorded so that a wrong answer on an old pack is a known gap rather than a mystery.
 ### 2.6 What `team.unnamed:mocha` does not do
 
 The measurement that produced ADR-0013. Recorded because a future reader will ask why an obvious,

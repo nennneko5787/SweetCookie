@@ -57,6 +57,23 @@ public interface MolangContext {
     /** The random source, so a conformance case can seed it and pin an expression's value. */
     MolangMath math();
 
+    /**
+     * What {@code this} reads: <b>the value the expression is about to write to</b>. SC-130 §2.6.
+     *
+     * <p>Microsoft's syntax guide calls it "the current value that this expression will ultimately
+     * write to (context specific)", and the parenthesis is the whole design: which value it is
+     * depends on what is evaluating. An animation channel's {@code this} is the offset that channel
+     * already carries, so {@code query.target_x_rotation - 110 - this} aims an arm relative to
+     * wherever the animations below it left the arm.
+     *
+     * <p>Zero by default, which is what a context with nothing underneath it should answer — and
+     * what an animation applied straight onto a bind pose genuinely has. A context that CAN answer
+     * overrides this; one that cannot is not lying by returning zero.
+     */
+    default float thisValue() {
+        return 0f;
+    }
+
     /** A context with no engine state: variables and temporaries work, queries all read 0. */
     static MolangContext standalone() {
         return new Standalone(new MolangMath(new java.util.Random()));

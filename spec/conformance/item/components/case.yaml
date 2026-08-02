@@ -1,0 +1,110 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: item/components
+tier: T0
+spec: SC-170
+
+features:
+  - minecraft:max_stack_size
+  - minecraft:durability
+  - minecraft:wearable
+  - minecraft:enchantable
+  - minecraft:foil
+  - minecraft:glint
+  - minecraft:display_name
+
+description: >-
+  An item's Bedrock components must reach Java's data components with their numbers intact and their
+  contradictions resolved the way SC-170 section 2 says. Every failure here is silent: a durability
+  read from the wrong nesting level leaves armour unbreakable, a stack size and a durability written
+  together produce a stack Java refuses outright, and an equipment slot Java has no name for turns
+  into a wrong slot if it is guessed at rather than declined.
+
+pack:
+  extends: minimal_bp
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1035          # nothing here is malformed
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  # ── The armour, as a real pack writes it ─────────────────────────────────────────────────────
+  # Nested inside `durability`, not at the top level. Read from the wrong level this is absent, and
+  # absent means unbreakable rather than broken - which is the failure nobody reports as a bug.
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.maxDurability
+    equals: "363"
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.protection
+    equals: "2"
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.enchantValue
+    equals: "5"
+  # Bedrock's spelling is kept in the IR and Java's is derived, so a golden shows both and neither
+  # can drift into the other.
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.wearableSlot
+    equals: slot.armor.head
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.javaEquipmentSlot
+    equals: head
+  # `foil`, which is the spelling every item in the surveyed corpus uses. `glint` is the newer name
+  # for the same thing and is read too; reading only the newer one looks complete and does nothing.
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].profile.glint
+    equals: "true"
+
+  # ── The contradictions ───────────────────────────────────────────────────────────────────────
+  # 999 is beyond Java's limit, so it is clamped rather than refusing the item... except that this
+  # item ALSO declares durability, and Java cannot have both. Durability wins and the stack becomes
+  # one: the other way round would leave the item unbreakable, which is the worse wrong.
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.maxStackSize
+    equals: "1"
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.maxDurability
+    equals: "50"
+  # `slot.armor` on its own is legal Bedrock and means any armour slot. Java's equippable names
+  # exactly one, so the Bedrock spelling is kept and the Java one is ABSENT - the item stays
+  # unwearable rather than being assigned a slot by guess.
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.wearableSlot
+    equals: slot.armor
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.javaEquipmentSlot
+    absent: true
+  # False is not absent. An item that says `"foil": false` has said something, and dropping it would
+  # let a vanilla default answer in its place.
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.glint
+    equals: "false"
+
+  # ── Both description shapes ──────────────────────────────────────────────────────────────────
+  # The circlet is the modern shape (menu_category.category) and the coin is the 1.10-era one
+  # (description.category plus register_to_creative_menu). Both are in circulation and both must
+  # reach the same IR.
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].menuCategory
+    equals: equipment
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].menuCategory
+    equals: items
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].inCreative
+    equals: "true"
+  # AND the modern one is in the menu without a boolean anywhere, because declaring a menu_category
+  # IS how the modern shape asks. Reading only the 1.10-era boolean filed every modern item as "did
+  # not ask": in the corpus this was written against, that was 62 pieces of armour that existed,
+  # bound, and appeared in no menu. Nothing but this line distinguishes the two readings.
+  - that: ir.packs[0].behavior.items['sc_conformance:circlet'].inCreative
+    equals: "true"
+  # A pack that says no still means no, in either shape.
+  - that: ir.packs[0].behavior.items['sc_conformance:token'].inCreative
+    equals: "false"
+
+  # ── The name that is a key ───────────────────────────────────────────────────────────────────
+  # minecraft:display_name holds a LANG KEY, not a name, and packs use it to borrow another entry's.
+  # Eighteen items in the corpus this was written against point at a spawn egg's key, because a
+  # ticket that places an entity is spelled as a spawn egg and Bedrock keys those by the entity.
+  # Looking only under item.<identifier>.name left every one of them showing its own identifier.
+  #
+  # The KEY, verbatim: resolving it to text here would bake one language into the item and every
+  # client would see it, which is what SC-170 splits the key from the translations to avoid.
+  - that: ir.packs[0].behavior.items['sc_conformance:ticket'].profile.nameKey
+    equals: item.spawn_egg.entity.sc_conformance:summoned.name
+  # An item that says nothing keeps Bedrock's default key, and the field is absent rather than
+  # holding a computed default - the default belongs to whoever looks the name up.
+  - that: ir.packs[0].behavior.items['sc_conformance:coin'].profile.nameKey
+    absent: true

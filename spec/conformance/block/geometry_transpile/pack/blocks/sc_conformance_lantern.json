@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:block": {
+    "description": {
+      "identifier": "sc_conformance:lantern",
+      "states": {
+        "sc:lit": [false, true]
+      },
+      "menu_category": { "category": "construction" }
+    },
+    "components": {
+      "minecraft:geometry": "geometry.sc_conformance.lantern",
+      "minecraft:material_instances": {
+        "*": { "texture": "sc_conformance_lantern_post", "render_method": "alpha_test" },
+        "cap": { "texture": "sc_conformance_lantern_cap", "render_method": "alpha_test" }
+      },
+      "minecraft:collision_box": {
+        "origin": [-2, 0, -2],
+        "size": [4, 12, 4]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "query.block_state('sc:lit')",
+        "components": {
+          "minecraft:light_emission": 14,
+          "minecraft:geometry": "geometry.sc_conformance.absent"
+        }
+      }
+    ]
+  }
+}

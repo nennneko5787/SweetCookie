@@ -1,0 +1,21 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Lepus Conformance Circlet",
+    "description": "Items whose components have to reach Java's data components. Original content, authored for this project.",
+    "uuid": "5c00c1e0-0000-4000-8000-000000000301",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5c00c1e0-0000-4000-8000-000000000302",
+      "version": [1, 0, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["Lepus"],
+    "license": "MIT"
+  }
+}

@@ -60,14 +60,36 @@ public record Diagnostic(
         return List.of(code, where.<Object>map(p -> p).orElse(""));
     }
 
-    /** A one-line rendering for logs and test failures. Not a user-facing surface. */
+    /**
+     * What went wrong, in the words the reporter used. SC-240 §3.
+     *
+     * <p>The arguments and nothing else: no code, no severity, and <b>no translation key</b>. A key
+     * is an identifier for a sentence this build does not have yet, and putting it in front of a
+     * player says nothing while looking like it should.
+     *
+     * <p>Until SC-240's message table exists, the arguments are the message. They are the concrete
+     * half anyway — the file, the field, the line and column — and a reader who has the code has
+     * everything the key would have told them.
+     */
+    public String describe() {
+        return args.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(", "));
+    }
+
+    /**
+     * A one-line rendering for logs and test failures.
+     *
+     * <p>It <b>is</b> a user-facing surface, whatever an earlier revision of this comment claimed:
+     * the pack screen and the text views all print it. So the arguments are joined rather than
+     * handed to {@code List.toString}, which put square brackets and commas in front of anyone
+     * whose pack had a malformed file.
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(codeString())
                 .append(' ').append(severity)
                 .append(' ').append(messageKey);
         if (!args.isEmpty()) {
-            sb.append(' ').append(args);
+            sb.append(' ').append(describe());
         }
         where.ifPresent(p -> sb.append(" at ").append(p));
         return sb.toString();

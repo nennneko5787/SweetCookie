@@ -85,8 +85,36 @@ public final class IrLoader {
                 }
             }
         }
-        return new BehaviorIr(blocks);
+        Map<BedrockId, net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> items =
+                new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(ITEMS_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            Optional<JsonObject> root = read(pack, path, where, into);
+            if (root.isEmpty()) {
+                continue;
+            }
+            for (var item : net.nennneko5787.lepus.core.format.ir.item.ItemFiles
+                    .parse(root.get(), where, into)) {
+                if (items.put(item.identifier(), item) != null) {
+                    into.report(IrDiagnostics.FIELD_MALFORMED.at(
+                            where, "identifier", "duplicate " + item.identifier()));
+                }
+            }
+        }
+        return new BehaviorIr(blocks, items);
     }
+
+    /** Where Bedrock looks for item definitions. */
+    private static final String ITEMS_ROOT = "items";
+
+    /** Where Bedrock looks for attachables — resource pack only. */
+    private static final String ATTACHABLES_ROOT = "attachables";
+
+    /** Where Bedrock looks for animations — resource pack only. */
+    private static final String ANIMATIONS_ROOT = "animations";
 
     private static ResourceIr resources(LoadedPack pack, Diagnostics into) {
         if (!pack.manifest().hasResources()) {
@@ -113,7 +141,52 @@ public final class IrLoader {
                 }
             }
         }
-        return new ResourceIr(geometries);
+        // The resource pack's OWN items/, which is where minecraft:icon lives. A behaviour pack's
+        // items/ of the same name carries what the item does and never what it looks like, so a
+        // reader that saw only that one leaves every item in such a pack with no picture.
+        Map<BedrockId, net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> icons =
+                new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(ITEMS_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            read(pack, path, where, into).ifPresent(root ->
+                    net.nennneko5787.lepus.core.format.ir.item.ItemFiles
+                            .parse(root, where, into)
+                            .forEach(item -> icons.put(item.identifier(), item)));
+        }
+        // Attachables: the 3D model an item is held or worn as (SC-170 §5). Resource-pack only,
+        // and keyed by the ITEM identifier rather than by a name of its own — which is what makes
+        // "what does this stack look like in a hand" answerable without an index.
+        Map<BedrockId, net.nennneko5787.lepus.core.format.ir.attachable.AttachableIr>
+                attachables = new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(ATTACHABLES_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            read(pack, path, where, into).ifPresent(root ->
+                    net.nennneko5787.lepus.core.format.ir.attachable.AttachableFiles
+                            .parse(root, where, into)
+                            .forEach(one -> attachables.put(one.identifier(), one)));
+        }
+        // Animations: what each bone does over time (SC-180 §4). Where a held model's POSITION comes
+        // from as much as its motion — an attachable has no placement of its own, so the animation
+        // that sets its root bone is the whole reason it sits where it does.
+        Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationIr> animations =
+                new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(ANIMATIONS_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            read(pack, path, where, into).ifPresent(root ->
+                    net.nennneko5787.lepus.core.format.ir.animation.AnimationFiles
+                            .parse(root, where, into)
+                            .forEach(one -> animations.put(one.name(), one)));
+        }
+        return new ResourceIr(geometries, icons, attachables, animations);
     }
 
     private static Optional<JsonObject> read(

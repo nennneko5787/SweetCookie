@@ -1,0 +1,66 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: block/box_resolution
+tier: T0
+spec: SC-150
+
+features:
+  - "minecraft:collision_box"
+  - "minecraft:selection_box"
+
+description: >-
+  A block's two boxes must arrive at the state index as numbers, not just as component names.
+  Bedrock measures X and Z from the block's centre and Java from its corner, so a sign error in that
+  one conversion offsets every custom block in every pack by half a block while leaving every
+  component-name golden green. The two boxes are also read independently: Java falls the collision
+  shape back to the outline shape by default, so a shared reading would make `selection_box: false`
+  silently delete a block's collision as well.
+
+pack:
+  extends: minimal_bp
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1035          # nothing here is malformed
+    - SCE-1036          # nothing required is missing
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  # Index 0, `slab`: the base components, and the only thing that proves the centre-to-corner
+  # conversion has the right sign — a bottom slab is symmetric on X/Z, so a wrong `+8` would show up
+  # as 8..24 rather than 0..16.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[0].collision
+    equals: "[0,0,0,16,8,16]"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[0].selection
+    equals: "[0,0,0,16,8,16]"
+
+  # Index 1, `post`: off-centre on X and Z. 4 wide about the middle is 6..10, not -2..2.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[1].collision
+    equals: "[6,0,6,10,16,10]"
+
+  # Index 2, `open`: no collision at all, but the base selection box survives. This is the pair that
+  # would both go null if the two boxes shared one reading.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[2].collision
+    equals: "null"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[2].selection
+    equals: "[0,0,0,16,8,16]"
+
+  # Index 3, `grown`: 64 units is past the 1.875-block cap. Truncated to 30, and the block still
+  # exists — refusing it would be the outcome constitution rule 5 exists to prevent.
+  #
+  # The Z range starts negative because that axis is mirrored on the way to Java: a box that
+  # overhangs the block northwards in Bedrock overhangs it southwards here. X, which is only
+  # offset, stays 0..30 — the two axes differing is the mirror showing.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[3].collision
+    equals: "[0,0,-14,30,30,16]"
+  # And the `true` shorthand is the default cube rather than an unreadable value. Absent is how the
+  # projection spells "the default" (it omits every field at its default), and absence pins this
+  # exactly: `true` misread as no box at all would project a null, and misread as any other box
+  # would project that box. Only the full cube disappears.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:ledge'].physics[3].selection
+    absent: true

@@ -1,0 +1,16 @@
+{
+  "format_version": "1.13.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "sc_conformance:coin",
+      "category": "items",
+      "register_to_creative_menu": true
+    },
+    "components": {
+      "minecraft:max_stack_size": 999,
+      "minecraft:durability": { "max_durability": 50 },
+      "minecraft:wearable": { "slot": "slot.armor" },
+      "minecraft:foil": false
+    }
+  }
+}

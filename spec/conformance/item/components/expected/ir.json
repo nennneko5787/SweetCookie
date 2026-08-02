@@ -1,0 +1,94 @@
+{
+  "diagnostics": [],
+  "packs": [
+    {
+      "behavior": {
+        "blocks": {},
+        "items": {
+          "sc_conformance:circlet": {
+            "components": ["minecraft:max_stack_size","minecraft:icon","minecraft:durability","minecraft:wearable","minecraft:enchantable","minecraft:foil"],
+            "identifier": "sc_conformance:circlet",
+            "inCreative": true,
+            "menuCategory": "equipment",
+            "profile": {
+              "enchantValue": 5,
+              "glint": true,
+              "javaEquipmentSlot": "head",
+              "maxDurability": 363,
+              "maxStackSize": 1,
+              "protection": 2,
+              "wearableSlot": "slot.armor.head"
+            }
+          },
+          "sc_conformance:coin": {
+            "components": ["minecraft:max_stack_size","minecraft:durability","minecraft:wearable","minecraft:foil"],
+            "identifier": "sc_conformance:coin",
+            "inCreative": true,
+            "menuCategory": "items",
+            "profile": {
+              "glint": false,
+              "maxDurability": 50,
+              "maxStackSize": 1,
+              "wearableSlot": "slot.armor"
+            }
+          },
+          "sc_conformance:ticket": {
+            "components": ["minecraft:max_stack_size","minecraft:display_name"],
+            "identifier": "sc_conformance:ticket",
+            "inCreative": true,
+            "menuCategory": "items",
+            "profile": {
+              "maxStackSize": 64,
+              "nameKey": "item.spawn_egg.entity.sc_conformance:summoned.name"
+            }
+          },
+          "sc_conformance:token": {
+            "components": ["minecraft:max_stack_size"],
+            "identifier": "sc_conformance:token",
+            "inCreative": false,
+            "menuCategory": "items",
+            "profile": {
+              "maxStackSize": 16
+            }
+          }
+        }
+      },
+      "capabilities": [],
+      "dependencies": [],
+      "files": ["items/sc_conformance_circlet.json","items/sc_conformance_coin.json","items/sc_conformance_ticket.json","items/sc_conformance_token.json","manifest.json"],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "Items whose components have to reach Java's data components. Original content, authored for this project.",
+        "minEngineVersion": "1.21.0",
+        "name": "Lepus Conformance Circlet",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c00c1e0-0000-4000-8000-000000000301",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        }
+      ],
+      "resource": {
+        "geometries": {}
+      },
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

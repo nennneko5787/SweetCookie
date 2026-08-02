@@ -1,0 +1,150 @@
+{
+  "diagnostics": [
+    {
+      "at": "/minecraft:geometry/0/item_display_transforms",
+      "code": "SCE-1035",
+      "count": 1,
+      "messageKey": "lepus.diagnostic.ir.field_malformed",
+      "pack": "5c00c1e0-0000-4000-8000-000000000201",
+      "path": "models/blocks/sc_conformance_signpost.geo.json",
+      "severity": "WARNING"
+    }
+  ],
+  "packs": [
+    {
+      "behavior": {
+        "blocks": {
+          "sc_conformance:signpost": {
+            "components": ["minecraft:geometry","minecraft:material_instances"],
+            "identifier": "sc_conformance:signpost",
+            "menuCategory": "construction",
+            "model": [
+              {
+                "display": {
+                  "ground": {
+                    "rotation": [0,0,0],
+                    "scale": [1,1,1],
+                    "translation": [0,1.75,0]
+                  },
+                  "gui": {
+                    "rotation": [30,-45,-2],
+                    "scale": [0.5,0.5,0.5],
+                    "translation": [-1,-1.25,-3]
+                  }
+                },
+                "elements": [
+                  {
+                    "faces": {
+                      "south": {
+                        "texture": "#0",
+                        "uv": [0,0,2,10]
+                      }
+                    },
+                    "from": [7,0,7],
+                    "to": [9,10,9]
+                  }
+                ],
+                "parent": "minecraft:block/block",
+                "textures": {
+                  "0": "sc_conformance_signpost",
+                  "particle": "sc_conformance_signpost"
+                }
+              }
+            ],
+            "permutations": [],
+            "physics": [
+              {}
+            ],
+            "resolved": [
+              ["minecraft:geometry","minecraft:material_instances"]
+            ],
+            "stateCount": 1,
+            "states": []
+          }
+        }
+      },
+      "capabilities": [],
+      "dependencies": [],
+      "files": ["blocks/sc_conformance_signpost.json","manifest.json","models/blocks/sc_conformance_signpost.geo.json"],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "A block whose geometry states how it is drawn as an item. Original content, authored for this project.",
+        "minEngineVersion": "1.21.0",
+        "name": "Lepus Conformance Signpost",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c00c1e0-0000-4000-8000-000000000201",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        },
+        {
+          "declaredType": "resources",
+          "type": "RESOURCES",
+          "version": "1.0.0"
+        }
+      ],
+      "resource": {
+        "geometries": {
+          "geometry.sc_conformance.signpost": {
+            "bones": [
+              {
+                "cubes": [
+                  {
+                    "origin": [-1,0,-1],
+                    "size": [2,10,2],
+                    "uv": {
+                      "north": {
+                        "uv": [0,0],
+                        "uvSize": [2,10]
+                      }
+                    }
+                  }
+                ],
+                "name": "post",
+                "pivot": [0,0,0],
+                "rotation": [0,0,0]
+              }
+            ],
+            "declaredVersion": "1.21.20",
+            "effectiveVersion": "1.12.0",
+            "identifier": "geometry.sc_conformance.signpost",
+            "itemDisplay": {
+              "ground": {
+                "rotation": [0,0,0],
+                "scale": [1,1,1],
+                "translation": [0,1.75,0]
+              },
+              "gui": {
+                "rotation": [30,-45,2],
+                "scale": [0.5,0.5,0.5],
+                "translation": [-1,-1.25,3]
+              }
+            },
+            "lossy": false,
+            "sourceFamily": "modern",
+            "textureHeight": 16,
+            "textureWidth": 16
+          }
+        }
+      },
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

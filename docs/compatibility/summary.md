@@ -5,12 +5,12 @@
 Every Bedrock feature identifier Lepus knows about, and what it does with it.
 Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conventions.md).
 
-**1359 tracked feature identifiers across 38 domains.**
+**1363 tracked feature identifiers across 38 domains.**
 
 | Domain | Spec | Total | implemented | partial | stub | unsupported | wontfix |
 |---|---|--:|--:|--:|--:|--:|--:|
 | [biomes](biomes.md) | SC-190 | 4 | 0 | 0 | 0 | 4 | 0 |
-| [block-components](block-components.md) | SC-150 | 54 | 0 | 0 | 54 | 0 | 0 |
+| [block-components](block-components.md) | SC-150 | 54 | 0 | 5 | 49 | 0 | 0 |
 | [block-states-traits](block-states-traits.md) | SC-150 | 8 | 0 | 0 | 8 | 0 | 0 |
 | [dialogue](dialogue.md) | SC-190 | 2 | 0 | 0 | 0 | 2 | 0 |
 | [entity-components](entity-components.md) | SC-160 | 118 | 0 | 0 | 117 | 0 | 1 |
@@ -22,19 +22,19 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [functions-commands](functions-commands.md) | SC-190 | 88 | 0 | 0 | 88 | 0 | 0 |
 | [interop-geyser](interop-geyser.md) | SC-210 | 7 | 0 | 0 | 6 | 1 | 0 |
 | [interop-viaversion](interop-viaversion.md) | SC-270 | 8 | 0 | 0 | 8 | 0 | 0 |
-| [item-components](item-components.md) | SC-170 | 45 | 0 | 0 | 45 | 0 | 0 |
+| [item-components](item-components.md) | SC-170 | 46 | 2 | 5 | 39 | 0 | 0 |
 | [loot](loot.md) | SC-190 | 30 | 0 | 0 | 30 | 0 | 0 |
 | [molang-math](molang-math.md) | SC-130 | 61 | 0 | 0 | 61 | 0 | 0 |
 | [molang-queries](molang-queries.md) | SC-130 | 319 | 0 | 0 | 319 | 0 | 0 |
-| [molang-syntax](molang-syntax.md) | SC-130 | 15 | 0 | 0 | 15 | 0 | 0 |
+| [molang-syntax](molang-syntax.md) | SC-130 | 16 | 0 | 1 | 15 | 0 | 0 |
 | [packaging](packaging.md) | SC-100 | 19 | 0 | 14 | 2 | 3 | 0 |
 | [recipes](recipes.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
 | [rp-animations](rp-animations.md) | SC-180 | 22 | 0 | 0 | 22 | 0 | 0 |
-| [rp-attachables](rp-attachables.md) | SC-170 | 9 | 0 | 0 | 9 | 0 | 0 |
+| [rp-attachables](rp-attachables.md) | SC-170 | 10 | 0 | 2 | 8 | 0 | 0 |
 | [rp-client-biomes](rp-client-biomes.md) | SC-180 | 6 | 0 | 0 | 6 | 0 | 0 |
 | [rp-client-entity](rp-client-entity.md) | SC-180 | 15 | 0 | 0 | 15 | 0 | 0 |
 | [rp-fog](rp-fog.md) | SC-180 | 2 | 0 | 0 | 1 | 1 | 0 |
-| [rp-geometry](rp-geometry.md) | SC-180 | 16 | 0 | 0 | 16 | 0 | 0 |
+| [rp-geometry](rp-geometry.md) | SC-180 | 17 | 0 | 1 | 16 | 0 | 0 |
 | [rp-lang-font](rp-lang-font.md) | SC-180 | 4 | 0 | 0 | 4 | 0 | 0 |
 | [rp-materials](rp-materials.md) | SC-180 | 8 | 0 | 0 | 5 | 0 | 3 |
 | [rp-particles](rp-particles.md) | SC-180 | 33 | 0 | 0 | 33 | 0 | 0 |
@@ -47,7 +47,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [spawn-rules](spawn-rules.md) | SC-190 | 16 | 0 | 0 | 16 | 0 | 0 |
 | [structures](structures.md) | SC-190 | 6 | 0 | 0 | 3 | 3 | 0 |
 | [trading](trading.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
-| **total** | | **1359** | **0** | **14** | **1310** | **25** | **10** |
+| **total** | | **1363** | **2** | **28** | **1298** | **25** | **10** |
 
 ## How to read this
 

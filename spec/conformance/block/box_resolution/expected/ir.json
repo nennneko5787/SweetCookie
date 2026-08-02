@@ -1,0 +1,98 @@
+{
+  "diagnostics": [],
+  "packs": [
+    {
+      "behavior": {
+        "blocks": {
+          "sc_conformance:ledge": {
+            "components": ["minecraft:collision_box","minecraft:selection_box"],
+            "identifier": "sc_conformance:ledge",
+            "menuCategory": "construction",
+            "model": [null,null,null,null],
+            "permutations": [
+              {
+                "components": ["minecraft:collision_box","minecraft:selection_box"],
+                "condition": "query.block_state('sc:shape') == 'post'"
+              },
+              {
+                "components": ["minecraft:collision_box"],
+                "condition": "query.block_state('sc:shape') == 'open'"
+              },
+              {
+                "components": ["minecraft:collision_box","minecraft:selection_box"],
+                "condition": "query.block_state('sc:shape') == 'grown'"
+              }
+            ],
+            "physics": [
+              {
+                "collision": [0,0,0,16,8,16],
+                "selection": [0,0,0,16,8,16]
+              },
+              {
+                "collision": [6,0,6,10,16,10],
+                "selection": [6,0,6,10,16,10]
+              },
+              {
+                "collision": null,
+                "selection": [0,0,0,16,8,16]
+              },
+              {
+                "collision": [0,0,-14,30,30,16]
+              }
+            ],
+            "resolved": [
+              ["minecraft:collision_box","minecraft:selection_box"],
+              ["minecraft:collision_box","minecraft:selection_box"],
+              ["minecraft:collision_box","minecraft:selection_box"],
+              ["minecraft:collision_box","minecraft:selection_box"]
+            ],
+            "stateCount": 4,
+            "states": [
+              {
+                "kind": "STRING",
+                "name": "sc:shape",
+                "values": ["slab","post","open","grown"]
+              }
+            ]
+          }
+        }
+      },
+      "capabilities": [],
+      "dependencies": [],
+      "files": ["blocks/sc_conformance_ledge.json","manifest.json"],
+      "formatVersion": 2,
+      "header": {
+        "baseGameVersion": "0.0.0",
+        "description": "Minimal valid behaviour pack. Original content, authored for this project.",
+        "minEngineVersion": "1.21.0",
+        "name": "Lepus Conformance BP",
+        "scope": "ANY",
+        "version": "1.0.0"
+      },
+      "id": "5c00c1e0-0000-4000-8000-000000000001",
+      "loadOrder": 0,
+      "modules": [
+        {
+          "declaredType": "data",
+          "type": "DATA",
+          "version": "1.0.0"
+        }
+      ],
+      "resource": {
+        "geometries": {}
+      },
+      "source": "pack",
+      "sourceKind": "DIRECTORY",
+      "subpack": {
+        "available": [],
+        "ceiling": 0,
+        "selected": false
+      },
+      "texts": {
+        "entries": {},
+        "languages": []
+      },
+      "unknownCapabilities": []
+    }
+  ]
+}

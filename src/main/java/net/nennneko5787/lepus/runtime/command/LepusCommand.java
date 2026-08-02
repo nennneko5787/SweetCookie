@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.commands.CommandSourceStack;
@@ -20,6 +21,7 @@ import net.nennneko5787.lepus.runtime.addon.WorldActivation;
 import net.nennneko5787.lepus.runtime.registry.WorldLedger;
 import net.nennneko5787.lepus.core.ui.TextView;
 import net.nennneko5787.lepus.core.ui.ViewModel;
+import net.nennneko5787.lepus.runtime.ui.ScreenOpener;
 import net.nennneko5787.lepus.runtime.ui.Views;
 
 /**
@@ -66,10 +68,14 @@ public final class LepusCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(Lepus.MOD_ID)
-                .executes(context -> show(context.getSource(), packsView()));
+                .executes(LepusCommand::openOrList);
+
+        root.then(Commands.literal("help")
+                .executes(context -> help(context.getSource())));
 
         root.then(Commands.literal("packs")
-                .executes(context -> show(context.getSource(), packsView())));
+                .executes(context -> show(context.getSource(),
+                        packsView(context.getSource()))));
 
         root.then(Commands.literal("pool").executes(context ->
                 show(context.getSource(), Views.pool(Lepus.blockPool(), WorldLedger.current()))));
@@ -147,8 +153,53 @@ public final class LepusCommand {
                 + pos.getX() + " " + pos.getY() + " " + pos.getZ());
     }
 
-    private static ViewModel packsView() {
-        return Views.packs(Lepus.addons(), WorldActivation.known());
+    /**
+     * Bare {@code /lepus}: the screen when there is one, the list when there is not.
+     *
+     * <p>The screen is the thing a player wants and the list is what a console can use, and asking
+     * for "the add-on settings" should not require knowing which of the two you are. A dedicated
+     * server registers no screen opener and gets the list, which is the only answer available there.
+     *
+     * <p>Every management operation is still a command underneath (SC-280 §7) — this opens the
+     * screen, and the screen sends the same commands anyone could type.
+     */
+    private static int openOrList(CommandContext<CommandSourceStack> context) {
+        if (ScreenOpener.open(mayManagePacks(context.getSource()))) {
+            return 1;
+        }
+        return show(context.getSource(), packsView(context.getSource()));
+    }
+
+    /**
+     * What this command can do, and what this caller can do with it.
+     *
+     * <p>The mutating lines are printed only to someone who can run them. Brigadier removes a node
+     * whose {@code requires} the caller fails, so printing {@code /lepus enable X} to a player
+     * without cheats offers a word their client will refuse to parse.
+     */
+    private static int help(CommandSourceStack source) {
+        List<String> lines = new ArrayList<>(List.of(
+                "[Lepus] commands:",
+                "  /lepus          " + (ScreenOpener.available()
+                        ? "open the add-on screen" : "list installed add-ons"),
+                "  /lepus help     this list",
+                "  /lepus packs    what is installed and what this world enabled",
+                "  /lepus pool     how many block slots are reserved and used"));
+        if (mayManagePacks(source)) {
+            lines.add("  /lepus enable <pack>            turn a pack on in this world");
+            lines.add("  /lepus disable <pack>           turn it off; nothing placed is lost");
+            lines.add("  /lepus order <position> <pack>  the last position wins");
+            lines.add("  /lepus place <block>            place a bound block where you stand");
+        } else {
+            lines.add("  enabling, disabling and reordering need command level 2, which you do not");
+            lines.add("  have here. Single player: pause, Open to LAN, Allow Cheats ON.");
+        }
+        lines.forEach(line -> source.sendSuccess(() -> Component.literal(line), false));
+        return lines.size();
+    }
+
+    private static ViewModel packsView(CommandSourceStack source) {
+        return Views.packs(Lepus.addons(), WorldActivation.known(), mayManagePacks(source));
     }
 
     private static int enable(CommandContext<CommandSourceStack> context, boolean on) {

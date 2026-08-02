@@ -25,24 +25,99 @@ upstream:
 entries:
   # ── Shape and collision ────────────────────────────────────────────────────
   - id: minecraft:collision_box
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockBox
+    conformance: [block/box_resolution]
+    fields:
+      origin: ok
+      size: ok
+      boolean_shorthand: ok
+      size_cap: partial
+      origin_inside_block: partial
+    fidelity: >-
+      Light occlusion still treats the block as a full cube: a block with a smaller collision box
+      shadows as if it filled its space. That matches how the block is currently DRAWN — every bound
+      block is a unit cube until minecraft:geometry lands — and moving occlusion first would give a
+      block that is visibly a cube and shadows like a slab, which is harder to recognise than the
+      present state. Revisit with geometry, not before.
+
+      The 1.875-block cap and the requirement that the origin start inside the block are applied by
+      truncation, and neither has been observed on a real Bedrock client; what Bedrock does with a
+      larger box (truncate it, or refuse the block) is unverified. Truncating keeps the block, which
+      is the outcome constitution rule 5 asks for.
     notes: >-
-      Bedrock is a single AABB from origin+size, capped at 1.875 blocks and required to start inside
-      the block. Java VoxelShape is a union, so widening is easy. The new BP shapes/ folder may
-      supersede this.
+      Bedrock is a single AABB from origin+size. Java VoxelShape is a union, so widening is easy. The
+      new BP shapes/ folder may supersede this.
 
   - id: minecraft:selection_box
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockBox
+    conformance: [block/box_resolution]
+    fields:
+      origin: ok
+      size: ok
+      boolean_shorthand: ok
+      size_cap: partial
+      origin_inside_block: partial
+    fidelity: >-
+      As minecraft:collision_box, which this shares its reading with. The two are resolved
+      independently — Minecraft falls the collision shape back to the outline shape by default, and
+      sharing one answer would make `"selection_box": false` delete a block's collision as well.
 
   - id: minecraft:geometry
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockGeometry
+    conformance: [block/geometry_transpile]
+    fields:
+      identifier: ok
+      per_face_uv: ok
+      box_uv: ok
+      inflate: ok
+      mirror: ok
+      never_render: ok
+      cube_rotation: partial
+      bone_rotation: partial
+      bone_visibility: missing
+      binding: missing
+      poly_mesh: missing
+    fidelity: >-
+      Path A only (SC-150 section 5.1): a model becomes a Java block model when every bone rotation
+      is a quarter turn about one axis (inherited turns compose along the parent chain) and every
+      cube rotation is one Java can express, which is one axis at -45, -22.5, 22.5 or 45 degrees.
+      Anything else — a free bone rotation, a two-axis turn, a poly mesh, Molang bone_visibility or
+      binding — draws as a plain cube with the block's texture and reports SCE-2031. The block is
+      placeable, breakable and visible in every case; it is the SHAPE that degrades, never the block.
+
+      A geometry no enabled pack declares is the same fallback with SCE-2030.
+
+      The Z axis is mirrored on the way to Java and this IS observed — the same block was placed in
+      both editions side by side. Everything is computed in Bedrock's space and converted once, so
+      north and south trade places and no face is flipped or spun.
+
+      The DIRECTION of a quarter turn is observed too, and it was wrong until it was: a Bedrock
+      angle turns the opposite way round to a right-handed turn about the same axis. A block
+      orienting one geometry through four permutations at 0, 90, 180 and -90 degrees came out with
+      its east and west placements holding each other's rotation while north and south were right,
+      which is the only symptom a wrong sense can have — a half turn is the same either way.
+
+      Faces carry no cullface, so a face that could have been hidden by a neighbour is drawn. That
+      costs a quad and cannot produce a hole; the reverse can.
     notes: >-
-      References an RP entity-style bone/cube model, plus bone_visibility (Molang) and culling.
-      Decides the Path A / Path B render split in SC-150 section 5.
+      Path B — arbitrary rotation and poly meshes — needs quads outside a Java block model and the
+      rendered-image goldens of SC-180 section 10, neither of which exists. Measured against the
+      first real add-ons installed against this build, no BLOCK geometry needed it; every one was
+      either already Path A or reached it with quarter-turn bones.
 
   - id: minecraft:unit_cube
-    status: stub
-    notes: The trivial case, and the one that transpiles to a Java model most cleanly.
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockModels
+    conformance: [block/geometry_transpile]
+    fields:
+      unit_cube: ok
+    fidelity: >-
+      A block with no geometry, one naming minecraft:geometry.full_block, and one whose geometry
+      cannot be transpiled all draw the same unit cube. The first two are exact; the third is
+      SC-150 section 5.2's fallback and is a wrong shape rather than a wrong block.
 
   - id: minecraft:transformation
     status: stub
@@ -50,10 +125,26 @@ entries:
 
   # ── Appearance ─────────────────────────────────────────────────────────────
   - id: minecraft:material_instances
-    status: stub
-    notes: >-
-      Maps face names to texture plus render_method, face_dimming, ambient_occlusion, tint_method
-      and isotropic. render_method maps imperfectly onto Java RenderType.
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockModels
+    conformance: [block/geometry_transpile]
+    fields:
+      texture: ok
+      instance_alias: ok
+      per_face_instances: ok
+      render_method: missing
+      face_dimming: missing
+      ambient_occlusion: missing
+      tint_method: missing
+      isotropic: missing
+    fidelity: >-
+      Only the texture is read. Every block draws on the same render layer whatever its
+      render_method says, so a block declaring alpha_test or blend is opaque: a texture with
+      transparent pixels shows black where it should show through, and one with partial alpha shows
+      none of it. That is the next thing to fix in this entry and it is independent of geometry.
+
+      A face naming an instance the block does not declare falls back to `*` rather than losing its
+      texture, which is one typo costing nothing.
 
   - id: minecraft:map_color
     status: stub

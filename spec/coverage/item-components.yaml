@@ -17,8 +17,19 @@ upstream:
 entries:
   # ── Stack identity and size ────────────────────────────────────────────────
   - id: minecraft:max_stack_size
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
     bedrockSince: "1.20.50"
+    fields:
+      max_stack_size: ok
+    fidelity: >-
+      Clamped into 1..99, which is Java's own range: a pack asking for more gets 99 rather than a
+      refused item.
+
+      An item that also declares durability is forced to a stack of ONE, because Java refuses a
+      stack carrying max_damage with a stack size above 1. The other way round - dropping the
+      durability - would make every piece of armour in the surveyed corpus unbreakable.
     notes: Java minecraft:max_stack_size. Per-stack since 1.20.5, which is what makes the carrier design work.
 
   - id: minecraft:stacked_by_data
@@ -31,7 +42,19 @@ entries:
 
   # ── Durability and repair ──────────────────────────────────────────────────
   - id: minecraft:durability
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      max_durability: ok
+      damage_chance: missing
+    fidelity: >-
+      max_durability becomes Java's minecraft:max_damage, with minecraft:damage set to zero so the
+      stack starts whole and shows a durability bar.
+
+      damage_chance has no Java counterpart. Bedrock wears an item down probabilistically per use;
+      Java always spends one point. An item declaring a chance below 1 therefore wears out FASTER
+      here than in Bedrock, by the ratio of the chance.
     notes: Java minecraft:max_damage plus minecraft:damage.
 
   - id: minecraft:repairable
@@ -117,7 +140,26 @@ entries:
 
   # ── Wearing and holding ────────────────────────────────────────────────────
   - id: minecraft:wearable
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      slot: partial
+      protection: partial
+      dispensable: missing
+    fidelity: >-
+      slot.armor.head/chest/legs/feet and slot.weapon.offhand map onto Java's equipment slots. Plain
+      `slot.armor`, which is legal Bedrock and means any armour slot, has no Java equivalent -
+      an equippable names exactly one - so the item is left unwearable rather than assigned a slot
+      by guess. A guessed slot would put boots on somebody's face and look deliberate.
+
+      protection becomes an `armor` attribute modifier of the same number. THE SCALES HAVE NOT BEEN
+      COMPARED: Bedrock states protection on its own scale and Java's armor attribute is points of a
+      twenty-point bar. Nothing here has been measured against a Bedrock client.
+
+      The worn model is vanilla's, because Bedrock's is an attachable and those need the SC-180
+      render stack. So a piece of armour equips, protects and shows its durability, and looks like
+      nothing on the player.
     notes: Java minecraft:equippable.
 
   - id: minecraft:hand_equipped
@@ -129,16 +171,60 @@ entries:
 
   # ── Enchanting ─────────────────────────────────────────────────────────────
   - id: minecraft:enchantable
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      value: ok
+      slot: missing
+    fidelity: >-
+      value becomes Java's minecraft:enchantable, which is the same idea under the same name.
+
+      Bedrock's `slot` says which enchantments may apply (armor_head, sword, bow…). Java decides
+      that from item tags instead, and the carrier item is in no tag by design (SC-120 section 4) -
+      being in one would let vanilla recipes and mechanics touch it. So an enchantable item offers
+      Java's generic set rather than the Bedrock-appropriate one.
     notes: Java minecraft:enchantable.
 
   - id: minecraft:glint
-    status: stub
-    notes: Java minecraft:enchantment_glint_override.
+    status: implemented
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      glint: ok
+    notes: Java minecraft:enchantment_glint_override. See minecraft:foil for the spelling packs use.
+
+  - id: minecraft:foil
+    status: implemented
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      foil: ok
+    notes: >-
+      The older spelling of minecraft:glint, and THE ONE REAL PACKS USE. A survey of six installed
+      add-ons found 35 items declaring `foil` and none declaring `glint`. Reading only the name the
+      newest schema gives would have looked complete and done nothing, which is why this entry
+      exists separately rather than being folded into the other as a note.
 
   # ── Display ────────────────────────────────────────────────────────────────
   - id: minecraft:display_name
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.item.ItemProfile
+    conformance: [item/components]
+    fields:
+      value: ok
+      legacy_string_form: ok
+    fidelity: >-
+      The component holds a LANG KEY, not a name, and it is carried as one: the key travels in the
+      item and the client picks the language (SC-170, DisplayNames). Resolving it to text at bind
+      time would bake one language into the item for every player.
+
+      A key naming an entry no enabled pack ships falls back to the item's own
+      item.<identifier>.name, and then to a readable form of the identifier. So a broken key costs
+      the translation and never the item.
+
+      NOT applied to blocks. Bedrock allows the component there too and no block in the surveyed
+      corpus uses it; a block's name still comes from tile.<identifier>.name alone.
     notes: Java minecraft:item_name. May be a .lang key.
 
   - id: minecraft:icon

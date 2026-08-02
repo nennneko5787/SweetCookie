@@ -5,15 +5,29 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import net.minecraft.resources.Identifier;
 import net.nennneko5787.lepus.Lepus;
 import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.ir.AddonIr;
 import net.nennneko5787.lepus.core.format.ir.BehaviorIr;
 import net.nennneko5787.lepus.core.format.ir.PackIr;
 import net.nennneko5787.lepus.core.format.ir.block.BlockDefIr;
+import net.nennneko5787.lepus.core.format.ir.block.BlockGeometry;
 import net.nennneko5787.lepus.core.format.ir.block.BlockModels;
+import net.nennneko5787.lepus.core.format.ir.block.FlipbookTextures;
+import net.nennneko5787.lepus.core.format.ir.block.LegacyBlockIndex;
+import net.nennneko5787.lepus.core.format.ir.block.MenuOrder;
 import net.nennneko5787.lepus.core.format.ir.block.BlockPhysics;
+import net.nennneko5787.lepus.core.format.ir.block.BlockTransform;
 import net.nennneko5787.lepus.core.format.ir.block.TerrainTextures;
+import net.nennneko5787.lepus.core.format.ir.attachable.AttachableIr;
+import net.nennneko5787.lepus.core.format.ir.geometry.GeometryIr;
+import net.nennneko5787.lepus.core.format.render.AnimationSampler;
+import net.nennneko5787.lepus.core.format.render.AttachablePoser;
+import net.nennneko5787.lepus.core.format.text.DisplayNames;
+import net.nennneko5787.lepus.core.format.ir.item.ItemDefIr;
+import net.nennneko5787.lepus.core.format.ir.item.ItemProfile;
 import net.nennneko5787.lepus.core.format.json.JsonValue;
 import net.nennneko5787.lepus.core.format.value.BedrockId;
 import net.nennneko5787.lepus.core.format.value.PackId;
@@ -23,6 +37,7 @@ import net.nennneko5787.lepus.core.registry.IdMapper;
 import net.nennneko5787.lepus.core.registry.StateSchema;
 import net.nennneko5787.lepus.runtime.addon.WorldActivation;
 import net.nennneko5787.lepus.runtime.resource.AddonResourcePack;
+import net.nennneko5787.lepus.runtime.resource.ClientResources;
 
 /**
  * Gives every enabled pack's blocks a slot in this world. SC-120 §6.
@@ -48,6 +63,39 @@ public final class BlockBinding {
      */
     private static TerrainTextures TEXTURES = TerrainTextures.EMPTY;
 
+    /**
+     * Every enabled pack's geometry, by identifier, rebuilt on every bind.
+     *
+     * <p>Merged with later packs winning, for the reason {@link #TEXTURES} is: Bedrock resolves a
+     * geometry against the whole enabled stack, and a behaviour pack naming a model its companion
+     * resource pack declares is the ordinary shape of an .mcaddon (SC-110 §11 — resource-pack assets,
+     * later pack wins wholesale).
+     */
+    private static Map<String, GeometryIr> GEOMETRIES = Map.of();
+
+    /**
+     * {@code textures/item_texture.json}, merged the same way {@link #TEXTURES} is.
+     *
+     * <p>A separate index from the block one, because Bedrock keeps two and the same key may appear
+     * in both meaning different pictures.
+     */
+    private static TerrainTextures ITEM_TEXTURES = TerrainTextures.EMPTY;
+
+    /**
+     * The resource packs' root {@code blocks.json}, merged with later packs winning.
+     *
+     * <p>Where a block written in the {@code 1.13}-era format keeps its texture. Not a fallback for
+     * a malformed pack — it is the only place those blocks say what they look like, and that format
+     * is everywhere.
+     */
+    private static LegacyBlockIndex LEGACY_INDEX = LegacyBlockIndex.EMPTY;
+
+    /** Which textures are animated, merged across enabled packs. SC-180 §8.2. */
+    private static FlipbookTextures FLIPBOOKS = FlipbookTextures.EMPTY;
+
+    /** The generated lang files, by pack path. Rebuilt on every bind. */
+    private static Map<String, byte[]> LANG_FILES = Map.of();
+
     private BlockBinding() {
     }
 
@@ -70,7 +118,10 @@ public final class BlockBinding {
             return;
         }
 
-        TEXTURES = terrainTextures(ir.get());
+        TEXTURES = textureIndex(ir.get(), "textures/terrain_texture.json");
+        ITEM_TEXTURES = textureIndex(ir.get(), "textures/item_texture.json");
+        LEGACY_INDEX = legacyTextures(ir.get());
+        FLIPBOOKS = flipbooks(ir.get());
         Map<BedrockId, BlockDefIr> definitions = enabledBlocks(ir.get());
         if (definitions.isEmpty()) {
             return;
@@ -100,17 +151,327 @@ public final class BlockBinding {
      */
     private static void publish(BlockLedger ledger, Map<BedrockId, BlockDefIr> definitions,
             Map<BedrockId, String> logical) {
+        GEOMETRIES = geometries(Lepus.addons().ir().orElseThrow());
         Map<BlockSlot, BoundBlocks.Bound> bound = new LinkedHashMap<>();
         definitions.forEach((identifier, definition) -> ledger.binding(logical.get(identifier))
                 .ifPresent(binding -> {
                     List<Map<BedrockId, JsonValue>> states = definition.resolveAll();
-                    bound.put(binding.slot(), new BoundBlocks.Bound(
+                    List<BoundBlocks.Appearance> appearances = new ArrayList<>();
+                    for (int index = 0; index < states.size(); index++) {
+                        appearances.add(appearanceOf(
+                                identifier, states.get(index), binding.slot(), index));
+                    }
+                    bound.put(binding.slot(), BoundBlocks.Bound.of(
                             binding.logicalId(),
                             states.stream().map(BlockPhysics::of).toList(),
-                            states.stream().map(BlockBinding::textureOf).toList()));
+                            appearances,
+                            LEGACY_INDEX.soundFor(identifier).map(BoundSounds::of)
+                                    .orElse(net.minecraft.world.level.block.SoundType.STONE)));
                 }));
-        BoundBlocks.replace(bound);
-        publishResources();
+        // Items carry their own identifiers and therefore their own logical ids, and BOTH sets have
+        // to reach the lang files: names were localising for blocks and not for items because this
+        // map held only the blocks.
+        Map<BedrockId, String> itemLogical =
+                IdMapper.resolve(new ArrayList<>(enabledItems().keySet()));
+        BoundBlocks.replace(bound, menuOrder(ledger, logical));
+        BoundItems.replace(items(itemLogical));
+
+        Map<BedrockId, String> named = new LinkedHashMap<>(logical);
+        named.putAll(itemLogical);
+        LANG_FILES = languages(named, declaredNameKeys());
+        publishResources(true);
+    }
+
+    /**
+     * Every enabled pack's items, resolved. SC-170.
+     *
+     * <p>No slot and no ledger entry: an item's identity travels in the stack (SC-120 §4), so this is
+     * a list rather than an allocation. Later packs win by identifier, as blocks do.
+     *
+     * <p>Only items that asked to be in the creative menu are listed. A pack's internal items — the
+     * ones it hands out by command or recipe — would otherwise bury the ones a player is meant to
+     * find, and Bedrock does not show them either.
+     */
+    private static List<BoundItems.Bound> items(Map<BedrockId, String> logical) {
+        Map<BedrockId, ItemDefIr> definitions = enabledItems();
+        List<BoundItems.Bound> bound = new ArrayList<>();
+        Map<String, BoundAttachables.Bound> attachables = new LinkedHashMap<>();
+        definitions.forEach((identifier, definition) -> {
+            if (!definition.inCreative()) {
+                return;
+            }
+            String id = logical.get(identifier);
+            String base = "item/" + id.replace(':', '_').replace('.', '_');
+            Map<String, byte[]> files = new LinkedHashMap<>();
+            Optional<byte[]> icon = ITEM_TEXTURES.resolve(iconKeyOf(identifier, definition))
+                    .flatMap(BlockBinding::readTexture);
+            icon.ifPresent(png -> files.put("textures/" + base + ".png", png));
+            // A flat sprite, which is what a Bedrock item is: its icon is one picture, not a model.
+            files.put("items/" + base.replace('/', '_') + ".json", AddonResourcePack.utf8(
+                    BlockModels.itemModelJson("lepus:" + base + "_model")));
+            // Always our own path, whether or not the file resolved. Absent, the client draws the
+            // missing texture - which reads as "missing" and nothing else. Pointing at a real
+            // vanilla texture instead was a placeholder that looked like a deliberate choice: an
+            // item with no icon appeared as a barrier block, which is a thing, and nobody could tell
+            // it was standing in for a failure.
+            files.put("models/" + base + "_model.json", AddonResourcePack.utf8(
+                    BlockModels.spriteModelJson("lepus:" + base)));
+            if (icon.isEmpty()) {
+                System.out.println("[Lepus] SCE-2032 " + identifier
+                        + " names the icon \"" + iconKeyOf(identifier, definition)
+                        + "\", which resolves to no file in any enabled pack;"
+                        + " it is drawn with the missing texture");
+            }
+            // The 3D model this is held as, when a pack ships one (SC-170 §5). Its texture is a
+            // PATH rather than a key: an attachable names the file directly where a block names an
+            // entry in terrain_texture.json, so there is no index to go through here.
+            Optional<AttachableIr> attachable = attachableOf(identifier);
+            Optional<GeometryIr> shape = attachable
+                    .flatMap(AttachableIr::defaultGeometry)
+                    .map(GEOMETRIES::get);
+            if (attachable.isPresent() && shape.isPresent()) {
+                String name = "attachable/" + base.substring("item/".length());
+                Optional<byte[]> skin = attachable.get().defaultTexture()
+                        .flatMap(BlockBinding::readTexture);
+                skin.ifPresent(png -> files.put("textures/" + name + ".png", png));
+                attachables.put(id, BoundAttachables.Bound.of(shape.get(),
+                        Identifier.fromNamespaceAndPath(Lepus.MOD_ID,
+                                "textures/" + name + ".png"),
+                        new AttachablePoser(shape.get(), animationsOf(attachable.get()),
+                                attachable.get().preAnimation())));
+                // Flat in the inventory, and nothing at all in a hand - which is what Bedrock does,
+                // and NOT what a plain special model does. Replacing the whole item took the icon
+                // away with it: every slot holding one of these went blank, because a special
+                // renderer draws in every context and the sprite is then never drawn at all.
+                // The hand draws nothing HERE because the attachable is drawn against the player
+                // rather than against the item; see AttachableLayer and FirstPersonAttachables.
+                //
+                // ARMOUR keeps its sprite in the hand. Bedrock shows a worn attachable only once it
+                // is worn, and a helmet being carried is just a helmet - blanking its hand contexts
+                // left the player holding nothing at all. Only something that draws as an
+                // attachable WHILE HELD may take the blank.
+                boolean worn = ItemProfile.of(definition.components()).javaEquipmentSlot()
+                        .isPresent();
+                if (!worn) {
+                    files.put("items/" + base.replace('/', '_') + ".json", AddonResourcePack.utf8(
+                            BlockModels.heldModelJson("lepus:" + base + "_model")));
+                }
+                if (skin.isEmpty()) {
+                    System.out.println("[Lepus] SCE-2032 " + identifier
+                            + " is held as " + attachable.get().defaultGeometry().orElse("?")
+                            + ", whose texture \""
+                            + attachable.get().defaultTexture().orElse("<none>")
+                            + "\" resolves to no file in any enabled pack");
+                }
+            }
+            bound.add(new BoundItems.Bound(id, base.replace('/', '_'),
+                    ItemProfile.of(definition.components()), files));
+        });
+        BoundAttachables.replace(attachables);
+        return bound;
+    }
+
+    /**
+     * What an attachable plays, resolved to samplers. SC-180 §4.
+     *
+     * <p><b>Conditions travel with their animation and are decided per frame</b>, not here: the
+     * answer to {@code v.main_hand && c.is_first_person} depends on who is looking, and binding
+     * happens once. See {@code AttachablePoser}.
+     *
+     * <p>A name that resolves to nothing is skipped in silence rather than reported, because that is
+     * exactly what a controller reference looks like from here — {@code default_controller} names a
+     * controller, and every attachable in the corpus has one.
+     */
+    private static List<Map.Entry<AnimationSampler, Optional<String>>> animationsOf(
+            AttachableIr attachable) {
+        List<Map.Entry<AnimationSampler, Optional<String>>> out = new ArrayList<>();
+        for (AttachableIr.Play play : attachable.animate()) {
+            String identifier = attachable.animations().get(play.name());
+            if (identifier == null) {
+                continue;
+            }
+            Lepus.addons().ir().ifPresent(ir -> {
+                for (PackId pack : WorldActivation.current().order()) {
+                    ir.byId(pack).map(PackIr::resource)
+                            .flatMap(resource -> resource.animation(identifier))
+                            .ifPresent(animation -> out.add(Map.entry(
+                                    new AnimationSampler(animation),
+                                    play.condition())));
+                }
+            });
+        }
+        return out;
+    }
+
+    /**
+     * The attachable any enabled pack declares for this item, later packs winning.
+     *
+     * <p>Keyed by the ITEM's identifier in Bedrock's own files, which is what makes this a lookup
+     * rather than a search: an attachable's {@code description.identifier} is the item it is for.
+     */
+    private static Optional<AttachableIr> attachableOf(BedrockId identifier) {
+        return Lepus.addons().ir().flatMap(ir -> {
+            AttachableIr found = null;
+            for (PackId pack : WorldActivation.current().order()) {
+                Optional<AttachableIr> candidate = ir.byId(pack)
+                        .map(PackIr::resource)
+                        .flatMap(resource -> resource.attachable(identifier));
+                if (candidate.isPresent()) {
+                    found = candidate.get();
+                }
+            }
+            return Optional.ofNullable(found);
+        });
+    }
+
+    /**
+     * The texture key an item's icon names.
+     *
+     * <p>{@code minecraft:icon} when the item declares one — as a bare string in the older format
+     * and as {@code {"texture": …}} in the newer. Absent, Bedrock falls back to the identifier's own
+     * path, which is what most packs rely on rather than writing the component.
+     */
+    private static String iconKeyOf(BedrockId identifier, ItemDefIr definition) {
+        return iconIn(definition)
+                // Then the RESOURCE pack's item of the same identifier. Bedrock splits an item in
+                // two - the behaviour pack says what it does, the resource pack says what it looks
+                // like - and minecraft:icon is only ever in the second. Reading only the first gave
+                // every item in such a pack no picture at all.
+                .or(() -> resourceItem(identifier).flatMap(BlockBinding::iconIn))
+                // Bedrock's own last resort, and what most packs rely on rather than writing the
+                // component: the identifier's path is the texture key.
+                .orElseGet(identifier::path);
+    }
+
+    private static Optional<String> iconIn(ItemDefIr definition) {
+        JsonValue icon = definition.components().get(BedrockId.parse("minecraft:icon"));
+        return icon == null
+                ? Optional.empty()
+                : icon.asString().or(() -> icon.asObject()
+                        .flatMap(object -> Optional.ofNullable(object.members().get("texture")))
+                        .flatMap(JsonValue::asString));
+    }
+
+    /** The client-side definition of an item, from any enabled pack's resource half. */
+    private static Optional<ItemDefIr> resourceItem(BedrockId identifier) {
+        return Lepus.addons().ir().flatMap(ir -> {
+            ItemDefIr found = null;
+            for (PackId pack : WorldActivation.current().order()) {
+                Optional<ItemDefIr> candidate = ir.byId(pack)
+                        .map(PackIr::resource)
+                        .map(resource -> resource.items().get(identifier));
+                if (candidate.isPresent()) {
+                    found = candidate.get();
+                }
+            }
+            return Optional.ofNullable(found);
+        });
+    }
+
+    /**
+     * The bound slots in creative-menu order. SC-170 §6.
+     *
+     * <p>{@code MenuOrder} decides — by pack, in activation order, then by Bedrock's own
+     * {@code menu_category} — and this maps its answer onto the slots those blocks were bound to. A
+     * block whose pack is enabled but which failed to bind simply is not in the list.
+     */
+    private static List<BlockSlot> menuOrder(BlockLedger ledger, Map<BedrockId, String> logical) {
+        List<BehaviorIr> inPrecedenceOrder = new ArrayList<>();
+        Lepus.addons().ir().ifPresent(ir -> {
+            for (PackId pack : WorldActivation.current().order()) {
+                ir.byId(pack).map(PackIr::behavior).ifPresent(inPrecedenceOrder::add);
+            }
+        });
+        List<BlockSlot> slots = new ArrayList<>();
+        for (BedrockId identifier : MenuOrder.of(inPrecedenceOrder)) {
+            Optional.ofNullable(logical.get(identifier))
+                    .flatMap(ledger::binding)
+                    .ifPresent(binding -> slots.add(binding.slot()));
+        }
+        return slots;
+    }
+
+    /**
+     * The item-model identifier for a bound block, which is also the path it is generated at.
+     *
+     * <p>State index zero: an item shows one shape, and choosing which needs Bedrock state names
+     * rather than the index — the same rule as {@code /lepus place}, in a smaller place.
+     */
+    public static String itemModelOf(BlockSlot slot) {
+        return assetBase(slot, 0);
+    }
+
+    /**
+     * How one state looks: its model, and the textures that model names. SC-150 §5.
+     *
+     * <p>Path A is attempted first and every way it can fail lands in the same place — a unit cube
+     * with the block's {@code *} texture, which is what every block looked like before this existed
+     * (§5.2). The two failures are reported apart, because their fixes belong to different people:
+     * a geometry no pack declares is the author's misspelling, and a geometry this build cannot
+     * transpile is ours.
+     */
+    private static BoundBlocks.Appearance appearanceOf(BedrockId block,
+            Map<BedrockId, JsonValue> components, BlockSlot slot, int index) {
+        // material_instances first, then the resource pack's blocks.json. A block from the 1.13-era
+        // format has no materials at all and keeps its texture there; reading only the modern
+        // component leaves it with the missing texture and nothing in its own file to explain why.
+        BlockModels.Materials declared = BlockModels.materialsOf(components);
+        BlockModels.Materials materials = declared.isEmpty()
+                ? LEGACY_INDEX.materialsFor(block).orElse(declared)
+                : declared;
+        Optional<String> wanted = BlockModels.geometryOf(components);
+        Optional<GeometryIr> geometry = wanted.map(GEOMETRIES::get);
+
+        String base = assetBase(slot, index);
+        Map<String, String> refs = new LinkedHashMap<>();
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        // Only the instances the model's faces actually name are resolved. A pack declaring six
+        // materials and using two should not ship four textures per state into the client.
+        for (String instance : geometry.map(BlockGeometry::instancesUsed).orElse(Set.of("*"))) {
+            Optional<String> path = materials.textureFor(instance).flatMap(TEXTURES::resolve);
+            Optional<byte[]> png = path.flatMap(BlockBinding::readTexture);
+            if (png.isPresent()) {
+                String name = "block/" + base + "_" + refs.size();
+                refs.put(instance, "lepus:" + name);
+                files.put("textures/" + name + ".png", png.get());
+                // An animated texture is a strip of frames, and Java has to be told so or it draws
+                // the whole strip as one picture - which looks like a stretched texture, not like a
+                // missing animation, and sends the reader to the UV maths.
+                path.flatMap(FLIPBOOKS::forPath).ifPresent(flipbook -> files.put(
+                        "textures/" + name + ".png.mcmeta",
+                        AddonResourcePack.utf8(BlockModels.animationJson(flipbook))));
+            } else if (index == 0) {
+                // Once per block rather than once per state: every state of a block usually names
+                // the same materials, and a 32-state block would otherwise report the same missing
+                // file 32 times.
+                //
+                // Reported at all because the symptom without it is a black-and-magenta cube and no
+                // line anywhere saying which file is absent. That is the block drawing exactly what
+                // SC-150 §5.2 asks it to - visible, not a crash - but visible is only half of it.
+                System.out.println("[Lepus] SCE-2032 " + block + " names the texture "
+                        + materials.textureFor(instance).map(key -> "\"" + key + "\"")
+                                .orElse("<none>")
+                        + " for its \"" + instance + "\" material, which resolves to no file in any"
+                        + " enabled pack; it is drawn with the missing texture");
+            }
+        }
+
+        Optional<String> transpiled = geometry.flatMap(model -> BlockGeometry.modelJson(
+                model, refs, BlockTransform.of(components).orElse(BlockTransform.NONE)));
+        if (wanted.isPresent() && transpiled.isEmpty()) {
+            System.out.println("[Lepus] " + (geometry.isEmpty()
+                    ? "SCE-2030 " + block + " names the geometry " + wanted.get()
+                            + ", which no enabled pack declares"
+                    : "SCE-2031 " + block + " uses the geometry " + wanted.get()
+                            + ", which this build cannot draw as a Java block model")
+                    + "; it is drawn as a cube");
+        }
+        // The fallback names a texture whether or not one resolved. Absent, the block draws with
+        // the missing texture - visible and reportable, where an absent model is an invisible block.
+        String fallbackTexture = refs.getOrDefault("*", "lepus:block/" + base + "_0");
+        return new BoundBlocks.Appearance(
+                transpiled.orElseGet(() -> BlockModels.cubeModelJson(Map.of("all", fallbackTexture))),
+                files);
     }
 
     /**
@@ -123,23 +484,34 @@ public final class BlockBinding {
      *
      * <p>Called at mod init as well as after binding, because the client loads resources on its way
      * to the main menu - long before any world, and therefore before anything is bound.
+     *
+     * @param reloadOnChange whether to ask the client to read the pack again if the bytes changed.
+     *                       True after binding, when the client's baked models are the ones from
+     *                       before this pack existed; false at mod init, where there is nothing
+     *                       loaded yet to reload
      */
-    public static void publishResources() {
+    private static void publishResources(boolean reloadOnChange) {
         Map<String, byte[]> files = new LinkedHashMap<>();
         for (BlockSlot slot : Lepus.blockPool().slots()) {
             List<String> models = new ArrayList<>();
             BoundBlocks.at(slot).ifPresent(block -> {
                 for (int index = 0; index < block.byStateIndex().size(); index++) {
-                    String name = "block/" + slot.sizeClass() + "_" + index;
-                    // The texture is emitted beside the model under the same name, so a model and
-                    // its picture cannot drift apart. Absent, the model still names it and the block
-                    // draws as the missing texture - visible and obviously unfinished.
-                    block.textureAt(index).ifPresent(png ->
-                            files.put("textures/" + name + ".png", png));
-                    files.put("models/" + name + ".json", AddonResourcePack.utf8(
-                            BlockModels.cubeModelJson(Map.of("all", "lepus:" + name))));
+                    String name = "block/" + assetBase(slot, index);
+                    // Model and textures were resolved together at bind time and are written out
+                    // together here, so a model and the pictures it names cannot drift apart.
+                    block.appearanceAt(index).ifPresent(appearance -> {
+                        files.putAll(appearance.textureFiles());
+                        files.put("models/" + name + ".json",
+                                AddonResourcePack.utf8(appearance.modelJson()));
+                    });
                     models.add("lepus:" + name);
                 }
+                // The item form draws the block's own model. An item model DEFINITION, which is a
+                // different file from a model: since 1.21.4 an item names one of these and it names
+                // the model, so that one item can show thousands of shapes through a data component.
+                files.put("items/" + itemModelOf(slot) + ".json", AddonResourcePack.utf8(
+                        BlockModels.itemModelJson(
+                                "lepus:block/" + assetBase(slot, 0))));
             });
             if (models.isEmpty()) {
                 models.add(BlockModels.AIR_MODEL);
@@ -147,7 +519,36 @@ public final class BlockBinding {
             files.put("blockstates/" + pathOf(slot) + ".json",
                     AddonResourcePack.utf8(BlockModels.blockstateJson(models)));
         }
-        AddonResourcePack.replace(files);
+        // Items bring their own files, already resolved: they have no slot to iterate.
+        BoundItems.all().forEach(item -> files.putAll(item.files()));
+        files.putAll(LANG_FILES);
+        if (AddonResourcePack.replace(files) && reloadOnChange) {
+            // The client baked its models before any pack was bound, so without this a bound block
+            // is INVISIBLE - correct outline, correct collision, nothing drawn. See ClientResources.
+            ClientResources.reload();
+        }
+    }
+
+    /**
+     * Publishes without asking the client to reload.
+     *
+     * <p>For mod initialisation, which runs before the client's first resource load: there is
+     * nothing to reload yet, and asking would either be wasted or reentrant.
+     */
+    public static void publishResources() {
+        publishResources(false);
+    }
+
+    /**
+     * The name every generated asset for one state is built from.
+     *
+     * <p><b>Per slot, not per size class.</b> Naming these after the size class alone was a bug with
+     * exactly one symptom: two blocks in the same class wrote the same model file, the second won,
+     * and one add-on's block silently wore another's model and texture. It needed two bound blocks
+     * of one class to show up, which is the second block anyone installs.
+     */
+    private static String assetBase(BlockSlot slot, int index) {
+        return pathOf(slot).replace('/', '_') + "_" + index;
     }
 
     /** The slot path a blockstate file lives at, matching what BlockPool registered. */
@@ -172,12 +573,139 @@ public final class BlockBinding {
         return merge(inPrecedenceOrder);
     }
 
-    /** Every enabled pack terrain_texture.json, merged with later packs winning. */
-    private static TerrainTextures terrainTextures(AddonIr ir) {
+    /**
+     * The generated lang files: every enabled pack's {@code texts/*.lang}, re-keyed. SC-100 §9.
+     *
+     * <p>One Java lang file per language any enabled pack ships, holding only the names of content
+     * this world actually bound. Re-keyed from Bedrock's {@code tile.<id>.name} onto the logical
+     * identifier, because two packs may define the same Bedrock identifier and SC-120 §3 has already
+     * decided which is which — keeping Bedrock's key would put them both under one name again.
+     *
+     * <p>Blocks and items are looked up under their own prefixes and an item may also carry a block
+     * key: Bedrock gives a block's item form the {@code tile.} name, and packs rely on it.
+     */
+    /**
+     * The lang key each item names for itself, where it names one. SC-170 §2.
+     *
+     * <p>{@code minecraft:display_name} does not hold a name — it holds a <b>key</b>, and packs use
+     * it to borrow another entry's. In the corpus this was written against, 18 items point at
+     * {@code item.spawn_egg.entity.<entity>.name}: a ticket that places an entity is spelled as a
+     * spawn egg, and Bedrock keys spawn eggs by the entity rather than by the item. Looking only
+     * under {@code item.<identifier>.name} left every one of them showing its own identifier.
+     */
+    private static Map<BedrockId, String> declaredNameKeys() {
+        Map<BedrockId, String> keys = new LinkedHashMap<>();
+        enabledItems().forEach((identifier, definition) ->
+                ItemProfile.of(definition.components()).nameKey()
+                        .ifPresent(key -> keys.put(identifier, key)));
+        return keys;
+    }
+
+    private static Map<String, byte[]> languages(Map<BedrockId, String> logical,
+            Map<BedrockId, String> declaredKeys) {
+        Map<String, Map<String, String>> byLocale = new LinkedHashMap<>();
+        Lepus.addons().ir().ifPresent(ir -> {
+            for (PackId pack : WorldActivation.current().order()) {
+                ir.byId(pack).ifPresent(packIr -> packIr.source().texts().byLocale()
+                        .forEach((locale, entries) -> {
+                            Map<String, String> target = byLocale.computeIfAbsent(
+                                    DisplayNames.javaLocale(locale), key -> new LinkedHashMap<>());
+                            logical.forEach((identifier, id) -> {
+                                // What the pack said its name is keyed under wins over both
+                                // defaults, because it is the only one the pack chose deliberately.
+                                String declared = declaredKeys.get(identifier);
+                                String name = declared == null ? null : entries.get(declared);
+                                if (name == null) {
+                                    name = entries.get(DisplayNames.blockKey(identifier));
+                                }
+                                if (name == null) {
+                                    name = entries.get(DisplayNames.itemKey(identifier));
+                                }
+                                if (name != null && !name.isBlank()) {
+                                    target.put(DisplayNames.javaKey(id), name);
+                                }
+                            });
+                        }));
+            }
+        });
+
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        byLocale.forEach((locale, entries) -> {
+            if (!entries.isEmpty()) {
+                files.put("lang/" + locale + ".json",
+                        AddonResourcePack.utf8(DisplayNames.langJson(entries)));
+            }
+        });
+        return files;
+    }
+
+    /** Every enabled pack's flipbook_textures.json, merged with later packs winning. */
+    private static FlipbookTextures flipbooks(AddonIr ir) {
+        Map<String, FlipbookTextures.Flipbook> merged = new LinkedHashMap<>();
+        for (PackId pack : WorldActivation.current().order()) {
+            ir.byId(pack).ifPresent(packIr -> packIr.source().vfs()
+                    .read("textures/flipbook_textures.json")
+                    .ifPresent(source -> {
+                        try {
+                            merged.putAll(FlipbookTextures.of(
+                                    net.nennneko5787.lepus.core.format.json.Json
+                                            .parse(source.readUtf8())).byTexturePath());
+                        } catch (java.io.IOException | RuntimeException unreadable) {
+                            // One unreadable index costs that pack its animations, not the load.
+                        }
+                    }));
+        }
+        return new FlipbookTextures(merged);
+    }
+
+    /** Every enabled pack's root blocks.json, merged with later packs winning. */
+    private static LegacyBlockIndex legacyTextures(AddonIr ir) {
+        Map<String, Map<String, String>> textures = new LinkedHashMap<>();
+        Map<String, String> sounds = new LinkedHashMap<>();
+        for (PackId pack : WorldActivation.current().order()) {
+            ir.byId(pack).ifPresent(packIr -> packIr.source().vfs().read("blocks.json")
+                    .ifPresent(source -> {
+                        try {
+                            LegacyBlockIndex index = LegacyBlockIndex.of(
+                                    net.nennneko5787.lepus.core.format.json.Json
+                                            .parse(source.readUtf8()));
+                            textures.putAll(index.texturesByBlock());
+                            sounds.putAll(index.soundByBlock());
+                        } catch (java.io.IOException | RuntimeException unreadable) {
+                            // One unreadable index costs that pack's legacy textures, not the load.
+                        }
+                    }));
+        }
+        return new LegacyBlockIndex(textures, sounds);
+    }
+
+    /** Every enabled pack's item definitions, later packs winning by identifier. */
+    private static Map<BedrockId, ItemDefIr> enabledItems() {
+        Map<BedrockId, ItemDefIr> definitions = new LinkedHashMap<>();
+        Lepus.addons().ir().ifPresent(ir -> {
+            for (PackId pack : WorldActivation.current().order()) {
+                ir.byId(pack).map(PackIr::behavior)
+                        .ifPresent(behavior -> definitions.putAll(behavior.items()));
+            }
+        });
+        return definitions;
+    }
+
+    /** Every enabled pack's geometry, merged with later packs winning. */
+    private static Map<String, GeometryIr> geometries(AddonIr ir) {
+        Map<String, GeometryIr> merged = new LinkedHashMap<>();
+        for (PackId pack : WorldActivation.current().order()) {
+            ir.byId(pack).ifPresent(packIr -> merged.putAll(packIr.resource().geometries()));
+        }
+        return merged;
+    }
+
+    /** One of Bedrock's two texture indexes, merged across enabled packs with later ones winning. */
+    private static TerrainTextures textureIndex(AddonIr ir, String path) {
         Map<String, java.util.List<String>> merged = new LinkedHashMap<>();
         for (PackId pack : WorldActivation.current().order()) {
             ir.byId(pack).ifPresent(packIr -> packIr.source().vfs()
-                    .read("textures/terrain_texture.json")
+                    .read(path)
                     .ifPresent(source -> {
                         try {
                             merged.putAll(TerrainTextures.of(
@@ -189,21 +717,6 @@ public final class BlockBinding {
                     }));
         }
         return new TerrainTextures(merged);
-    }
-
-    /**
-     * The PNG behind one state materials, if the packs have one.
-     *
-     * <p>Reads the first texture the state names - material_instances gives a KEY, terrain_texture
-     * turns it into a path, and the pack VFS turns that into bytes. Every step can come up empty and
-     * an empty answer is a block drawn with the missing texture, which is visible and reportable;
-     * refusing the block over an absent picture would not be.
-     */
-    private static Optional<byte[]> textureOf(Map<BedrockId, JsonValue> components) {
-        return BlockModels.materialsOf(components).textureFor("*")
-                .or(() -> BlockModels.materialsOf(components).textureFor("up"))
-                .flatMap(TEXTURES::resolve)
-                .flatMap(BlockBinding::readTexture);
     }
 
     /**

@@ -10,10 +10,13 @@ import net.nennneko5787.lepus.runtime.addon.WorldActivation;
 import net.nennneko5787.lepus.runtime.config.LepusConfig;
 import net.nennneko5787.lepus.runtime.registry.BlockBinding;
 import net.nennneko5787.lepus.runtime.registry.BlockPool;
+import net.nennneko5787.lepus.runtime.registry.LepusItems;
 import net.nennneko5787.lepus.platform.CommandRegistrar;
 import net.nennneko5787.lepus.runtime.command.LepusCommand;
 import net.nennneko5787.lepus.runtime.registry.WorldLedger;
 import net.nennneko5787.lepus.core.ui.TextView;
+import net.nennneko5787.lepus.runtime.resource.ClientResources;
+import net.nennneko5787.lepus.runtime.ui.ScreenOpener;
 import net.nennneko5787.lepus.runtime.ui.Views;
 
 /**
@@ -61,12 +64,24 @@ public final class Lepus {
         SlotPool effective = config.pool();
 
         blockPool = BlockPool.register(effective);
+        // Two entries for the whole project, both anonymous: the carrier item every bound block's
+        // item form is a stack of, and the tab they appear in. SC-120 4 and SC-170 6.
+        LepusItems.register();
         // Before the client loads resources on its way to the main menu, which is long before any
         // world and therefore before anything is bound. Without this every slot is missing a
         // blockstate at startup and the log fills with one line per state.
         BlockBinding.publishResources();
         WorldLedger.install(lifecycle, effective);
         WorldActivation.install(lifecycle);
+        // Behind the side check, and behind a method reference, so that a dedicated server never
+        // loads a client class. The lambda's bootstrap is what would load AddonPackScreen, and it
+        // only runs if this branch is taken. See ScreenOpener on why the indirection exists at all.
+        if (platform.isClient()) {
+            ScreenOpener.register(
+                    net.nennneko5787.lepus.client.ui.AddonPackScreen::show);
+            ClientResources.register(
+                    net.nennneko5787.lepus.client.ClientReload::now);
+        }
 
         System.out.println("[Lepus] " + platform.loaderName() + " "
                 + platform.loaderVersion() + " (" + platform.side() + "): registered "

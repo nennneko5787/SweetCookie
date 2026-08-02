@@ -7,10 +7,10 @@ Ledger: [`spec/coverage/item-components.yaml`](../../spec/coverage/item-componen
 
 | Feature | Status | Notes |
 |---|---|---|
-| `minecraft:max_stack_size` | stub | Java minecraft:max_stack_size. Per-stack since 1.20.5, which is what makes the carrier design work. |
+| `minecraft:max_stack_size` | partial | Clamped into 1..99, which is Java's own range: a pack asking for more gets 99 rather than a refused item. An item that also declares durability is forced to a stack of ONE, because Java refuses a stack carrying max_damage with a stack size above 1. The other way round - dropping the durability - would make every piece of armour in the surveyed corpus unbreakable. |
 | `minecraft:stacked_by_data` | stub | Legacy aux/damage-value stacking. Java has no aux value; custom_data equality already separates distinct items. |
 | `minecraft:should_despawn` | stub | Java ItemEntity lifetime. |
-| `minecraft:durability` | stub | Java minecraft:max_damage plus minecraft:damage. |
+| `minecraft:durability` | partial | max_durability becomes Java's minecraft:max_damage, with minecraft:damage set to zero so the stack starts whole and shows a durability bar. damage_chance has no Java counterpart. Bedrock wears an item down probabilistically per use; Java always spends one point. An item declaring a chance below 1 therefore wears out FASTER here than in Bedrock, by the ratio of the chance. |
 | `minecraft:repairable` | stub | Java minecraft:repairable. Bedrock lists repair items with a per-item repair amount expression. |
 | `minecraft:damage_absorption` | stub |  |
 | `minecraft:durability_sensor` | stub | Fires events at durability thresholds. No Java counterpart; needs a behaviour hook. |
@@ -31,12 +31,13 @@ Ledger: [`spec/coverage/item-components.yaml`](../../spec/coverage/item-componen
 | `minecraft:compostable` | stub |  |
 | `minecraft:block_placer` | stub | Behaviour hook on useOn. The main way an add-on item places a custom block. |
 | `minecraft:entity_placer` | stub |  |
-| `minecraft:wearable` | stub | Java minecraft:equippable. |
+| `minecraft:wearable` | partial | slot.armor.head/chest/legs/feet and slot.weapon.offhand map onto Java's equipment slots. Plain `slot.armor`, which is legal Bedrock and means any armour slot, has no Java equivalent - an equippable names exactly one - so the item is left unwearable rather than assigned a slot by guess. A guessed slot would put boots on somebody's face and look deliberate. protection becomes an `armor` attribute modifier of the same number. THE SCALES HAVE NOT BEEN COMPARED: Bedrock states protection on its own scale and Java's armor attribute is points of a twenty-point bar. Nothing here has been measured against a Bedrock client. The worn model is vanilla's, because Bedrock's is an attachable and those need the SC-180 render stack. So a piece of armour equips, protects and shows its durability, and looks like nothing on the player. |
 | `minecraft:hand_equipped` | stub | Whether the item renders as a tool in hand. Interacts with attachables. |
 | `minecraft:allow_off_hand` | stub |  |
-| `minecraft:enchantable` | stub | Java minecraft:enchantable. |
-| `minecraft:glint` | stub | Java minecraft:enchantment_glint_override. |
-| `minecraft:display_name` | stub | Java minecraft:item_name. May be a .lang key. |
+| `minecraft:enchantable` | partial | value becomes Java's minecraft:enchantable, which is the same idea under the same name. Bedrock's `slot` says which enchantments may apply (armor_head, sword, bow…). Java decides that from item tags instead, and the carrier item is in no tag by design (SC-120 section 4) - being in one would let vanilla recipes and mechanics touch it. So an enchantable item offers Java's generic set rather than the Bedrock-appropriate one. |
+| `minecraft:glint` | implemented | Java minecraft:enchantment_glint_override. See minecraft:foil for the spelling packs use. |
+| `minecraft:foil` | implemented | The older spelling of minecraft:glint, and THE ONE REAL PACKS USE. A survey of six installed add-ons found 35 items declaring `foil` and none declaring `glint`. Reading only the name the newest schema gives would have looked complete and done nothing, which is why this entry exists separately rather than being folded into the other as a note. |
+| `minecraft:display_name` | partial | The component holds a LANG KEY, not a name, and it is carried as one: the key travels in the item and the client picks the language (SC-170, DisplayNames). Resolving it to text at bind time would bake one language into the item for every player. A key naming an entry no enabled pack ships falls back to the item's own item.<identifier>.name, and then to a readable form of the identifier. So a broken key costs the translation and never the item. NOT applied to blocks. Bedrock allows the component there too and no block in the surveyed corpus uses it; a block's name still comes from tile.<identifier>.name alone. |
 | `minecraft:icon` | stub | Names a key in item_texture.json, not a path. Becomes a generated Java items/ model definition referenced by minecraft:item_model. |
 | `minecraft:rarity` | stub |  |
 | `minecraft:hover_text_color` | stub |  |

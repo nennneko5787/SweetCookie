@@ -7,14 +7,17 @@
 # Status meanings: spec/normative/SC-000-conventions.md section 3.
 # `implemented` is written by hand and VERIFIED by the build - ADR-0011, constitution rule 9.
 #
-# EVERYTHING HERE IS `stub` AND STAYS `stub` UNTIL SOMETHING DRAWS.
+# A FEATURE HERE IS `stub` UNTIL SOMETHING DRAWS IT.
 # These are SC-180 features, and SC-180 is rendering. Their runtime effect is a model appearing on
-# screen, and nothing renders yet. The parser is written, tested and proven by a conformance case -
-# and `stub` is exactly what SC-000 section 3 calls that: recognised, parsed into the IR, no runtime
-# effect. Promoting them because a parser exists would tell a user reading the compatibility table
-# that geometry works.
+# screen. The parser is written, tested and proven by a conformance case - and `stub` is exactly what
+# SC-000 section 3 calls that: recognised, parsed into the IR, no runtime effect. Promoting an entry
+# because a parser exists would tell a user reading the compatibility table that geometry works.
 #
 # A `stub` entry may still name the case that proves its parse; it may not name an `impl`.
+#
+# The exception is a feature whose effect reaches the screen through SC-150 section 5's transpile
+# rather than through SC-180's renderer, which does not exist. That path DOES draw, so an entry on
+# it carries an impl and a status like any other. Today that is item_display_transforms alone.
 
 domain: rp-geometry
 spec: SC-180
@@ -91,5 +94,41 @@ entries:
   - id: geometry/visible_bounds
     status: stub
     conformance: [packaging/format_version_sniffing]
+  - id: geometry/item_display_transforms
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.ir.block.BlockGeometry
+    conformance: [block/item_display_transforms]
+    diagnostics: [SCE-1035]
+    fields:
+      rotation: ok
+      translation: ok
+      scale: ok
+      per_context: ok
+      compose_order: partial
+      left_hand: partial
+    fidelity: >-
+      The eight context names, the units and the three fields are the same in both editions, so the
+      mapping is the identity and the only work is the axis conversion — which is the model's own,
+      applied to a displacement rather than to a position.
+
+      The ORDER the three angles compose in is not observed. Java's half is read off the jar - the
+      transform is applied as rotationXYZ, so X then Y then Z - and Bedrock is assumed to match. The
+      mirror preserves whatever the order is, so a transform turning about one axis is right either
+      way; only one turning about two at once could show a difference.
+
+      What Bedrock does for the LEFT HAND is not observed either. Java mirrors its two left-hand
+      contexts itself at render time, whether or not the model declares one, so a pack's left-hand
+      values are passed through verbatim: right if Bedrock inherited that convention with the rest
+      of the system, and mirrored in the off hand if it did not.
+
+      A context the pack does not state is not written, which leaves minecraft:block/block answering
+      for it. That is Java's per-context inheritance rather than Bedrock's defaults, and the two
+      have not been compared.
+    notes: >-
+      The one entry in this shard that is not `stub`, because it does not need SC-180's renderer:
+      its effect is a `display` block in a model SC-150 section 5 already generates, and it reaches
+      the screen through the same path the geometry does. It is also the only part of a geometry
+      whose absence is visible in exactly one place — the hotbar icon, at Java's default angle while
+      the block itself is perfect.
   - id: geometry/texture_meshes
     status: stub

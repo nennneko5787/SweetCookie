@@ -108,6 +108,26 @@ public final class BlockPool {
                 // closing over the live reference: light is asked for per state, every time, so a
                 // pack bound after registration still lights the world.
                 .lightLevel(BoundBlocks::lightOf)
+                // Minecraft's per-state Cache holds a collision shape, and the context-free
+                // getCollisionShape(level, pos) answers out of it when it exists. It is built by
+                // BlockState.initCache, which vanilla runs once from Blocks' class initialiser -
+                // before any world, and therefore before any pack is bound. A pool block that got
+                // one would collide as a full cube forever after, whatever its collision_box said.
+                //
+                // Whether our states ever get one is a question about when a loader runs
+                // registration relative to that class initialiser. That is not ours to answer and
+                // it can change under us, so this does not depend on the answer: `dynamicShape` is
+                // vanilla's own way of saying "ask the block, do not cache", and a slot whose shape
+                // changes when a pack attaches is as dynamic as a shape gets.
+                .dynamicShape()
+                // SC-150 5.5. A model smaller than its block must not cull the faces behind it, and
+                // whether it is smaller is not known here: the occlusion shape is baked once, before
+                // any pack is bound, and there is no dynamicShape equivalent to opt out of it.
+                //
+                // The cost is that a bound block which IS a full cube no longer blocks light. That
+                // is mild and visible - a brighter cave - against severe and confusing: terrain
+                // disappearing behind a custom model.
+                .noOcclusion()
                 .sound(SoundType.STONE);
     }
 

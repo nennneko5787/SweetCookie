@@ -8,6 +8,7 @@
             "components": ["minecraft:friction","minecraft:destructible_by_explosion"],
             "identifier": "sc_conformance:lamp",
             "menuCategory": "construction",
+            "model": [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
             "permutations": [
               {
                 "components": ["minecraft:light_emission"],
@@ -20,6 +21,152 @@
               {
                 "components": ["minecraft:collision_box"],
                 "condition": "query.block_state('sc:kind') == 'tall'"
+              }
+            ],
+            "physics": [
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 7
+              },
+              {
+                "explosionResistance": 3,
+                "friction": 0.6,
+                "lightEmission": 15
               }
             ],
             "resolved": [

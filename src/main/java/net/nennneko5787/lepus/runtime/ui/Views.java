@@ -50,6 +50,21 @@ public final class Views {
      *               what the server enabled, and saying so beats listing everything as disabled
      */
     public static ViewModel packs(AddonRegistry addons, Optional<ActivePacks> active) {
+        return packs(addons, active, true);
+    }
+
+    /**
+     * As above, for a reader who may not be allowed to change anything.
+     *
+     * @param mayManage whether this reader can run the mutating commands. When false they are not
+     *                  offered, and the view says why instead — Brigadier removes a node the caller
+     *                  fails {@code requires} for, so offering {@code /lepus enable X} to a
+     *                  player without cheats produces "incorrect argument" pointing at a word the
+     *                  view itself told them to type. That is the failure this parameter exists to
+     *                  stop, and it cost a real user a real hour.
+     */
+    public static ViewModel packs(AddonRegistry addons, Optional<ActivePacks> active,
+            boolean mayManage) {
 
         List<ViewModel.Row> enabled = new ArrayList<>();
         List<ViewModel.Row> available = new ArrayList<>();
@@ -62,7 +77,7 @@ public final class Views {
             String provides = pack.provides().describe();
             List<String> notes = pack.diagnostics().stream()
                     .filter(d -> d.severity() == Severity.ERROR)
-                    .map(Diagnostic::toString)
+                    .map(d -> d.codeString() + " " + d.describe())
                     .toList();
             long warnings = pack.count(Severity.WARNING);
 
@@ -75,7 +90,11 @@ public final class Views {
                     .map(badge -> ViewModel.Row.of(label, detail, badge, notes))
                     .orElseGet(() -> ViewModel.Row.of(label, detail));
             if (order.isPresent()) {
-                enabled.add(row.with(enabledActions(handle, order.get(), active.get().size())));
+                enabled.add(mayManage
+                        ? row.with(enabledActions(handle, order.get(), active.get().size()))
+                        : row);
+            } else if (!mayManage) {
+                available.add(row);
             } else {
                 // A pack whose activation is unknown gets no commands offered: naming one against a
                 // list we did not compute would be advice that does not match the current state.
@@ -121,6 +140,17 @@ public final class Views {
                     available.isEmpty() ? "installed but not enabled - none"
                             : "installed but not enabled",
                     available));
+            if (!mayManage) {
+                // The whole point of the flag. Without this the reader sees packs they cannot turn
+                // on and no reason, which reads as the mod being broken rather than as a permission
+                // they can grant themselves in ten seconds.
+                sections.add(ViewModel.Section.of("changing this needs cheats", List.of(
+                        ViewModel.Row.empty("enabling a pack changes what every player in the world"
+                                + " sees, so it needs command level 2 and you do not have it here"),
+                        ViewModel.Row.empty("single player: pause, Open to LAN, Allow Cheats ON -"
+                                + " the world stays single player"),
+                        ViewModel.Row.empty("server: /op yourself, or run it from the console"))));
+            }
         }
 
         // Reported before any pack had an identity - a corrupt archive, an unusable manifest. It has
@@ -128,7 +158,7 @@ public final class Views {
         if (!addons.unattributed().isEmpty()) {
             sections.add(ViewModel.Section.of("not attributable to a pack",
                     addons.unattributed().stream()
-                            .map(d -> ViewModel.Row.of(d.codeString(), d.toString(), d.severity(),
+                            .map(d -> ViewModel.Row.of(d.codeString(), d.describe(), d.severity(),
                                     List.of()))
                             .toList()));
         }

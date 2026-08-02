@@ -263,6 +263,64 @@ class GeometryFilesTest {
     }
 
     @Test
+    @ProvesSpec("SC-180#geometry/item_display_transforms")
+    void readsItemDisplayTransforms() {
+        // On the MODEL, beside `bones` - not inside `description`, which is where a reader who had
+        // not looked at a real file would put it.
+        GeometryIr model = parse("""
+                {
+                  "format_version": "1.21.0",
+                  "minecraft:geometry": [{
+                    "description": { "identifier": "geometry.trophy" },
+                    "bones": [],
+                    "item_display_transforms": {
+                      "gui": {
+                        "rotation": [30, -45, 2],
+                        "translation": [-1, -1.25, 0],
+                        "scale": [0.5, 0.5, 0.5]
+                      },
+                      "ground": { "translation": [0, 1.75, 0] }
+                    }
+                  }]
+                }
+                """).get(0);
+
+        assertEquals(new Vec3f(30f, -45f, 2f), model.itemDisplay().get("gui").rotation());
+        assertEquals(new Vec3f(-1f, -1.25f, 0f), model.itemDisplay().get("gui").translation());
+        assertEquals(new Vec3f(0.5f, 0.5f, 0.5f), model.itemDisplay().get("gui").scale());
+
+        // A context that states one field states only that one. Rotation and translation default to
+        // nothing; SCALE defaults to ONE, and defaulting it the way the other two default would
+        // scale the model to a point - an invisible item, from an omitted field.
+        assertEquals(new Vec3f(0f, 1.75f, 0f), model.itemDisplay().get("ground").translation());
+        assertEquals(Vec3f.ONE, model.itemDisplay().get("ground").scale());
+        assertEquals(Vec3f.ZERO, model.itemDisplay().get("ground").rotation());
+    }
+
+    @Test
+    @ProvesSpec("SC-180#geometry/item_display_transforms")
+    void reportsADisplayContextThatIsNotOne() {
+        // Java's model loader ignores a display context it does not know, so a typo passed through
+        // would be invisible in the file AND in the game. Reported and dropped instead.
+        GeometryIr model = parse("""
+                {
+                  "format_version": "1.21.0",
+                  "minecraft:geometry": [{
+                    "description": { "identifier": "geometry.trophy" },
+                    "bones": [],
+                    "item_display_transforms": {
+                      "firstperson": { "scale": [2, 2, 2] },
+                      "gui": { "scale": [0.5, 0.5, 0.5] }
+                    }
+                  }]
+                }
+                """).get(0);
+
+        assertEquals(List.of("gui"), List.copyOf(model.itemDisplay().keySet()));
+        assertTrue(reported(IrDiagnostics.FIELD_MALFORMED.code()));
+    }
+
+    @Test
     @ProvesSpec("SC-180")
     void readsEveryModelInAMultiModelFile() {
         assertEquals(2, parse("""

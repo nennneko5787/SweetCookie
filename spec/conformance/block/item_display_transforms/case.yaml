@@ -1,0 +1,76 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: block/item_display_transforms
+tier: T0
+# SC-180, though half of what this proves is SC-150 §5.6's conversion: the feature is a geometry
+# feature and its coverage entry lives in the SC-180 shard, and a case names one spec. Under the
+# block/ domain because a block model is the only thing that consumes these today.
+spec: SC-180
+
+features:
+  - geometry/item_display_transforms
+  # ONE feature, though this case exercises the parse and the transpile of it. They are two halves
+  # of the same claim - a pack says where its model goes when it is drawn as an item, and the
+  # generated Java model has to say the same thing - and splitting them across two entries would
+  # let a broken conversion sit behind a green parse. NOT minecraft:geometry: that has its own case,
+  # and claiming it here would let a regression in either hide behind the other.
+
+description: >-
+  A geometry may state where its model goes when it is drawn as an ITEM rather than as a block, and
+  those transforms must survive into the Java model's display block with the axis conversion applied.
+  Dropping them is invisible everywhere the world draws the block and wrong everywhere an item is
+  drawn: the hotbar icon falls back to Java's default angle, roughly a quarter turn from the one the
+  pack chose, which reads as a mirrored icon rather than as a dropped component. Getting the
+  conversion wrong instead of dropping it looks the same to anyone not holding both editions.
+
+pack:
+  extends: minimal_bp
+  dir: pack
+  container: directory
+
+diagnostics:
+  expected:
+    - SCE-1035          # `not_a_context` is not a display context
+  forbidden:
+    - SCE-1036          # every bone is named
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  # ── The parse ────────────────────────────────────────────────────────────────────────────────
+  # On the MODEL, beside `bones` — not inside `description`, which is where a reader who had not
+  # opened a real file would look for it. Verbatim: the IR keeps Bedrock's numbers.
+  - that: ir.packs[0].resource.geometries['geometry.sc_conformance.signpost'].itemDisplay.gui.rotation
+    equals: "[30,-45,2]"
+  # A context that states one field states only that one, and SCALE defaults to ONE. Defaulting it
+  # the way rotation and translation default would scale the model to a point — an invisible item,
+  # produced by an omitted field.
+  - that: ir.packs[0].resource.geometries['geometry.sc_conformance.signpost'].itemDisplay.ground.scale
+    equals: "[1,1,1]"
+  # A name that is not a context is dropped, not passed through. Java's model loader ignores a
+  # display context it does not know, so a typo that reached the model would be invisible in the
+  # file AND in the game; SCE-1035 above is the whole reason it is visible anywhere.
+  - that: ir.packs[0].resource.geometries['geometry.sc_conformance.signpost'].itemDisplay.not_a_context
+    absent: true
+
+  # ── The transpile ────────────────────────────────────────────────────────────────────────────
+  # The angles take the same correction the model's own turns take: the pack's angle sense reversed,
+  # and the mirror on Z reversing a turn about x or y again. Two reversals cancel on x and y; one
+  # does not, on z. So [30, -45, 2] comes out as [30, -45, -2] and ONLY the last number moves.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:signpost'].model[0].display.gui.rotation
+    equals: "[30,-45,-2]"
+  # A translation is a displacement, not a position. It takes the mirror's sign on Z and NOT the
+  # centre-to-corner offset on X — adding 8 here would shove every icon half a block sideways.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:signpost'].model[0].display.gui.translation
+    equals: "[-1,-1.25,-3]"
+  # A mirror commutes with a scale along the axes, so this passes through untouched.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:signpost'].model[0].display.gui.scale
+    equals: "[0.5,0.5,0.5]"
+  # And a context the pack did not state is not written at all: Java resolves `display` one context
+  # at a time up the parent chain, so silence here is what leaves minecraft:block/block answering
+  # for the hands and the item frame. Writing an identity transform instead would silently replace
+  # vanilla's answer with "no transform", which is a different thing and looks wrong in the hand.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:signpost'].model[0].display.head
+    absent: true

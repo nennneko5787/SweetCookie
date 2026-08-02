@@ -1,0 +1,96 @@
+# Schema: spec/schemas/conformance-case.schema.json
+
+id: block/geometry_transpile
+tier: T0
+spec: SC-150
+
+features:
+  - "minecraft:geometry"
+  - "minecraft:material_instances"
+  - "minecraft:unit_cube"
+  # NOT geometry/inflate, geometry/mirror or geometry/per_face_uv, though this case exercises all
+  # three: those are SC-180's parse-side entries and this case proves what the TRANSPILE does with
+  # them, which is a different claim. Claiming both from one case would let a parse regression hide
+  # behind a green transpile.
+
+description: >-
+  A block naming a geometry must reach a Java block model whose boxes are where the pack put them.
+  Bedrock measures X and Z from the block's centre and states UV in texels against the model's own
+  texture size; Java measures from the corner and states UV in sixteenths of the whole texture. Both
+  conversions are invisible to a golden over component names, and getting either wrong produces a
+  block that loads, draws, and is in the wrong place or shows the wrong part of its texture. The
+  second state names a geometry no pack declares, which must fall back rather than fail.
+
+pack:
+  extends: minimal_bp
+  dir: pack
+  container: directory
+
+diagnostics:
+  forbidden:
+    - SCE-1035          # nothing here is malformed
+    - SCE-1036          # every bone is named
+  exhaustive: false
+
+expect:
+  ir: expected/ir.json
+
+assert:
+  # The post: 4x9x4 about the centre, so 6..10 on X and Z. Off by the wrong sign and it would be
+  # at -2..2, which is outside its own block.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[0].from
+    equals: "[6,0,6]"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[0].to
+    equals: "[10,9,10]"
+
+  # The UV divisor, which is the model's OWN texture_width of 32, not the texture's real size and
+  # not 16. A 4-texel face on a 32-wide texture is 2 in Java's sixteenths. In their original
+  # order, because the conversion never flips a face - it only relabels them.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[0].faces.south.uv
+    equals: "[0,0,2,4.5]"
+
+  # The hook inherits its bone's inflate of 0.25 and declares mirror, so its single face comes back
+  # with the two U coordinates the other way round.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[1].from
+    equals: "[6.75,8.75,6.75]"
+  # The hook declares mirror, and the pack's mirror is the only thing that flips a texture, so
+  # its U values come out reversed. Under SOUTH, because the mirror trades the two names.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[1].faces.south.uv
+    equals: "[1,8,0,9.5]"
+
+  # The arm: 3 wide, hard against one side of the block, so its X coordinates say which side that
+  # is. Bedrock puts it at x -7..-4, and X is only offset, so it comes out at 1..4 — while its Z,
+  # which IS mirrored, moves to the opposite side. This is the only element in the corpus that
+  # would notice the mirror being dropped again; every other box here is symmetric on both.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[2].from
+    equals: "[1,4,7]"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[2].to
+    equals: "[4,6,9]"
+
+  # And which face is which. The arm gives east and west different textures on purpose, and they
+  # must come out UNDER THEIR OWN NAMES: the mirror is on Z, so it trades north for south and
+  # leaves these two alone. Nothing else in the corpus can tell the two apart.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[2].faces.west.uv
+    equals: "[12,0,13,1]"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[2].faces.east.uv
+    equals: "[10,0,11,1]"
+
+  # never_render draws nothing, so the anchor bone contributes no element at all. Three elements,
+  # not four - and the anchor is a full-block box, so if it leaked in it would swallow the lantern.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[3]
+    absent: true
+
+  # Two material instances, two texture slots, and the face that named `cap` uses the second.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].textures['0']
+    equals: sc_conformance_lantern_post
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].textures['1']
+    equals: sc_conformance_lantern_cap
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[0].elements[0].faces.up.texture
+    equals: "#1"
+
+  # State 1 names a geometry no pack declares. SC-150 §5.2: no model, and the runtime draws a cube.
+  # A missing model must never be a missing block.
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].model[1]
+    equals: "null"
+  - that: ir.packs[0].behavior.blocks['sc_conformance:lantern'].physics[1].lightEmission
+    equals: "14"

@@ -29,6 +29,7 @@ import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.diag.Diagnostic;
 import net.nennneko5787.lepus.core.format.diag.Severity;
 import net.nennneko5787.lepus.core.format.value.PackId;
+import net.nennneko5787.lepus.core.format.value.SemanticVersion;
 import net.nennneko5787.lepus.core.registry.ActivePacks;
 import net.nennneko5787.lepus.core.registry.ActivePlan;
 import net.nennneko5787.lepus.runtime.addon.PackKind;
@@ -77,21 +78,96 @@ public final class AddonPackScreen {
      * wrong answer, and committing it would enable packs against a list nobody had seen. So that
      * client gets the read-only view, which says the server decides.
      */
+    /**
+     * Puts the screen on screen, from wherever.
+     *
+     * <p>Through {@code Minecraft.execute} because the caller is usually the <b>server</b> thread:
+     * {@code /lepus} runs as a command, and in single player the integrated server shares this
+     * process with the client. Touching a screen from that thread directly is the kind of bug that
+     * works for a month and then corrupts a render pass.
+     */
+    public static void show(boolean mayManage) {
+        Minecraft client = Minecraft.getInstance();
+        // A null parent, which is what closing this screen should return to: the caller typed a
+        // command, so the thing behind the screen is the game. 26.2 exposes no current-screen
+        // accessor to hand back anyway, and reaching for one would be a version divergence bought
+        // for nothing.
+        client.execute(() -> Screens.show(mayManage
+                ? open(null)
+                : new ViewScreen(null, () -> Views.packs(
+                        Lepus.addons(), WorldActivation.known(), false))));
+    }
+
+    /**
+     * What the user has selected so far, across both tabs, before anything is sent.
+     *
+     * <p>Each tab is a separate screen and switching rebuilds the other one, so without somewhere to
+     * put it a selection made on one tab is simply lost when the other opens. The previous answer —
+     * committing on every switch — kept it, but paid for it with a round trip and a client resource
+     * reload per tab press: the window flickered and the cursor jumped to the middle.
+     *
+     * <p>So the tabs edit this, and <b>only closing the screen sends anything</b>. One plan, one set
+     * of commands, however many times the user went back and forth.
+     */
+    private static List<PackId> pending = List.of();
+
+    /**
+     * True while a tab switch is committing the model into the repository.
+     *
+     * <p>{@code PackSelectionScreen} has exactly one way to get its pending selection out — its own
+     * commit — and it does not distinguish "the user pressed Done" from "we need the numbers". This
+     * says which one is happening, so a tab switch records and a real close sends.
+     */
+    private static boolean switchingTabs;
+
     public static Screen open(Screen parent) {
-        return WorldActivation.known().isPresent()
-                ? selection(parent, PackKind.BEHAVIOR)
-                : new ViewScreen(parent,
-                        () -> Views.packs(Lepus.addons(), WorldActivation.known()));
+        if (WorldActivation.known().isEmpty()) {
+            return new ViewScreen(parent,
+                    () -> Views.packs(Lepus.addons(), WorldActivation.known()));
+        }
+        // A fresh session starts from what the world actually has, never from the last session's
+        // leftovers - the world may have changed underneath, and a stale pending list would send
+        // commands undoing someone else's change.
+        pending = List.copyOf(WorldActivation.current().order());
+        switchingTabs = false;
+        return selection(parent, PackKind.BEHAVIOR);
+    }
+
+    /** Called by {@link TabbedPackScreen} around the commit it does to read the selection. */
+    static void switching(boolean on) {
+        switchingTabs = on;
+    }
+
+    /**
+     * {@link #pending} as an {@link ActivePacks}, for the screen to render against.
+     *
+     * <p>The versions are the installed packs' own, so that a pack enabled here and then committed
+     * records the version it was enabled at — which is what SC-120 §8's drift detection reads later.
+     */
+    private static ActivePacks pendingActive() {
+        ActivePacks active = ActivePacks.NONE;
+        for (PackId id : pending) {
+            active = active.enable(id, versionOf(id));
+        }
+        return active;
+    }
+
+    private static SemanticVersion versionOf(PackId id) {
+        return Lepus.addons().packs().stream()
+                .filter(pack -> pack.id().equals(id))
+                .findFirst()
+                .flatMap(pack -> SemanticVersion.tryParse(pack.version()))
+                .orElse(SemanticVersion.ZERO);
     }
 
     /**
      * One tab's screen.
      *
-     * <p>Rebuilt whenever a tab is chosen rather than kept side by side, so that switching tabs
-     * after committing shows what the commit did. Building one is reading two in-memory lists.
+     * <p>Built from {@link #pending} rather than from the world, so the other tab opens showing what
+     * was just ticked on this one.
      */
     private static Screen selection(Screen parent, PackKind kind) {
-        ActivePacks active = WorldActivation.current();
+        ActivePacks active = pendingActive();
         return new TabbedPackScreen(
                 parent,
                 kind,
@@ -102,7 +178,7 @@ public final class AddonPackScreen {
                 // vanilla drag-and-drop hint once the tab bar has pushed the header down. SC-280
                 // 5.1 still item - which end of the order wins - moved to the tab tooltip.
                 Component.empty(),
-                chosen -> Minecraft.getInstance().setScreenAndShow(selection(parent, chosen)));
+                chosen -> Screens.show(selection(parent, chosen)));
     }
 
     /**
@@ -192,7 +268,9 @@ public final class AddonPackScreen {
                 + (provides.isEmpty() ? " - provides nothing this build reads" : " - " + provides));
         List<String> errors = pack.diagnostics().stream()
                 .filter(diagnostic -> diagnostic.severity() == Severity.ERROR)
-                .map(Diagnostic::toString)
+                // Code and message, not the translation key: a key names a sentence this build
+                // does not have yet and says nothing to whoever is reading the screen.
+                .map(diagnostic -> diagnostic.codeString() + " " + diagnostic.describe())
                 .toList();
         if (!errors.isEmpty()) {
             return summary.copy().append(Component.literal("\n" + errors.get(0)
@@ -218,12 +296,17 @@ public final class AddonPackScreen {
         for (String id : committed.getSelectedIds()) {
             PackId.parse(id).ifPresent(selected::add);
         }
-        ActivePacks current = WorldActivation.current();
         // This tab decided about its own kind and said nothing about the other. Handing the
         // selection straight to between() would read every resource pack as deselected and disable
         // the lot; spliceKind replaces this kind's entries in place and leaves the rest alone.
-        List<PackId> desired = ActivePlan.spliceKind(current.order(), selected, idsOf(kind));
-        ActivePlan plan = ActivePlan.between(current, desired);
+        pending = ActivePlan.spliceKind(pending, selected, idsOf(kind));
+        if (switchingTabs) {
+            // Recorded, not sent. The other tab is about to open and will be built from it.
+            return;
+        }
+        // The screen is closing, so this is the whole session: one plan against the world as it
+        // stands, however many tabs were visited on the way here.
+        ActivePlan plan = ActivePlan.between(WorldActivation.current(), pending);
         for (ActivePlan.Step step : plan.steps()) {
             send(commandFor(step));
         }

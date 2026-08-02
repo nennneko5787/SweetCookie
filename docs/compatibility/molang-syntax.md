@@ -9,10 +9,11 @@ Ledger: [`spec/coverage/molang-syntax.yaml`](../../spec/coverage/molang-syntax.y
 |---|---|---|
 | `syntax/arithmetic` | stub | ADR-0012: the chosen expression compiler evaluates in double throughout, so intermediate values inside one expression will be double-width and only the result narrows to float. Concretely 0.1 + 0.2 > 0.3 will be true here and is false on Bedrock. This becomes a `fidelity` note the moment the evaluator lands; it is recorded now so the decision is not rediscovered later. |
 | `syntax/comparison` | stub | Inherits the width divergence in syntax/arithmetic: a comparison whose operands land within about one part in sixteen million of each other can resolve the opposite way. ADR-0012. |
-| `syntax/logical` | stub |  |
-| `syntax/ternary` | stub |  |
+| `syntax/logical` | stub | GATED BY min_engine_version. Bedrock changed the precedence at 1.18.20 — AND binds before OR, and comparison before equality — and kept the old order for packs declaring less. This build implements the modern order only. SC-130 section 2.7. |
+| `syntax/ternary` | stub | GATED BY min_engine_version. Bedrock fixed the associativity at 1.18.10, so `A ? B : C ? D : E` groups as `A ? B : (C ? D : E)` there and the other way below it. This build implements the modern grouping only, and nothing passes the manifest's version to the compiler. SC-130 section 2.7. |
 | `syntax/binary_if` | stub | `a ? b` with no else, yielding 0 when false. Distinct from ternary. |
 | `syntax/null_coalesce` | stub |  |
+| `syntax/this` | partial | "The current value that this expression will ultimately write to (context specific)" — Microsoft's own syntax guide, and the parenthesis is the design: WHICH value depends on what is evaluating. So the compiler emits a read and MolangContext.thisValue answers it. A context that cannot answer returns zero, which is not a lie: an animation applied straight onto a bind pose genuinely has nothing underneath it. The only context that supplies a real value today is the animation sampler, and it supplies zero for the same reason — until animations blend, nothing has written to the channel. Found because a real pack used it: `query.target_x_rotation - 110.0 - this` aims an arm relative to wherever the animations below it left the arm, and the whole expression failed to compile without it. |
 | `syntax/deref` | stub | The -> operator. The right side evaluates in the left side's entity context. |
 | `syntax/statements` | stub | Multi-statement bodies must end in return. |
 | `syntax/assignment` | stub | Only variable. and temp. are assignable. |

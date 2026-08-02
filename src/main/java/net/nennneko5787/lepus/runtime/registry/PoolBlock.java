@@ -139,9 +139,90 @@ public final class PoolBlock extends Block {
         return hardness <= 0.0f ? 1.0f : player.getDestroySpeed(state) / hardness / 30.0f;
     }
 
+    /**
+     * The outline the cursor draws on this block. SC-150 §4.
+     *
+     * <p>Bedrock's {@code selection_box}. Kept separate from {@link #getCollisionShape} because
+     * Minecraft falls the second back to the first by default, and a block that can be walked
+     * through but still targeted — Bedrock's {@code "collision_box": false} — is a shape a pack
+     * cannot express if the two share one answer.
+     */
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getShape(
+            net.minecraft.world.level.block.state.BlockState state,
+            net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+            net.minecraft.world.phys.shapes.CollisionContext context) {
+        return BoundBlocks.selectionOf(state);
+    }
+
+    /**
+     * What this block is solid against. SC-150 §4, Bedrock's {@code collision_box}.
+     *
+     * <p>The shape is looked up, never built: {@link BoundBlocks} converted every state's box once
+     * when the pack was bound, which is what keeps this method a map lookup on a path that runs
+     * many times per tick per entity.
+     */
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getCollisionShape(
+            net.minecraft.world.level.block.state.BlockState state,
+            net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+            net.minecraft.world.phys.shapes.CollisionContext context) {
+        return BoundBlocks.collisionOf(state);
+    }
+
+    /**
+     * What the middle mouse button puts in your hand. SC-120 §4.
+     *
+     * <p>The carrier item carrying this block's LOGICAL identity — never the slot. A slot appears in
+     * chunk storage and the ledger and nowhere else (constitution rule 12), and an item is somewhere
+     * else: it is picked up, dropped, put in a chest, and read by anything that reads a stack.
+     *
+     * <p>An unbound slot answers with nothing, which is what picking a placeholder should do.
+     */
+    @Override
+    protected net.minecraft.world.item.ItemStack getCloneItemStack(
+            net.minecraft.world.level.LevelReader level, net.minecraft.core.BlockPos pos,
+            net.minecraft.world.level.block.state.BlockState state, boolean includeData) {
+        return slot == null
+                ? net.minecraft.world.item.ItemStack.EMPTY
+                : BoundBlocks.at(slot)
+                        .map(bound -> AddonItem.of(bound.logicalId(),
+                                BoundBlocks.nameOf(bound.logicalId()),
+                                net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                                        BlockPool.namespace(), BlockBinding.itemModelOf(slot))))
+                        .orElse(net.minecraft.world.item.ItemStack.EMPTY);
+    }
+
+    /**
+     * What this block sounds like when placed, broken and walked on. SC-150 §4.
+     *
+     * <p>Overridden rather than baked for the reason every other behaviour here is: the registered
+     * properties are filled in before any pack exists, so a fixed sound would make every add-on
+     * block in the game sound like stone however its pack declared it.
+     */
+    @Override
+    protected net.minecraft.world.level.block.SoundType getSoundType(
+            net.minecraft.world.level.block.state.BlockState state) {
+        return BoundBlocks.soundOf(state);
+    }
+
     /** How many states this block has. Equal to its size class. */
     public int sizeClass() {
         return sizeClass;
+    }
+
+    /**
+     * The block state carrying one state index.
+     *
+     * <p>Clamped rather than trusted: an index is computed from a schema that a pack can change
+     * between loads, and {@code setValue} on a value outside the property's range throws. A block
+     * placed in its first state beats a crash in the middle of placing it.
+     */
+    public net.minecraft.world.level.block.state.BlockState stateOf(int stateIndex) {
+        if (index == null) {
+            return defaultBlockState();
+        }
+        return defaultBlockState().setValue(index, Math.max(0, Math.min(sizeClass - 1, stateIndex)));
     }
 
     /** The slot index property, or {@code null} for a size class of 1. */

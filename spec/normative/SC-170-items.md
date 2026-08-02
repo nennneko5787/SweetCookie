@@ -86,8 +86,47 @@ Attachables — 3D held and worn models with their own geometry, animations and 
 have no Java equivalent and need the SC-180 render stack. This is the largest single piece of work
 in this document.
 
-`TODO(SC-170)`: whether attachables render through the same path as entities or need their own,
-given first-person hand rendering differs substantially.
+**Attachables need their own path, and it is split by view rather than by kind.** The open question
+above is answered, and the answer is not the one it assumed: first-person hand rendering is not
+merely different, it is the wrong place entirely. An attachable is posed in **player space**
+(SC-180 §3.4.2), so the item's own model draws it in neither view.
+
+| view | seam |
+|---|---|
+| third person | a render layer on the player, as the elytra's is |
+| first person | a hook on the hand render, which rebuilds player space against the camera |
+| inventory, ground, item frame | the flat `minecraft:icon` sprite, as Bedrock shows there |
+
+The item's model definition therefore **selects on the display context** and resolves to
+`minecraft:empty` for **all four hand contexts** — the drawing happens beside it, not through it.
+Making the whole item a special model instead removes its inventory icon, because a special renderer
+draws in every context and the sprite is then never drawn at all.
+
+Blanking only first person is the halfway state, and it is visibly wrong rather than merely
+incomplete: the third-person hand goes on drawing the flat icon, which lands inside the character
+the layer is drawing on the player. Bedrock shows the attachable and nothing else.
+
+Neither loader offers one seam for both views. NeoForge has `RenderHandEvent`; Fabric API has no
+first-person hook on either supported version — the class lists of both were read — so that half is
+a mixin, delegating immediately to shared code as SC-230 §6 requires.
+
+### 5.1 Where Bedrock's own account of this lives
+
+<https://wiki.bedrock.dev/items/attachables> is the community reference and **should be consulted
+before inferring an attachable's semantics from a pack's files**. It is not normative and it is not
+complete, but it settles questions this project spent a day guessing at:
+
+| | |
+|---|---|
+| the two views | a pack is expected to author **separate** first- and third-person animations |
+| construction | *Method 1* rebuilds the player skeleton and parents to `rightItem`; *Method 2* sets `"binding": "q.item_slot_to_bone_name(context.item_slot)"` on the root |
+| an undocumented engine offset | with Method 2, Minecraft applies **y −24 to bound bones**, which packs cancel by hand. The wiki says "we are unsure at this time why this happens" |
+
+That last row is worth carrying: **Bedrock applies constants that no pack file states.** A model
+that will not line up is not necessarily a parsing or composition fault.
+
+`TODO(SC-170)`: `binding` is parsed into the unknown bag and not applied (SC-180 §3.5). Method 2
+packs will not place correctly until it is, and the y −24 goes with it.
 
 ## 6. Creative menu
 

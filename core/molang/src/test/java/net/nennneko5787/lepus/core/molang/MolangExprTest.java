@@ -176,6 +176,59 @@ class MolangExprTest {
                 new TreeSet<>(expr.referencedQueries()));
     }
 
+    /**
+     * {@code this} — "the current value that this expression will ultimately write to".
+     *
+     * <p>Microsoft's own definition, and the parenthesis in it ("context specific") is why the
+     * context answers rather than the compiler deciding. Found because a real pack's animation aims
+     * an arm with {@code query.target_x_rotation - 110.0 - this}: without the keyword the WHOLE
+     * expression failed to compile, taking the {@code - 110.0} with it and dropping the arm.
+     */
+    @Test
+    @ProvesSpec("SC-130#syntax/this")
+    void thisReadsWhateverTheContextIsAbout() {
+        MolangContext carrying = new MolangContext() {
+            private final MolangContext delegate = MolangContext.standalone();
+
+            @Override
+            public boolean isDefined(Scope scope, String name) {
+                return delegate.isDefined(scope, name);
+            }
+
+            @Override
+            public float read(Scope scope, String name) {
+                return delegate.read(scope, name);
+            }
+
+            @Override
+            public void write(Scope scope, String name, float value) {
+                delegate.write(scope, name, value);
+            }
+
+            @Override
+            public float call(Scope scope, String name, float[] arguments) {
+                return delegate.call(scope, name, arguments);
+            }
+
+            @Override
+            public MolangMath math() {
+                return delegate.math();
+            }
+
+            @Override
+            public float thisValue() {
+                return 30f;
+            }
+        };
+        assertEquals(20f, MolangExpr.compile("this - 10").evaluate(carrying), 1.0e-4f);
+        // No scope, no dot - it is a keyword, not a variable.
+        assertEquals(-10f, MolangExpr.compile("q.nothing - 10 - this")
+                .evaluate(MolangContext.standalone()), 1.0e-4f);
+        // A context with nothing underneath answers zero, which is not a lie: an animation applied
+        // straight onto a bind pose genuinely has nothing beneath it.
+        assertEquals(0f, MolangExpr.compile("this").evaluate(MolangContext.standalone()), 1.0e-4f);
+    }
+
     @Test
     @ProvesSpec("SC-130")
     void saysWhatItCannotParseYet() {

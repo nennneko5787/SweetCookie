@@ -1,0 +1,15 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:block": {
+    "description": {
+      "identifier": "sc_conformance:signpost",
+      "menu_category": { "category": "construction" }
+    },
+    "components": {
+      "minecraft:geometry": "geometry.sc_conformance.signpost",
+      "minecraft:material_instances": {
+        "*": { "texture": "sc_conformance_signpost" }
+      }
+    }
+  }
+}

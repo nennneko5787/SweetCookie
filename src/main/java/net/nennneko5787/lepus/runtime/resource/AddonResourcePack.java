@@ -64,8 +64,33 @@ public final class AddonResourcePack implements PackResources {
      * together, and a pack half-updated would draw one block with another's model. Volatile because
      * binding happens on the server thread and resource loading does not.
      */
-    public static void replace(Map<String, byte[]> byPath) {
+    public static boolean replace(Map<String, byte[]> byPath) {
+        Map<String, byte[]> previous = contents;
         contents = Map.copyOf(byPath);
+        return !same(previous, contents);
+    }
+
+    /**
+     * Whether two snapshots serve the same bytes.
+     *
+     * <p>The answer decides whether the client is asked to reload its resources, and a reload is a
+     * visible pause — so "changed" has to mean changed, not "was rebuilt". Binding runs on every
+     * world load and every activation change, and most of those produce the identical 2,012
+     * blockstate files.
+     *
+     * <p>{@code Map.equals} would not do: the values are {@code byte[]}, whose equality is identity,
+     * so every rebuild would compare unequal and every world load would reload the client.
+     */
+    private static boolean same(Map<String, byte[]> a, Map<String, byte[]> b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (Map.Entry<String, byte[]> entry : a.entrySet()) {
+            if (!java.util.Arrays.equals(entry.getValue(), b.get(entry.getKey()))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** UTF-8, for the callers whose files are JSON they just generated. */

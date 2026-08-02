@@ -1,0 +1,26 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Lepus Conformance Lantern",
+    "description": "One pack carrying both halves, so a block and the model it names ship together. Original content, authored for this project.",
+    "uuid": "5c00c1e0-0000-4000-8000-000000000101",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "5c00c1e0-0000-4000-8000-000000000102",
+      "version": [1, 0, 0]
+    },
+    {
+      "type": "resources",
+      "uuid": "5c00c1e0-0000-4000-8000-000000000103",
+      "version": [1, 0, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["Lepus"],
+    "license": "MIT"
+  }
+}

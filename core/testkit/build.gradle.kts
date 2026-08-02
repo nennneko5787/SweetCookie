@@ -26,3 +26,18 @@ tasks.withType<Test>().configureEach {
     System.getProperty("lepus.accept")?.let { systemProperty("lepus.accept", it) }
     outputs.upToDateWhen { false } // the corpus is an input this task cannot declare
 }
+
+// The survey: what real add-ons use and how much of it this build reads. spec/process.md §1.
+//
+// A task rather than a test, because add-ons are never committed here (constitution rule 10) and
+// the path has to come from whoever is running it.
+tasks.register<JavaExec>("survey") {
+    group = "verification"
+    description = "Report what installed add-ons use. -Paddons=<folder of packs>, repeatable by comma."
+    mainClass.set("net.nennneko5787.lepus.core.testkit.AddonSurvey")
+    classpath = sourceSets["main"].runtimeClasspath
+    // Resolved at execution time so configuring the build without the property still works.
+    argumentProviders.add(CommandLineArgumentProvider {
+        (findProperty("addons") as String?)?.split(",")?.map(String::trim) ?: emptyList()
+    })
+}

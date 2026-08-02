@@ -74,6 +74,28 @@ public final class TabbedPackScreen extends PackSelectionScreen {
         super.init();
         TabNavigationBar bar = PackTabBar.build(this.width, kind, selected -> {
             if (selected != kind) {
+                // Read this tab's selection out before the other one replaces the screen, or it is
+                // simply gone and the box un-ticks itself on the way back. Vanilla's own commit is
+                // the ONLY way to get it out of PackSelectionScreen - the model is private, and the
+                // repository does not hold the selection until the model writes it there.
+                //
+                // SUPER's onClose, not this class's. Vanilla's is the commit plus closing the file
+                // watcher and nothing else; the override below adds Screens.show(parent) after it.
+                // A tab press that went through the override therefore closed the screen to a null
+                // parent - which is to say back to the game - and then opened the other tab. Going
+                // back to the game GRABS the mouse: Minecraft hides the cursor and puts it in the
+                // middle of the window, and opening the next screen released it again, leaving it
+                // where the grab had just put it. That round trip is the whole of the cursor jump.
+                //
+                // Flagged, because the commit is also what a real close uses to send commands. A
+                // tab press must not send: doing so was a round trip and a client resource reload
+                // per press, which flickered the window.
+                AddonPackScreen.switching(true);
+                try {
+                    super.onClose();
+                } finally {
+                    AddonPackScreen.switching(false);
+                }
                 switcher.accept(selected);
             }
         });
@@ -159,17 +181,17 @@ public final class TabbedPackScreen extends PackSelectionScreen {
         List<Path> rejected = files.stream().filter(file -> !looksLikeAnAddon(file)).toList();
 
         if (accepted.isEmpty()) {
-            showRejected(rejected, () -> this.minecraft.setScreenAndShow(this));
+            showRejected(rejected, () -> Screens.show(this));
             return;
         }
         // Vanilla's own dialog, down to the translation keys, so it is the prompt a user has already
         // seen when adding a resource pack and it is already in their language. Asking at all is the
         // point: a drop copies files into the game directory, and doing that without a word is a
         // surprise even when it is what the user meant.
-        this.minecraft.setScreenAndShow(new ConfirmScreen(
+        Screens.show(new ConfirmScreen(
                 confirmed -> {
                     if (!confirmed) {
-                        this.minecraft.setScreenAndShow(this);
+                        Screens.show(this);
                         return;
                     }
                     install(accepted);
@@ -190,7 +212,7 @@ public final class TabbedPackScreen extends PackSelectionScreen {
             next.run();
             return;
         }
-        this.minecraft.setScreenAndShow(new AlertScreen(
+        Screens.show(new AlertScreen(
                 next,
                 Component.translatable("pack.dropRejected.title"),
                 Component.translatable("pack.dropRejected.message", rejected.stream()
@@ -272,9 +294,11 @@ public final class TabbedPackScreen extends PackSelectionScreen {
 
     @Override
     public void onClose() {
-        // Vanilla's onClose commits and then returns to ITS parent, which it took from Minecraft's
-        // current screen. Ours is the screen the mod list came from, so it is restored here.
+        // Vanilla's onClose commits the selection and closes its file watcher, and leaves the
+        // screen up - every vanilla caller decides for itself what to show next. So the screen
+        // change is this override's, which is why the tab switch above calls super and not this:
+        // there is no way to ask for the commit alone once the two are stuck together here.
         super.onClose();
-        this.minecraft.setScreenAndShow(parent);
+        Screens.show(parent);
     }
 }

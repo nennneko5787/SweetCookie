@@ -39,12 +39,13 @@ public final class GeometryFiles {
     /** The member the modern family keys its model array under. */
     private static final String MODERN_ROOT = "minecraft:geometry";
 
-    private static final Set<String> MODEL_KEYS_MODERN = Set.of("description", "bones", "cape");
+    private static final Set<String> MODEL_KEYS_MODERN =
+            Set.of("description", "bones", "cape", "item_display_transforms");
     private static final Set<String> DESCRIPTION_KEYS = Set.of(
             "identifier", "texture_width", "texture_height",
             "visible_bounds_width", "visible_bounds_height", "visible_bounds_offset");
     private static final Set<String> MODEL_KEYS_LEGACY = Set.of(
-            "bones", "texturewidth", "textureheight",
+            "bones", "texturewidth", "textureheight", "item_display_transforms",
             "visible_bounds_width", "visible_bounds_height", "visible_bounds_offset");
     private static final Set<String> BONE_KEYS = Set.of(
             "name", "parent", "pivot", "rotation", "bind_pose_rotation", "binding",
@@ -128,6 +129,7 @@ public final class GeometryFiles {
                 descAt.intValue(desc, "texture_height", GeometryIr.DEFAULT_TEXTURE_SIZE),
                 visibleBounds(desc, descAt),
                 parseBones(model, ctx),
+                itemDisplay(model, ctx),
                 ctx.provenance(),
                 UnknownData.of(model, MODEL_KEYS_MODERN)));
     }
@@ -155,6 +157,7 @@ public final class GeometryFiles {
                     at.intValue(m, "textureheight", GeometryIr.DEFAULT_TEXTURE_SIZE),
                     visibleBounds(m, at),
                     parseBones(m, at),
+                    itemDisplay(m, at),
                     at.provenance(),
                     UnknownData.of(m, MODEL_KEYS_LEGACY)));
         }
@@ -196,6 +199,46 @@ public final class GeometryFiles {
                 ctx.floatValue(source, "visible_bounds_width", 0f),
                 ctx.floatValue(source, "visible_bounds_height", 0f),
                 ctx.vec3(source, "visible_bounds_offset", Vec3f.ZERO)));
+    }
+
+    /**
+     * {@code item_display_transforms}, by context. SC-180 §3.6.
+     *
+     * <p>On the MODEL rather than in its description, which is where every observed file puts it and
+     * where Bedrock's own schema has it — a sibling of {@code bones}, not a member of
+     * {@code description}. Parsed for both families: the key belongs to the model object either way,
+     * and a 1.8.0 file carrying one costs nothing to read.
+     *
+     * <p>A context name outside {@link ItemDisplay#CONTEXTS} is <b>reported and dropped</b>. Passing
+     * it through would put a key in the Java model that Minecraft's loader silently ignores, and a
+     * misspelled context would then be invisible in the file and in the game at once.
+     */
+    private static Map<String, ItemDisplay> itemDisplay(JsonObject model, ParseContext ctx) {
+        Optional<JsonObject> transforms = model.getObject("item_display_transforms");
+        if (transforms.isEmpty()) {
+            return Map.of();
+        }
+        ParseContext at = ctx.at("item_display_transforms");
+        Map<String, ItemDisplay> out = new LinkedHashMap<>();
+        for (String context : transforms.get().keys()) {
+            if (!ItemDisplay.CONTEXTS.contains(context)) {
+                at.report(IrDiagnostics.FIELD_MALFORMED, context, "not a display context");
+                continue;
+            }
+            Optional<JsonObject> transform = transforms.get().getObject(context);
+            if (transform.isEmpty()) {
+                at.report(IrDiagnostics.FIELD_MALFORMED, context, "not an object");
+                continue;
+            }
+            ParseContext one = at.at(context);
+            out.put(context, new ItemDisplay(
+                    one.vec3(transform.get(), "rotation", Vec3f.ZERO),
+                    one.vec3(transform.get(), "translation", Vec3f.ZERO),
+                    // ONE, not ZERO. A missing scale means "unchanged", and defaulting it the way
+                    // the other two default would scale every such model to nothing.
+                    one.vec3(transform.get(), "scale", Vec3f.ONE)));
+        }
+        return out;
     }
 
     private static List<BoneIr> parseBones(JsonObject model, ParseContext ctx) {

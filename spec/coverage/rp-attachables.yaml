@@ -27,6 +27,58 @@ entries:
     notes: >-
       Which items this attachable applies to.
   - id: attachable/first_person
-    status: stub
-    notes: >-
-      First-person hand rendering differs substantially; may need its own path.
+    status: partial
+    impl: net.nennneko5787.lepus.client.render.FirstPersonAttachables
+    fields:
+      main_hand: ok
+      off_hand: ok
+      worn_slots: missing
+    fidelity: >-
+      It does need its own path, and the reason is not that hand rendering is awkward: Bedrock does
+      not draw an attachable at the hand at all. It poses it in PLAYER space, which in first person
+      is a space the game never draws in, because no player model is submitted. So the space is
+      rebuilt against the camera - the camera's pitch and its yaw-over-body undone, the origin then
+      dropped to the feet, and the whole scaled by the 0.9375 a player model carries.
+
+      ORDER, not sign, is what that list is about. Stepping down to the feet before undoing the
+      pitch drops the model along a tilted axis, misplacing it by 1.62 sin(pitch) horizontally -
+      "looking up moves her up and forward, looking down the reverse".
+
+      Pitch is undone because a player layer is not pitched either; Java tilts the head bone, not
+      the body. Yaw is taken back to the BODY's, because Minecraft lets head and body differ by
+      fifty degrees and a camera-anchored model slides off the player's back as the mouse moves.
+
+      A worn attachable is not drawn in first person. The seam is the hand render, which is offered
+      the two hands and nothing else; the four armour slots reach the third-person layer only. A
+      halo sits above and behind the eye and would be invisible anyway, but an armour attachable
+      that reaches in front of the player is a real omission rather than a hidden one.
+
+      NOT yet confirmed against a Bedrock client. The reference screenshot puts the character at the
+      left edge of the view, which agrees with SC-180 section 4.1's composition rule; whether the
+      remaining overlap between the camera and her head matches has not been measured.
+  - id: attachable/worn
+    status: partial
+    impl: net.nennneko5787.lepus.client.render.AttachableLayer
+    fields:
+      head: ok
+      chest: ok
+      legs: ok
+      feet: ok
+      first_person: missing
+    fidelity: >-
+      A worn attachable reaches the render layer only because the stack's minecraft:equippable names
+      an equipment asset. Vanilla filters what it puts on the render state -
+      HumanoidMobRenderer.getEquipmentIfRenderable asks HumanoidArmorLayer.shouldRender, which asks
+      assetId().isPresent() - so a stack without one leaves headEquipment and its three neighbours
+      empty and the layer is handed nothing at all.
+
+      The asset named is ours and draws nothing: it declares a single layer of a type no humanoid
+      renders, because the codec rejects an empty layer map and any type a humanoid DOES render
+      would put a flat armour piece over the model.
+
+      This lives on the STACK, so a stack made by an older build carries an equippable without the
+      asset and stays invisible until it is made again (SC-120 section 5). That is a real upgrade
+      hazard, not only a development one.
+
+      Vanilla's CustomHeadLayer still draws the item's own flat model on the head, beside the
+      attachable. Bedrock shows only the attachable.

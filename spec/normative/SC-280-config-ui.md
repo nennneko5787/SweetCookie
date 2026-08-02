@@ -248,6 +248,41 @@ exists.
 The screen **rebuilds its description on a timer, not after sending**. The command is answered on
 another thread; redrawing immediately shows the state the action was about to change.
 
+**Switching tabs commits.** Each tab is a separate screen built from the activation state (§5.2), so
+a selection left uncommitted when the other tab opens is not merely unsaved — it is gone, and the
+box un-ticks itself on the way back with nothing said. There is no cancel to be inconsistent with:
+Done and Escape both commit already.
+
+### 7.1.1 What a view may offer
+
+**A view must not print a command the reader cannot run.** Brigadier removes a node whose
+`requires` the caller fails, and removes it from the tree sent to the client too — so a player
+without cheats who types a command the mod just told them to type gets *"incorrect argument for
+command"* with the caret under the word they were told to write. Nothing in that message names
+permissions, and the mod looks broken to the one person who did exactly as instructed.
+
+So the actions in a view are built against the caller's permission, and where an action is withheld
+the view says **why, and what to change**: single player is `Open to LAN` with `Allow Cheats` on,
+a server is `/op`. A withheld action with no explanation is the same failure one step later.
+
+### 7.1.2 `/lepus` opens the screen
+
+The bare command **opens the add-on screen when this process has a client**, and prints the list
+when it does not. Asking for "the add-on settings" should not require knowing whether you are a
+player or a console.
+
+This does not weaken §7: the screen still performs everything by sending commands, and the
+subcommands remain the whole feature set. `/lepus help` prints them.
+
+The client registers the opener during its own initialisation and the command asks whether anyone
+did (`ScreenOpener`). The command must not name a screen class: it runs on a dedicated server too,
+where loading one would fail at the first invocation — a failure no compiler and no headless test
+catches, because both sides compile and only the server's classpath is missing the class.
+
+A client connected to a **remote** server gets the list rather than the screen: the command executes
+on the server, which has no client to open. Opening the local screen from there would need a packet,
+and SC-270's invariant is worth more than the convenience.
+
 ### 7.2 What is testable, and where it lives
 
 The selection screen itself is not ours to test — it is the game's, and it is exercised every time

@@ -18,12 +18,19 @@ import net.nennneko5787.lepus.core.format.value.BedrockId;
  * @param blocks keyed by {@code description.identifier}, in the order the pack's files were walked
  */
 @SpecImpl("SC-110")
-public record BehaviorIr(Map<BedrockId, BlockDefIr> blocks) {
+public record BehaviorIr(Map<BedrockId, BlockDefIr> blocks,
+        Map<BedrockId, net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> items) {
 
-    public static final BehaviorIr EMPTY = new BehaviorIr(Map.of());
+    public static final BehaviorIr EMPTY = new BehaviorIr(Map.of(), Map.of());
 
     public BehaviorIr {
         blocks = Collections.unmodifiableMap(new LinkedHashMap<>(blocks));
+        items = Collections.unmodifiableMap(new LinkedHashMap<>(items));
+    }
+
+    /** Blocks only, for the callers that predate items. */
+    public BehaviorIr(Map<BedrockId, BlockDefIr> blocks) {
+        this(blocks, Map.of());
     }
 
     public Optional<BlockDefIr> block(BedrockId identifier) {
@@ -31,6 +38,6 @@ public record BehaviorIr(Map<BedrockId, BlockDefIr> blocks) {
     }
 
     public boolean isEmpty() {
-        return blocks.isEmpty();
+        return blocks.isEmpty() && items.isEmpty();
     }
 }

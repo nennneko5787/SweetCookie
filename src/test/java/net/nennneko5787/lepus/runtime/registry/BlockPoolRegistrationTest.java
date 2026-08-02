@@ -1,6 +1,7 @@
 package net.nennneko5787.lepus.runtime.registry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,11 +10,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.nennneko5787.lepus.core.format.ir.block.BlockBox;
+import net.nennneko5787.lepus.core.format.ir.block.BlockPhysics;
 import net.nennneko5787.lepus.core.registry.BlockSlot;
 import net.nennneko5787.lepus.core.registry.SlotPool;
 import org.junit.jupiter.api.BeforeAll;
@@ -133,6 +141,81 @@ class BlockPoolRegistrationTest {
         // dark default an unbound slot should have.
         PoolBlock block = pool.block(new BlockSlot(4, 0)).orElseThrow();
         assertEquals(0, block.defaultBlockState().getLightEmission());
+    }
+
+    /**
+     * The shape of a bound block, asked for after Minecraft has had its chance to cache one.
+     *
+     * <p>{@code getCollisionShape(level, pos)} — no {@code CollisionContext} — answers out of
+     * {@code BlockStateBase.Cache} when a cache exists, and {@code initCache} is called here
+     * <b>before anything is bound</b> because that is when vanilla calls it: once, from
+     * {@code Blocks}' class initialiser, long before any world. Without
+     * {@code Properties.dynamicShape()} the cache keeps the unbound full cube and every bound block
+     * collides as one, whatever its {@code collision_box} says.
+     *
+     * <p>The explicit {@code initCache} is the point of the test. Registration in this class happens
+     * after {@code Bootstrap} has already run that initialiser, so these states are never cached on
+     * their own and the assertion would pass either way — which is exactly the shape of a test that
+     * proves nothing. Calling it puts the state into the condition a real launch could put it in.
+     */
+    @Test
+    void aBoundBlockCollidesAsItsBoxRatherThanOutOfAStaleCache() {
+        BlockSlot slot = new BlockSlot(4, 2);
+        PoolBlock block = pool.block(slot).orElseThrow();
+        BlockState state = block.defaultBlockState().setValue(block.indexProperty(), 0);
+        state.initCache();
+        try {
+            BoundBlocks.replace(Map.of(slot, BoundBlocks.Bound.of("sc:slab",
+                    List.of(physicsWithBoxes(new BlockBox(0, 0, 0, 16, 8, 16), BlockBox.FULL)),
+                    List.of(NO_APPEARANCE), net.minecraft.world.level.block.SoundType.STONE)));
+
+            assertEquals(0.5, state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
+                    .max(Direction.Axis.Y));
+            assertEquals(1.0, state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
+                    .max(Direction.Axis.Y));
+        } finally {
+            BoundBlocks.clear();
+        }
+    }
+
+    @Test
+    void aBlockWithNoCollisionBoxIsStillThereToLookAt() {
+        // `"collision_box": false` with the selection box left alone: walked through, still
+        // targeted. Minecraft falls collision back to the outline by default, so these two answers
+        // being different is the whole reason the two are read separately.
+        BlockSlot slot = new BlockSlot(4, 1);
+        PoolBlock block = pool.block(slot).orElseThrow();
+        try {
+            BoundBlocks.replace(Map.of(slot, BoundBlocks.Bound.of("sc:open",
+                    List.of(physicsWithBoxes(null, BlockBox.FULL)), List.of(NO_APPEARANCE),
+                    net.minecraft.world.level.block.SoundType.STONE)));
+
+            BlockState state = block.defaultBlockState().setValue(block.indexProperty(), 0);
+            assertTrue(state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty());
+            assertFalse(state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty());
+        } finally {
+            BoundBlocks.clear();
+        }
+    }
+
+    @Test
+    void anUnboundSlotIsSolidRatherThanSomethingToFallThrough() {
+        // SC-120 §7: a slot nothing is bound to is a placeholder, and a placeholder a player falls
+        // through would take the world's floor with it when a pack is detached.
+        PoolBlock block = pool.block(new BlockSlot(1, 0)).orElseThrow();
+        assertEquals(1.0, block.defaultBlockState()
+                .getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
+                .max(Direction.Axis.Y));
+    }
+
+    /** What a state looks like when the test is about shapes and not about pictures. */
+    private static final BoundBlocks.Appearance NO_APPEARANCE =
+            new BoundBlocks.Appearance("{}", Map.of());
+
+    /** A {@link BlockPhysics} that is default in every way except its two boxes. */
+    private static BlockPhysics physicsWithBoxes(BlockBox collision, BlockBox selection) {
+        return new BlockPhysics(Optional.of(0.0f), Optional.of(0.0f), 0, 0.4f,
+                Optional.ofNullable(collision), Optional.ofNullable(selection));
     }
 
     @Test

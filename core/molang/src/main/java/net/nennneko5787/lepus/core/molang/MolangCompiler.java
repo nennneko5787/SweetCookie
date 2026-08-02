@@ -334,6 +334,15 @@ final class MolangCompiler {
     private Node parseAccess() {
         Token head = advance();
         String scopeName = head.text();
+        // `this` is a value on its own and takes no scope and no dot. Microsoft's syntax guide:
+        // "the current value that this expression will ultimately write to (context specific)".
+        //
+        // Which value that is belongs to whoever is evaluating — an animation channel's existing
+        // offset, a render controller's colour — so it is asked of the context rather than decided
+        // here. SC-130 §2.6.
+        if (scopeName.equalsIgnoreCase("this")) {
+            return Node.dynamic(MolangContext::thisValue);
+        }
         expectDot(head);
         Token nameToken = expect(Kind.IDENTIFIER, "expected a name after '" + scopeName + ".'");
         String name = nameToken.text();

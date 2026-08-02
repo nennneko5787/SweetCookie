@@ -1,0 +1,15 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "sc_conformance:ticket",
+      "menu_category": { "category": "items" }
+    },
+    "components": {
+      "minecraft:max_stack_size": 64,
+      "minecraft:display_name": {
+        "value": "item.spawn_egg.entity.sc_conformance:summoned.name"
+      }
+    }
+  }
+}

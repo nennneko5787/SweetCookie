@@ -14,6 +14,7 @@
   "environment": "*",
   "entrypoints": {
     "main": ["net.nennneko5787.lepus.fabric.LepusFabric"],
+    "client": ["net.nennneko5787.lepus.fabric.LepusFabricClient"],
     "modmenu": ["net.nennneko5787.lepus.fabric.LepusModMenu"]
   },
   "mixins": [
