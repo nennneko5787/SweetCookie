@@ -1,5 +1,7 @@
 # Lepus
 
+[English](README.md) | [日本語](README.ja.md)
+
 **Run Minecraft Bedrock Edition Add-Ons on Minecraft Java Edition.**
 
 Lepus loads `.mcaddon` / `.mcpack` files — behavior packs *and* resource packs — and executes
@@ -12,7 +14,67 @@ spawn rules.
 | Loaders | Fabric, NeoForge |
 | Minecraft | 26.2, 1.21.11 *(more to follow)* |
 | Side | **Required on both client and server** |
-| Status | **Pre-alpha — specification and scaffolding phase. Not usable yet.** |
+| Status | **Pre-alpha.** Blocks and items from a real add-on load, bind and render; entities, Molang queries and particles do not. |
+
+## Implementation status
+
+A box is checked when the capability works end to end in the running game. The fraction after it
+counts entries in [`spec/coverage/`](spec/coverage/) that have an implementation behind them
+(`implemented` + `partial`) against the identifiers tracked in that area — the full per-identifier
+table is [`docs/compatibility/summary.md`](docs/compatibility/summary.md), and **1363 identifiers
+are tracked in total**. The two are not the same measurement: a capability can be usable while most
+of its long tail of identifiers is still untouched.
+
+**Loading a pack**
+
+- [x] `.mcaddon`, `.mcpack` and plain-folder containers — 14/19
+- [x] Manifest `format_version` 1, 2 and 3, module and dependency declarations, `min_engine_version`
+- [x] Subpack overlays, `texts/*.lang`
+- [x] Enable, disable and reorder per world at runtime, with the assignment persisted per world
+- [x] Unknown components, goals, queries and format versions log a diagnostic and become no-ops
+      rather than crashing the world (SC-240)
+
+**Blocks** — 5/54 components, 0/8 states and traits
+
+- [x] Bound to anonymous pool slots, with generated blockstates and models per state
+- [x] `minecraft:collision_box`, `minecraft:selection_box`
+- [x] `minecraft:geometry` transpiled from `.geo.json`, `minecraft:unit_cube`
+- [x] `minecraft:material_instances` texture resolution, through `terrain_texture.json`
+- [x] Creative menu, grouped by pack and ordered by `menu_category`
+- [ ] Permutations beyond the parsed form, block traits, and the remaining 49 components
+
+**Items** — 7/46 components
+
+- [x] One carrier item plus a data component, never a registry entry of its own
+- [x] `max_stack_size`, `durability`, `wearable`, `enchantable`, `glint` / `foil`, `display_name`
+- [x] `item_display_transforms` from the add-on's geometry — 1/17
+- [ ] `allow_off_hand`, food, cooldown, digger, and the remaining 39 components
+
+**Rendering**
+
+- [ ] Attachables — first-person and worn 3D models, animated. In progress, 2/10
+- [ ] Bedrock skeletal animation files — 0/22
+- [ ] Render controllers 0/13, client entity definitions 0/15
+- [ ] Snowstorm particles — 0/33
+
+**Molang** — 1/396
+
+- [x] Lexer, compiler and math binding in `core/molang`
+- [ ] No `math.*` or `query.*` identifier is claimed in the ledger yet
+
+**Entities** — 0/373
+
+- [ ] Components 0/118, AI goals 0/173, events 0/23, entity properties 0/59
+- [ ] Filters — 0/108
+
+**World and gameplay data** — 0/152
+
+- [ ] Loot tables 0/30, recipes 0/9, trading 0/9, spawn rules 0/16, functions and commands 0/88
+
+**Interoperability and scripting**
+
+- [ ] Geyser 0/7, ViaVersion / ViaBackwards 0/8
+- [ ] Script API — 0/23
 
 ## Why
 
@@ -74,19 +136,3 @@ policy for GPL sources are in [NOTICE](NOTICE); the reasoning is
 
 Minecraft is a trademark of Mojang Synergies AB. This project is not affiliated with Mojang or
 Microsoft.
-
----
-
-## 日本語
-
-Minecraft 統合版のアドオン（`.mcaddon` / `.mcpack`）を Java 版で動かす MOD です。ビヘイビアパックと
-リソースパックの両方を読み込み、カスタムブロック・アイテム・エンティティ（コンポーネントと AI ゴール
-定義込み）・Bedrock のスケルタルモデルとアニメーション・Molang・Snowstorm パーティクル・ルート
-テーブル・レシピ・湧き条件を Java 版の中で実行します。
-
-Geyser はビヘイビアパックを原理的にサポートしません（実行には Java サーバー側の改変が必要で、
-プロキシ構成では不可能だから）。Lepus はその欠けている「Java サーバー側」です。
-
-**現在はプレアルファ（仕様策定と足場作りの段階）で、まだ動きません。**
-
-詳細は [README.ja.md](README.ja.md) を参照してください。

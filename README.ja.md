@@ -1,5 +1,7 @@
 # Lepus
 
+[English](README.md) | [日本語](README.ja.md)
+
 **Minecraft 統合版のアドオンを Java 版で動かす MOD。**
 
 `.mcaddon` / `.mcpack` を読み込み、ビヘイビアパックとリソースパックの両方を Java 版の中で実行します。
@@ -11,7 +13,67 @@
 | ローダー | Fabric, NeoForge |
 | Minecraft | 26.2, 1.21.11 *(順次追加)* |
 | 導入先 | **クライアント・サーバーの両方に必須** |
-| 状態 | **プレアルファ — 仕様策定と足場作りの段階。まだ動きません。** |
+| 状態 | **プレアルファ。** 実際のアドオンのブロックとアイテムは読み込み・バインド・描画まで動きます。エンティティ・Molang クエリ・パーティクルはまだ動きません。 |
+
+## 実装状況
+
+チェックが付いているのは、実際にゲーム内で端から端まで動く機能です。後ろの分数は
+[`spec/coverage/`](spec/coverage/) の中でその領域の識別子のうち実装が紐づいているもの
+（`implemented` + `partial`）の数で、識別子ごとの完全な表は
+[`docs/compatibility/summary.md`](docs/compatibility/summary.md) にあります（**追跡中の識別子は
+全部で 1363 件**）。この 2 つは別の尺度です。機能として使える状態でも、その裾野にある識別子の
+大半は手つかず、ということが普通に起こります。
+
+**パックの読み込み**
+
+- [x] `.mcaddon` / `.mcpack` / 素のフォルダ — 14/19
+- [x] マニフェストの `format_version` 1・2・3、モジュールと依存の宣言、`min_engine_version`
+- [x] サブパックのオーバーレイ、`texts/*.lang`
+- [x] ワールドごとの有効化・無効化・並べ替えを実行中に反映し、割り当てはワールドごとに永続化
+- [x] 未知のコンポーネント・ゴール・クエリ・format_version は、ワールドを落とさず診断を出して
+      no-op になる（SC-240）
+
+**ブロック** — コンポーネント 5/54、state と trait 0/8
+
+- [x] 無名スロットのプールへバインドし、state ごとに blockstate とモデルを生成
+- [x] `minecraft:collision_box`、`minecraft:selection_box`
+- [x] `.geo.json` から変換する `minecraft:geometry`、`minecraft:unit_cube`
+- [x] `terrain_texture.json` を経由した `minecraft:material_instances` のテクスチャ解決
+- [x] クリエイティブメニュー（パック単位でまとまり、`menu_category` 順）
+- [ ] パース以上のパーミュテーション、block trait、残り 49 コンポーネント
+
+**アイテム** — コンポーネント 7/46
+
+- [x] 単一のキャリアアイテム＋データコンポーネント（専用のレジストリ枠は取らない）
+- [x] `max_stack_size`、`durability`、`wearable`、`enchantable`、`glint` / `foil`、`display_name`
+- [x] アドオン側ジオメトリの `item_display_transforms` — 1/17
+- [ ] `allow_off_hand`、food、cooldown、digger、残り 39 コンポーネント
+
+**描画**
+
+- [ ] attachable（一人称・装備の 3D モデル、アニメーション込み）— 作業中、2/10
+- [ ] Bedrock のアニメーションファイル — 0/22
+- [ ] レンダーコントローラ 0/13、client entity 定義 0/15
+- [ ] Snowstorm パーティクル — 0/33
+
+**Molang** — 1/396
+
+- [x] `core/molang` に字句解析・コンパイラ・math のバインディング
+- [ ] `math.*` も `query.*` も、まだ台帳上は 1 件も実装として主張していない
+
+**エンティティ** — 0/373
+
+- [ ] コンポーネント 0/118、AI ゴール 0/173、イベント 0/23、entity property 0/59
+- [ ] フィルタ — 0/108
+
+**ワールドとゲームプレイのデータ** — 0/152
+
+- [ ] ルートテーブル 0/30、レシピ 0/9、取引 0/9、湧き条件 0/16、function とコマンド 0/88
+
+**他 MOD 連携とスクリプト**
+
+- [ ] Geyser 0/7、ViaVersion / ViaBackwards 0/8
+- [ ] Script API — 0/23
 
 ## なぜ作るのか
 
@@ -48,7 +110,7 @@
 規範的な仕様は [`spec/`](spec/) に、機能カバレッジの自動生成表は
 [`docs/compatibility/`](docs/compatibility/) にあります。
 
-## 対応状況
+## 互換性の追跡
 
 Lepus は他人が決めた仕様を実装するプロジェクトなので、「何が動くか」は主張ではなく明示的に
 追跡します。全ての Bedrock feature ID が [`spec/coverage/`](spec/coverage/) に、状態・実装クラス・
