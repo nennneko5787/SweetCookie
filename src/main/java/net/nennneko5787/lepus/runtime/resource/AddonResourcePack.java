@@ -47,6 +47,23 @@ public final class AddonResourcePack implements PackResources {
 
     private static volatile Map<String, byte[]> contents = Map.of();
 
+    /**
+     * What this pack serves in the <b>{@code minecraft}</b> namespace, replacing vanilla's own file.
+     * SC-170 §5.2.
+     *
+     * <p>Separate from {@link #contents} rather than one map keyed by identifier, because the two are
+     * different kinds of thing and the difference is worth being unable to lose: everything above is
+     * a file only this mod names, and everything here <b>overwrites something vanilla shipped</b>.
+     * The pack sits at {@link Pack.Position#TOP}, so what is written here wins.
+     *
+     * <p>Empty in every world that has no add-on dressing a vanilla item, which is nearly all of
+     * them — an empty map means vanilla is untouched, and that is the state to prefer.
+     */
+    private static volatile Map<String, byte[]> overrides = Map.of();
+
+    /** The namespace {@link #overrides} lands in. Vanilla's own, which is the point of it. */
+    private static final String VANILLA = "minecraft";
+
     private final PackLocationInfo location;
 
     public AddonResourcePack() {
@@ -65,9 +82,22 @@ public final class AddonResourcePack implements PackResources {
      * binding happens on the server thread and resource loading does not.
      */
     public static boolean replace(Map<String, byte[]> byPath) {
-        Map<String, byte[]> previous = contents;
+        return replace(byPath, Map.of());
+    }
+
+    /**
+     * As above, with the vanilla-namespace replacements this pack also serves. SC-170 §5.2.
+     *
+     * <p>Both halves swap together for the reason the first one swaps at all: an item whose
+     * third-person hands were blanked and whose attachable had not yet bound would draw nothing in
+     * either place, for as long as the two snapshots disagreed.
+     */
+    public static boolean replace(Map<String, byte[]> byPath, Map<String, byte[]> vanillaByPath) {
+        Map<String, byte[]> previousContents = contents;
+        Map<String, byte[]> previousOverrides = overrides;
         contents = Map.copyOf(byPath);
-        return !same(previous, contents);
+        overrides = Map.copyOf(vanillaByPath);
+        return !same(previousContents, contents) || !same(previousOverrides, overrides);
     }
 
     /**
@@ -100,7 +130,7 @@ public final class AddonResourcePack implements PackResources {
 
     /** How many files the pack currently serves. Zero is the honest state before any world loads. */
     public static int size() {
-        return contents.size();
+        return contents.size() + overrides.size();
     }
 
     /**
@@ -144,30 +174,44 @@ public final class AddonResourcePack implements PackResources {
 
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier id) {
-        if (type != PackType.CLIENT_RESOURCES || !Lepus.MOD_ID.equals(id.getNamespace())) {
+        if (type != PackType.CLIENT_RESOURCES) {
             return null;
         }
-        byte[] bytes = contents.get(id.getPath());
+        byte[] bytes = served(id.getNamespace()).get(id.getPath());
         return bytes == null ? null : () -> new ByteArrayInputStream(bytes);
     }
 
     @Override
     public void listResources(PackType type, String namespace, String prefix,
             ResourceOutput output) {
-        if (type != PackType.CLIENT_RESOURCES || !Lepus.MOD_ID.equals(namespace)) {
+        if (type != PackType.CLIENT_RESOURCES) {
             return;
         }
-        contents.forEach((path, bytes) -> {
+        served(namespace).forEach((path, bytes) -> {
             if (path.startsWith(prefix)) {
-                output.accept(Identifier.fromNamespaceAndPath(Lepus.MOD_ID, path),
+                output.accept(Identifier.fromNamespaceAndPath(namespace, path),
                         () -> new ByteArrayInputStream(bytes));
             }
         });
     }
 
+    /** The half of this pack a namespace is served from; empty for anything else. */
+    private static Map<String, byte[]> served(String namespace) {
+        if (Lepus.MOD_ID.equals(namespace)) {
+            return contents;
+        }
+        return VANILLA.equals(namespace) ? overrides : Map.of();
+    }
+
     @Override
     public Set<String> getNamespaces(PackType type) {
-        return type == PackType.CLIENT_RESOURCES ? Set.of(Lepus.MOD_ID) : Set.of();
+        if (type != PackType.CLIENT_RESOURCES) {
+            return Set.of();
+        }
+        // Vanilla's namespace is claimed only while something is actually replacing a file in it.
+        // Claiming it unconditionally would make this pack a participant in every vanilla asset
+        // lookup in the game for the sake of serving nothing.
+        return overrides.isEmpty() ? Set.of(Lepus.MOD_ID) : Set.of(Lepus.MOD_ID, VANILLA);
     }
 
     @Override

@@ -157,6 +157,65 @@ class BlockModelsTest {
                 held.get("model").asObject().orElseThrow().members().get("type").asString());
     }
 
+    /** Vanilla's own {@code assets/minecraft/items/bow.json}, which is not a plain model. */
+    private static final String VANILLA_BOW = """
+            {
+              "model": {
+                "type": "minecraft:condition",
+                "property": "minecraft:using_item",
+                "on_false": {"type": "minecraft:model", "model": "minecraft:item/bow"},
+                "on_true": {
+                  "type": "minecraft:range_dispatch",
+                  "property": "minecraft:use_duration",
+                  "scale": 0.05,
+                  "fallback": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_0"},
+                  "entries": [
+                    {"threshold": 0.65,
+                     "model": {"type": "minecraft:model", "model": "minecraft:item/bow_pulling_1"}}
+                  ]
+                }
+              }
+            }
+            """;
+
+    @Test
+    void aVanillaItemDressedByAPackKeepsItsFirstPersonHandsAndItsWholeDefinition() {
+        Map<String, JsonValue> definition = Json.parse(
+                BlockModels.vanillaHeldModelJson(VANILLA_BOW).orElseThrow())
+                .asObject().orElseThrow()
+                .members().get("model").asObject().orElseThrow().members();
+
+        // WRAPPED, NOT REWRITTEN. Naming `minecraft:item/bow` as the fallback would have produced a
+        // bow that draws but never pulls; the condition and the dispatch under it have to survive
+        // whole, because this build has no way to reconstruct them and no business trying.
+        Map<String, JsonValue> fallback =
+                definition.get("fallback").asObject().orElseThrow().members();
+        assertEquals(Optional.of("minecraft:condition"), fallback.get("type").asString());
+        assertEquals(Optional.of("minecraft:range_dispatch"),
+                fallback.get("on_true").asObject().orElseThrow().members().get("type").asString());
+
+        List<String> when = definition.get("cases").asArray().orElseThrow()
+                .values().get(0).asObject().orElseThrow().members()
+                .get("when").asArray().orElseThrow().values().stream()
+                .map(value -> value.asString().orElseThrow()).toList();
+        // Third person goes, because the render layer draws the character there.
+        assertTrue(when.contains("thirdperson_righthand"), when.toString());
+        assertTrue(when.contains("thirdperson_lefthand"), when.toString());
+        // FIRST PERSON STAYS, and that is the measurement rather than a preference: a Bedrock client
+        // draws no attachable at all in first person for a vanilla item, so the item has to draw
+        // itself there or the hand is empty. SC-170 5.2.
+        assertFalse(when.contains("firstperson_righthand"), when.toString());
+        assertFalse(when.contains("firstperson_lefthand"), when.toString());
+    }
+
+    @Test
+    void anUnreadableVanillaDefinitionIsNotReplacedAtAll() {
+        // A file this build cannot read is one it must not replace. The caller leaves vanilla's own
+        // in place and the sprite goes on drawing - cosmetic, against an item that stops working.
+        assertTrue(BlockModels.vanillaHeldModelJson("{ not json").isEmpty());
+        assertTrue(BlockModels.vanillaHeldModelJson("{\"other\": 1}").isEmpty());
+    }
+
     @Test
     void differingFacesProduceTheSixSidedParentAndAParticleTexture() {
         Map<String, String> faces = new LinkedHashMap<>();

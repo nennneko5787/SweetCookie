@@ -30,7 +30,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [packaging](packaging.md) | SC-100 | 19 | 0 | 14 | 2 | 3 | 0 |
 | [recipes](recipes.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
 | [rp-animations](rp-animations.md) | SC-180 | 22 | 0 | 6 | 16 | 0 | 0 |
-| [rp-attachables](rp-attachables.md) | SC-170 | 10 | 0 | 5 | 5 | 0 | 0 |
+| [rp-attachables](rp-attachables.md) | SC-170 | 10 | 0 | 6 | 4 | 0 | 0 |
 | [rp-client-biomes](rp-client-biomes.md) | SC-180 | 6 | 0 | 0 | 6 | 0 | 0 |
 | [rp-client-entity](rp-client-entity.md) | SC-180 | 15 | 0 | 0 | 15 | 0 | 0 |
 | [rp-fog](rp-fog.md) | SC-180 | 2 | 0 | 0 | 1 | 1 | 0 |
@@ -47,7 +47,7 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [spawn-rules](spawn-rules.md) | SC-190 | 16 | 0 | 0 | 16 | 0 | 0 |
 | [structures](structures.md) | SC-190 | 6 | 0 | 0 | 3 | 3 | 0 |
 | [trading](trading.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
-| **total** | | **1363** | **2** | **37** | **1289** | **25** | **10** |
+| **total** | | **1363** | **2** | **38** | **1288** | **25** | **10** |
 
 ## How to read this
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.nennneko5787.lepus.Lepus;
 import net.nennneko5787.lepus.core.api.SpecImpl;
@@ -40,6 +41,7 @@ import net.nennneko5787.lepus.core.registry.StateSchema;
 import net.nennneko5787.lepus.runtime.addon.WorldActivation;
 import net.nennneko5787.lepus.runtime.resource.AddonResourcePack;
 import net.nennneko5787.lepus.runtime.resource.ClientResources;
+import net.nennneko5787.lepus.runtime.resource.VanillaAssets;
 
 /**
  * Gives every enabled pack's blocks a slot in this world. SC-120 §6.
@@ -97,6 +99,24 @@ public final class BlockBinding {
 
     /** The generated lang files, by pack path. Rebuilt on every bind. */
     private static Map<String, byte[]> LANG_FILES = Map.of();
+
+    /**
+     * Textures for the attachables that dress <b>vanilla</b> items. SC-170 §5.2.
+     *
+     * <p>Held apart from {@link BoundItems} because these have no item of ours to hang off: the item
+     * they dress was registered by Minecraft long before any pack existed, so there is no
+     * {@code BoundItems.Bound} to carry the files.
+     */
+    private static Map<String, byte[]> VANILLA_ATTACHABLE_FILES = Map.of();
+
+    /**
+     * The vanilla item definitions those replace, in the {@code minecraft} namespace. SC-170 §5.2.
+     *
+     * <p>Written only for an attachable that actually bound. Blanking an item's third-person hands
+     * while nothing was ready to draw in their place would delete the item from the hand rather than
+     * replace it.
+     */
+    private static Map<String, byte[]> VANILLA_OVERRIDES = Map.of();
 
     private BlockBinding() {
     }
@@ -269,8 +289,121 @@ public final class BlockBinding {
             bound.add(new BoundItems.Bound(id, base.replace('/', '_'),
                     ItemProfile.of(definition.components()), files));
         });
+        // And the ones whose identifier is not any pack's item at all. Merged rather than replaced:
+        // the two key spaces cannot collide, because a logical identifier is always under `lepus:`
+        // and a registry name never is.
+        attachables.putAll(vanillaAttachables(definitions.keySet()));
         BoundAttachables.replace(attachables);
         return bound;
+    }
+
+    /**
+     * The attachables that dress items <b>Minecraft already registered</b>. SC-170 §5.2.
+     *
+     * <p>An attachable is keyed by the identifier of the item it dresses, and a pack may name one it
+     * did not define — {@code minecraft:totem_of_undying} is what the corpus's one such pack names.
+     * Nothing is registered for these and nothing may be: the item exists, so the binding is keyed by
+     * its own registry name, which is what a stack of it carries.
+     *
+     * <p><b>Third person only.</b> {@link BoundAttachables.Bound#onVanillaItem} carries the reason;
+     * it is measured, not chosen. The item's own model therefore keeps its first-person hands and
+     * loses only the two third-person ones, which is what {@link BlockModels#vanillaHeldModelJson}
+     * writes.
+     *
+     * @param ours the identifiers the enabled packs define as items, which {@link #items} has
+     *             already bound through the add-on path and which must not be bound twice
+     */
+    private static Map<String, BoundAttachables.Bound> vanillaAttachables(Set<BedrockId> ours) {
+        Map<String, BoundAttachables.Bound> bound = new LinkedHashMap<>();
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        Map<String, byte[]> overrides = new LinkedHashMap<>();
+        enabledAttachables().forEach((identifier, attachable) -> {
+            if (ours.contains(identifier)) {
+                return;
+            }
+            Optional<Identifier> name = javaIdentifier(identifier);
+            if (name.isEmpty() || !BuiltInRegistries.ITEM.containsKey(name.get())) {
+                System.out.println("[Lepus] SCE-2041 an attachable names \"" + identifier
+                        + "\", which is neither an item any enabled pack defines nor an item this"
+                        + " game registers; it dresses nothing");
+                return;
+            }
+            Optional<GeometryIr> shape = attachable.defaultGeometry().map(GEOMETRIES::get);
+            if (shape.isEmpty()) {
+                return;
+            }
+            String base = "attachable/vanilla/"
+                    + name.get().getNamespace() + "_" + name.get().getPath();
+            Optional<byte[]> skin = attachable.defaultTexture().flatMap(BlockBinding::readTexture);
+            skin.ifPresent(png -> files.put("textures/" + base + ".png", png));
+            if (skin.isEmpty()) {
+                System.out.println("[Lepus] SCE-2032 " + identifier
+                        + " is drawn as " + attachable.defaultGeometry().orElse("?")
+                        + ", whose texture \"" + attachable.defaultTexture().orElse("<none>")
+                        + "\" resolves to no file in any enabled pack");
+            }
+            bound.put(name.get().toString(), BoundAttachables.Bound.onVanillaItem(
+                    shape.get(),
+                    Identifier.fromNamespaceAndPath(Lepus.MOD_ID, "textures/" + base + ".png"),
+                    new AttachablePoser(shape.get(), animationsOf(attachable),
+                            attachable.preAnimation())));
+            // Vanilla's own definition, WRAPPED rather than rewritten: its model is carried across
+            // whole, so a bow keeps its pull and a potion its tint, and only the third-person hands
+            // go empty. Rebuilding it from the item's name would have been a guess that is right for
+            // plain items and quietly wrong for every item that is more than one model.
+            String definition = "assets/minecraft/items/" + name.get().getPath() + ".json";
+            Optional<String> wrapped = VanillaAssets.read(definition)
+                    .flatMap(BlockModels::vanillaHeldModelJson);
+            if (wrapped.isEmpty()) {
+                // Left alone on purpose. An item definition this build cannot read is one it must
+                // not replace - the flat sprite goes on drawing inside the character, which is
+                // cosmetic, where a rewritten definition would break the item itself.
+                System.out.println("[Lepus] SCE-2042 " + identifier + " dresses "
+                        + name.get() + ", whose own item definition (" + definition
+                        + ") could not be read; it is left as vanilla wrote it, and the item's flat"
+                        + " sprite still draws in the third-person hand");
+                return;
+            }
+            overrides.put("items/" + name.get().getPath() + ".json",
+                    AddonResourcePack.utf8(wrapped.get()));
+        });
+        VANILLA_ATTACHABLE_FILES = files;
+        VANILLA_OVERRIDES = overrides;
+        return bound;
+    }
+
+    /**
+     * Every enabled pack's attachables, later packs winning, whatever they dress.
+     *
+     * <p>The whole set rather than one lookup, because this is the one caller that does not know the
+     * identifier it wants: {@link #attachableOf} answers "what dresses this item", and the question
+     * here is the other one — "what items does this pack dress".
+     */
+    private static Map<BedrockId, AttachableIr> enabledAttachables() {
+        Map<BedrockId, AttachableIr> all = new LinkedHashMap<>();
+        Lepus.addons().ir().ifPresent(ir -> {
+            for (PackId pack : WorldActivation.current().order()) {
+                ir.byId(pack).map(PackIr::resource)
+                        .ifPresent(resource -> all.putAll(resource.attachables()));
+            }
+        });
+        return all;
+    }
+
+    /**
+     * A Bedrock identifier as a Java one, or empty when Java cannot spell it.
+     *
+     * <p>Empty rather than an exception: an identifier is add-on input, and Bedrock accepts spellings
+     * Java's own parser rejects. Constitution rule 5 — one malformed name in a pack must cost that
+     * name and nothing else.
+     */
+    private static Optional<Identifier> javaIdentifier(BedrockId identifier) {
+        try {
+            return Optional.of(Identifier.fromNamespaceAndPath(
+                    identifier.namespace(), identifier.path()));
+        } catch (RuntimeException malformed) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -551,7 +684,11 @@ public final class BlockBinding {
         // Items bring their own files, already resolved: they have no slot to iterate.
         BoundItems.all().forEach(item -> files.putAll(item.files()));
         files.putAll(LANG_FILES);
-        if (AddonResourcePack.replace(files) && reloadOnChange) {
+        // The attachables that dress vanilla items bring only a texture into our namespace; what
+        // they change about the item itself is a REPLACEMENT of vanilla's own file, and goes in the
+        // other half of the pack. SC-170 §5.2.
+        files.putAll(VANILLA_ATTACHABLE_FILES);
+        if (AddonResourcePack.replace(files, VANILLA_OVERRIDES) && reloadOnChange) {
             // The client baked its models before any pack was bound, so without this a bound block
             // is INVISIBLE - correct outline, correct collision, nothing drawn. See ClientResources.
             ClientResources.reload();

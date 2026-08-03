@@ -75,9 +75,43 @@ entries:
       and running from then on whatever the blend does. `scripts.initialize`, `scripts.scale` and
       `scripts.variables` are still not read. SC-180 section 4.1.1.
   - id: attachable/item
-    status: stub
-    notes: >-
-      Which items this attachable applies to.
+    status: partial
+    impl: net.nennneko5787.lepus.runtime.registry.BoundAttachables
+    fields:
+      add_on_item: ok
+      vanilla_item: ok
+      # Ignored the way Bedrock ignores them, not the way an unimplemented thing is ignored.
+      vanilla_item_first_person_animations: ignored
+    diagnostics: [SCE-2041, SCE-2042]
+    fidelity: >-
+      An attachable is keyed by the identifier of the item it dresses and a pack may name one it did
+      not define. An add-on item binds under its logical identifier; a vanilla one binds under its
+      own registry name, which is what such a stack already carries. A stack is asked for its logical
+      identity first and for its registry name only in its absence, so a carrier item whose content
+      is unbound can never fall through to a vanilla binding. Nothing is registered either way.
+
+      A vanilla item's attachable is drawn in THIRD PERSON ONLY, and that is measured rather than
+      chosen: a probe on `minecraft:stick` with an unconditional `scripts.animate` was drawn in third
+      person by a Bedrock client and not at all in first, and a later probe on a custom item held the
+      same way with the same bones WAS drawn in first person - so vanilla-versus-custom is the
+      isolated variable. The corpus's one such pack writes four first-person animations Bedrock never
+      plays, and this build does not play them either.
+
+      The item therefore keeps drawing itself in first person, and its item definition is replaced
+      with one blanking the two third-person hand contexts alone - against the four an add-on item
+      blanks, where the hand hook draws instead. That replacement is served in the `minecraft`
+      namespace, which is what a Bedrock pack does to a vanilla item.
+
+      Vanilla's own definition is WRAPPED rather than rewritten: it is read out of the game's jar and
+      its `model` carried across verbatim as the fallback, so a bow's condition over `using_item` and
+      the range dispatch beneath it, a potion's tint and a compass's needle all survive untouched. A
+      definition that cannot be read is not replaced at all - no override is written, the attachable
+      still draws, the flat sprite draws with it, and SCE-2042 says so. An add-on may change how an
+      item is drawn; it may not cost the item its behaviour.
+
+      An attachable naming an identifier that is neither a pack's item nor a registered one resolves
+      to nothing and reports SCE-2041. The pack that also replaces such an item's ICON does it by
+      writing over the vanilla texture path, which is `rp-textures` and not this entry.
   - id: attachable/first_person
     status: partial
     impl: net.nennneko5787.lepus.client.render.FirstPersonAttachables

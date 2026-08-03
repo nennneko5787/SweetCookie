@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.json.CanonicalJson;
+import net.nennneko5787.lepus.core.format.json.Json;
 import net.nennneko5787.lepus.core.format.json.JsonArray;
 import net.nennneko5787.lepus.core.format.json.JsonBool;
 import net.nennneko5787.lepus.core.format.json.JsonNumber;
@@ -216,6 +217,17 @@ public final class BlockModels {
             "thirdperson_righthand", "thirdperson_lefthand");
 
     /**
+     * The two of those a <b>vanilla</b> item blanks. SC-170 §5.2.
+     *
+     * <p>A vanilla item keeps its first-person hands, and the reason is a measurement rather than a
+     * preference: a Bedrock client does not draw an attachable whose identifier is a vanilla item in
+     * first person at all (0005 {@code probe/}, v3, isolated against a custom item in v8–v10). So
+     * something has to draw there and only the item itself is left.
+     */
+    private static final List<String> BLANK_THIRD_PERSON_CONTEXTS = List.of(
+            "thirdperson_righthand", "thirdperson_lefthand");
+
+    /**
      * An item that is a flat icon in the inventory and nothing at all in a hand. SC-170 §5.
      *
      * <p><b>Both halves matter and the first one was learned by breaking it.</b> Making the whole
@@ -233,18 +245,55 @@ public final class BlockModels {
      * @param sprite the flat model, used everywhere the attachable is not drawn
      */
     public static String heldModelJson(String sprite) {
-        JsonObject blank = new JsonObject(Map.of("type", new JsonString("minecraft:empty")));
-        JsonObject flat = new JsonObject(Map.of(
+        return blankingModelJson(sprite, BLANK_CONTEXTS);
+    }
+
+    /**
+     * A <b>vanilla</b> item that keeps everything but its third-person hands. SC-170 §5.2.
+     *
+     * <p><b>Vanilla's own definition is wrapped, never rebuilt.</b> Its {@code model} is carried
+     * across verbatim as the fallback, so a bow's {@code condition} over {@code using_item} and the
+     * {@code range_dispatch} under it, a potion's tint, a compass's needle — all of it survives
+     * untouched, and only the two third-person hand contexts become empty. Naming
+     * {@code minecraft:item/<path>} instead would have been a guess that happens to be right for
+     * plain items and silently breaks every item that is more than one model.
+     *
+     * <p>Empty when the argument is not an item definition — a file this build cannot read is one it
+     * must not replace. The caller then leaves vanilla's own file in place: the cost is a flat sprite
+     * drawn inside the character, which is cosmetic, against a broken bow, which is not.
+     *
+     * @param vanillaDefinition the bytes of vanilla's {@code assets/minecraft/items/<path>.json}
+     */
+    public static Optional<String> vanillaHeldModelJson(String vanillaDefinition) {
+        JsonValue model;
+        try {
+            model = Json.parse(vanillaDefinition).asObject()
+                    .map(object -> object.members().get("model"))
+                    .orElse(null);
+        } catch (RuntimeException unreadable) {
+            return Optional.empty();
+        }
+        return model == null
+                ? Optional.empty()
+                : Optional.of(blankingModelJson(model, BLANK_THIRD_PERSON_CONTEXTS));
+    }
+
+    private static String blankingModelJson(String sprite, List<String> contexts) {
+        return blankingModelJson(new JsonObject(Map.of(
                 "type", new JsonString("minecraft:model"),
-                "model", new JsonString(sprite)));
+                "model", new JsonString(sprite))), contexts);
+    }
+
+    private static String blankingModelJson(JsonValue fallback, List<String> contexts) {
+        JsonObject blank = new JsonObject(Map.of("type", new JsonString("minecraft:empty")));
         JsonObject held = new JsonObject(Map.of(
-                "when", new JsonArray(BLANK_CONTEXTS.stream()
+                "when", new JsonArray(contexts.stream()
                         .map(context -> (JsonValue) new JsonString(context)).toList()),
                 "model", blank));
         return CanonicalJson.pretty(new JsonObject(Map.of("model", new JsonObject(Map.of(
                 "type", new JsonString("minecraft:select"),
                 "property", new JsonString("minecraft:display_context"),
-                "fallback", flat,
+                "fallback", fallback,
                 "cases", new JsonArray(List.of(held)))))));
     }
 

@@ -61,8 +61,12 @@ public final class FirstPersonAttachables {
         if (AddonItem.wornRatherThanHeld(stack)) {
             return;
         }
-        AddonItem.logicalIdOf(stack)
-                .flatMap(BoundAttachables::at)
+        BoundAttachables.of(stack)
+                // A vanilla item's attachable stops here, and that is a measurement: a Bedrock client
+                // draws nothing in first person for one, whatever its animations ask for (SC-170
+                // §5.2). Its own model keeps drawing in this view, which is why the generated
+                // override blanks the third-person hands alone.
+                .filter(BoundAttachables.Bound::inFirstPerson)
                 .ifPresent(bound -> {
                     poseStack.pushPose();
                     toPlayerSpace(poseStack, player);

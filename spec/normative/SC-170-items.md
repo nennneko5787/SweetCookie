@@ -128,6 +128,61 @@ that will not line up is not necessarily a parsing or composition fault.
 `TODO(SC-170)`: `binding` is parsed into the unknown bag and not applied (SC-180 §3.5). Method 2
 packs will not place correctly until it is, and the y −24 goes with it.
 
+### 5.2 An attachable whose identifier is a vanilla item
+
+An attachable is keyed by the identifier of the item it dresses, and **nothing requires that item to
+come from the pack**. `minecraft:totem_of_undying` is an identifier like any other; a pack naming it
+is saying how the totem is drawn on a player, and Bedrock draws it.
+
+Nothing is registered for this and nothing may be. The vanilla item already exists, already has a
+network id, and already appears in stacks that predate every pack — so the binding is keyed by the
+**item's own registry name**, which is what such a stack carries, exactly as an add-on item's binding
+is keyed by the logical identifier its stack carries (SC-120 §4). A stack is asked for its logical
+identity first and for its registry name only when it has none, so a carrier item can never fall
+through to a vanilla binding.
+
+**Third person only, and that is measured rather than reasoned.** A probe (0005 `probe/`, v3) put an
+attachable on `minecraft:stick` with an unconditional `scripts.animate`; a Bedrock client drew it in
+third person and drew nothing in first. A later generation of the same probe (v8–v10) moved to a
+custom item defined by its own behaviour pack, held in the same hand with the same bone structure,
+and **was** drawn in first person. Vanilla-versus-custom is therefore the isolated variable, not
+held-versus-worn and not the animation's conditions.
+
+So a pack may write first-person animations for a vanilla item — the corpus's one such pack does,
+four of them — and Bedrock plays none of them. This build plays none of them either. Implementing
+what the pack file asks for here would be inventing behaviour its author never saw.
+
+**The vanilla item goes on drawing itself in first person**, because something has to and Bedrock has
+nothing else to draw there. Its model definition is therefore replaced with one that blanks the two
+**third-person** hand contexts only — where the layer is drawing the character instead — against the
+four an add-on item blanks in §5. The asymmetry is the same measurement stated twice.
+
+That replacement is served in the **`minecraft` namespace**: `assets/minecraft/items/<path>.json`.
+It is the first thing this project serves outside its own namespace, and it is a replacement rather
+than an addition — which is what a Bedrock resource pack does to a vanilla item, and the mechanism
+the same packs use to retexture one.
+
+**Vanilla's own definition is wrapped, not rewritten, and that is normative.** The replacement reads
+`assets/minecraft/items/<path>.json` out of the game's own jar and carries its `model` across
+verbatim as the fallback, adding only the `select` that empties the two contexts. Writing a fresh
+definition naming `minecraft:item/<path>` would reproduce the plain case and **silently destroy every
+item that is more than one model** — a bow's `condition` over `using_item` and the `range_dispatch`
+beneath it, a potion's tint, a compass's needle. An add-on may change how an item is drawn; it may
+not cost the item its behaviour.
+
+The read does **not** go through the resource manager: the generated pack sits above vanilla's, so
+asking the manager while building that pack returns this project's own previous answer. It asks the
+jar, through a Minecraft class so that whichever module or loader holds those assets is the one
+asked.
+
+**A definition that cannot be read is not replaced.** No override is written, the attachable still
+binds and still draws, and the item's flat sprite goes on drawing inside the character — cosmetic,
+and reported as `SCE-2042`. The alternative, replacing a file whose contents are unknown, trades a
+visual defect for a functional one.
+
+An attachable naming an identifier that is neither an enabled pack's item nor any registered item
+resolves to nothing and reports `SCE-2041`.
+
 ## 6. Creative menu
 
 Bedrock's `item_catalog/crafting_item_catalog.json` groups items for the creative menu. Java uses

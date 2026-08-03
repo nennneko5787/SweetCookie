@@ -4,7 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.ir.geometry.GeometryIr;
 import net.nennneko5787.lepus.core.format.render.AttachablePoser;
@@ -25,7 +27,7 @@ import net.nennneko5787.lepus.core.molang.MolangContext;
  * never changes. Animation will add a per-frame layer on top (stage C); this stays the base it
  * starts from.
  */
-@SpecImpl({"SC-170#attachable/geometry", "SC-170#attachable/textures"})
+@SpecImpl({"SC-170#attachable/geometry", "SC-170#attachable/textures", "SC-170#attachable/item"})
 public final class BoundAttachables {
 
     /**
@@ -36,10 +38,25 @@ public final class BoundAttachables {
      * @param bindPose   every bone's transform with no animation applied
      * @param animations what plays, in the order {@code scripts.animate} lists it
      */
-    public record Bound(GeometryIr geometry, Identifier texture, AttachablePoser poser) {
+    public record Bound(GeometryIr geometry, Identifier texture, AttachablePoser poser,
+            boolean inFirstPerson) {
 
         public static Bound of(GeometryIr geometry, Identifier texture, AttachablePoser poser) {
-            return new Bound(geometry, texture, poser);
+            return new Bound(geometry, texture, poser, true);
+        }
+
+        /**
+         * One dressing a <b>vanilla</b> item, which is third person only. SC-170 §5.2.
+         *
+         * <p>Not a policy and not a limitation of this build: a Bedrock client draws nothing in first
+         * person for an attachable whose identifier is a vanilla item, measured with a probe on
+         * {@code minecraft:stick} and isolated against a custom item held the same way. The corpus's
+         * one such pack writes four first-person animations that Bedrock never plays; playing them
+         * here would be inventing a frame its author never saw.
+         */
+        public static Bound onVanillaItem(GeometryIr geometry, Identifier texture,
+                AttachablePoser poser) {
+            return new Bound(geometry, texture, poser, false);
         }
 
         /**
@@ -85,6 +102,25 @@ public final class BoundAttachables {
     /** What this stack's content is held as, if anything. */
     public static Optional<Bound> at(String logicalId) {
         return Optional.ofNullable(byLogicalId.get(logicalId));
+    }
+
+    /**
+     * What a stack is drawn as, whichever kind of identity it carries. SC-170 §5.2.
+     *
+     * <p><b>Logical identity first, registry name only in its absence.</b> An add-on stack answers
+     * the first and never reaches the second, so a carrier item whose content is unbound cannot fall
+     * through to whatever a pack happened to bind to {@code lepus:item}. A vanilla stack has no
+     * logical identity at all, and its registry name is the key a pack naming
+     * {@code minecraft:totem_of_undying} bound under.
+     */
+    public static Optional<Bound> of(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || byLogicalId.isEmpty()) {
+            return Optional.empty();
+        }
+        return AddonItem.logicalIdOf(stack)
+                .or(() -> Optional.ofNullable(BuiltInRegistries.ITEM.getKey(stack.getItem()))
+                        .map(Identifier::toString))
+                .flatMap(BoundAttachables::at);
     }
 
     /** True when any item has one, so a renderer can be skipped entirely when none do. */

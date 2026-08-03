@@ -109,8 +109,9 @@ public final class AttachableLayer extends RenderLayer<AvatarRenderState, Player
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        AddonItem.logicalIdOf(stack)
-                .flatMap(BoundAttachables::at)
+        // Asked of the STACK rather than of its logical id, because a stack need not have one: a pack
+        // may dress a vanilla item, and then the key is that item's own registry name (SC-170 §5.2).
+        BoundAttachables.of(stack)
                 .ifPresent(bound -> {
                     poseStack.pushPose();
                     toPlayerSpace(poseStack);
