@@ -111,10 +111,14 @@ entries:
       section 4.4; the wearer's `body` carries a half turn in first person, section 4.2.1), each
       read off original-content probes rather than fitted.
 
-      A sub-block placement residual remains and is deliberately not fitted: both clients draw this
-      pass with a fixed projection that ignores the FOV setting (measured), so the residual is
-      plausibly the two engines' fixed projections differing - not pack data, and a constant tuned
-      to it would be a hand-fitted number of exactly the kind the constitution forbids.
+      The observable difference that remains: in first person the model sits slightly more centred
+      and slightly nearer than the Bedrock client draws it - under a block, visible when the two
+      screenshots are compared side by side, invisible without them. Both clients draw this pass
+      with a fixed projection that ignores the FOV setting (measured), and the difference between
+      those two fixed projections is not a vertical 60-versus-70: scaling camera-space x and y by
+      tan(35)/tan(30) - the correction that premise derives - made the confirmed-matching character
+      visibly worse. Five fitted constants and one derived one have died on this residual. No
+      further constant goes in without a premise that survives the waist-parented character.
   - id: attachable/worn
     status: partial
     impl: net.nennneko5787.lepus.client.render.AttachableLayer

@@ -154,6 +154,14 @@ public final class FirstPersonAttachables {
         // and the one whose first-person placement DOES match a Bedrock capture came back visibly
         // too high. Y is now checked and was already correct; Z was checked when this space was
         // derived and X against a capture. All three have been read off a frame.
+        // NO PROJECTION CORRECTION, and one was tried on a real derivation. Java's hand pass
+        // projects at a fixed 70° and Bedrock's default is 60, both measured to ignore the FOV
+        // setting (SC-180 §4.4) - so scaling x and y by tan(35°)/tan(30°) should reproduce a 60°
+        // frustum inside this one. On screen it made the one confirmed-matching character WORSE,
+        // which refutes the premise: whatever Bedrock's fixed projection is, the difference to
+        // this pass is not a vertical 60-versus-70. The sub-block residual on the other character
+        // stays a recorded TODO rather than a number - five fitted constants have died in this
+        // file, and now one derived one has too.
         poseStack.translate(0.0f, -player.getEyeHeight(), 0.0f);
         poseStack.scale(PLAYER_MODEL_SCALE, PLAYER_MODEL_SCALE, PLAYER_MODEL_SCALE);
     }
