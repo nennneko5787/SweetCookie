@@ -1,5 +1,6 @@
 import net.nennneko5787.lepus.gradle.AdrIndexTask
 import net.nennneko5787.lepus.gradle.FetchUpstreamTask
+import net.nennneko5787.lepus.gradle.GenerateBedrockConstantsTask
 import net.nennneko5787.lepus.gradle.SpecConformanceTask
 import net.nennneko5787.lepus.gradle.SpecLanguageTask
 import net.nennneko5787.lepus.gradle.SpecLinkTask
@@ -75,6 +76,33 @@ tasks.register<UpdateUpstreamLockTask>("updateUpstreamLock") {
     group = "specification"
     description = "Pin a new bedrock-samples snapshot. Pass --ref=<branch|tag|sha>."
     specDir.set(specDirectory)
+}
+
+// Also deliberately manual, and its output committed. The table it writes is what lets an add-on
+// rename or retexture a VANILLA item: Bedrock spells the totem `totem` and Java spells it
+// `totem_of_undying`, and 564 of 1,494 names differ like that. See the task for the join and for
+// why it refuses the ambiguous ones rather than choosing.
+tasks.register<GenerateBedrockConstantsTask>("generateBedrockConstants") {
+    group = "specification"
+    description = "Regenerate the Bedrock-to-Java vanilla name table from the pinned snapshot."
+    specDir.set(specDirectory)
+    cacheDir.set(upstreamCache)
+    outputFile.set(
+        layout.projectDirectory.file(
+            "core/registry/src/main/resources/lepus/vanilla-names.tsv"
+        )
+    )
+    // Where Java's own language file lives is the loader plugin's business, not ours, so the jar is
+    // asked for rather than located. Lazily, and from one node only: every node ships the same
+    // en_us.json for its version, and resolving four would cost four Minecraft provisions.
+    minecraftJars.from(
+        provider {
+            project(":26.2-fabric").configurations
+                .getByName("compileClasspath")
+                .filter { it.name.endsWith(".jar") }
+        }
+    )
+    dependsOn(fetchUpstreamMetadata)
 }
 
 val specUpstreamDiff = tasks.register<SpecUpstreamDiffTask>("specUpstreamDiff") {

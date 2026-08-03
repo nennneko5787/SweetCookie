@@ -50,6 +50,25 @@ Generating code from a schema is not redistributing the schema. Shipping the sch
 `.upstream-cache/` is gitignored. `fetchUpstreamMetadata` is skipped when the cache is present and
 its hashes match.
 
+### Two reasons to pin a file
+
+`updateUpstreamLock` derives its file set from two places, and the lock records which in
+`usedBy.kind`:
+
+| kind | declared in | read by |
+|---|---|---|
+| `coverage` | a shard's `upstream.source` | `specUpstreamDiff`, as a list of Bedrock feature identifiers |
+| `codegen` | `spec/upstream/codegen.yaml` | `generateBedrockConstants` |
+
+**The second exists because the first is not a general-purpose pin.** A coverage source is read as a
+feature list; a language file is not one, and wiring it into a shard to get it downloaded would
+manufacture ledger entries out of prose — the trap this document already warns about below. Until
+`codegen.yaml` existed, that was the only way to pin anything, so the `codegen` kind the lock format
+allowed had never been written.
+
+Adding files without moving the snapshot is `updateUpstreamLock --ref <the current commit>`. The
+default re-resolves `main`, which is a re-baseline and a separate decision.
+
 ### Addressing upstream
 
 Upstream uses two shapes, so a coverage shard's `upstream` is a **list** of selectors:

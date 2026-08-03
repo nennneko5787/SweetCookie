@@ -3,9 +3,9 @@
 
   "repository": "https://github.com/Mojang/bedrock-samples",
   "license": "NOASSERTION",
-  "ref": "main",
+  "ref": "921fafb05c93abeae56c2f2868cd8f942bdbcc0f",
   "commit": "921fafb05c93abeae56c2f2868cd8f942bdbcc0f",
-  "fetchedAt": "2026-07-30T17:46:28Z",
+  "fetchedAt": "2026-08-03T11:20:47Z",
 
   "targetEngineVersion": "1.26.30.5",
 
@@ -32,7 +32,9 @@
       "bytes": 1778543,
       "usedBy": [
         { "kind": "coverage", "name": "entity-components" },
+        { "kind": "coverage", "name": "entity-events" },
         { "kind": "coverage", "name": "entity-goals" },
+        { "kind": "coverage", "name": "entity-properties" },
         { "kind": "coverage", "name": "filters" }
       ]
     },
@@ -49,7 +51,24 @@
       "sha256": "3db1ff59d46a051feab06e88d8d61bd17eb3c2111750aa9a3e9c9b771d5b5c90",
       "bytes": 135616,
       "usedBy": [
+        { "kind": "coverage", "name": "molang-math" },
         { "kind": "coverage", "name": "molang-queries" }
+      ]
+    },
+    {
+      "path": "resource_pack/texts/en_US.lang",
+      "sha256": "ae1bab8a3ab0055921a9077c8f3244d53bb9a16540510c4f0e0779103c521ede",
+      "bytes": 801848,
+      "usedBy": [
+        { "kind": "codegen", "name": "vanilla-item-names" }
+      ]
+    },
+    {
+      "path": "resource_pack/textures/item_texture.json",
+      "sha256": "13415a73201c43c03afc7ff9c4e5146366ec31e4f3057228f309730daea963c7",
+      "bytes": 56884,
+      "usedBy": [
+        { "kind": "codegen", "name": "vanilla-item-names" }
       ]
     }
   ]

@@ -47,34 +47,47 @@ abstract class UpdateUpstreamLockTask : DefaultTask() {
         val commit = Upstream.resolveCommit(requested)
         logger.lifecycle("updateUpstreamLock: commit $commit")
 
-        // Every distinct upstream source the ledger declares, across every selector. Sorted so the
-        // lock file is stable and its diffs are readable.
-        val sources = CoverageLoader.loadAll(spec.resolve("coverage"))
-            .flatMap { shard -> shard.upstream.map { it.source to shard.domain } }
-            .groupBy({ it.first }, { it.second })
-            .mapValues { (_, domains) -> domains.distinct() }
-            .toSortedMap()
+        // Every distinct upstream source the ledger declares, across every selector, plus the ones
+        // declared for code generation. Sorted so the lock file is stable and its diffs readable.
+        //
+        // TWO KINDS, ONE LOCK. A coverage source is a list of Bedrock's feature identifiers and is
+        // diffed against the ledger; a codegen source is data a generator reads. Keeping the kinds
+        // apart in `usedBy` is what lets `specUpstreamDiff` ignore the second sort, which it must:
+        // an English language file is not a feature list, and reading it as one manufactures ledger
+        // entries out of prose.
+        val sources = sortedMapOf<String, MutableList<Pair<String, String>>>()
+        CoverageLoader.loadAll(spec.resolve("coverage")).forEach { shard ->
+            shard.upstream.forEach { selector ->
+                sources.getOrPut(selector.source) { mutableListOf() } += "coverage" to shard.domain
+            }
+        }
+        CodegenSources.load(spec.resolve("upstream/codegen.yaml")).forEach { target ->
+            target.sources.forEach { path ->
+                sources.getOrPut(path) { mutableListOf() } += "codegen" to target.name
+            }
+        }
 
         if (sources.isEmpty()) {
             throw org.gradle.api.GradleException(
-                "No coverage shard declares an `upstream` source, so there is nothing to pin."
+                "Nothing declares an upstream source - neither a coverage shard's `upstream` nor a\n" +
+                    "target in spec/upstream/codegen.yaml - so there is nothing to pin."
             )
         }
 
         val locked = mutableListOf<LockedFile>()
         val missing = mutableListOf<String>()
 
-        for ((path, domains) in sources) {
+        for ((path, users) in sources) {
             val bytes = Upstream.fetchFile(commit, path)
             if (bytes == null) {
-                missing += "$path (declared by ${domains.joinToString(", ")})"
+                missing += "$path (declared by ${users.joinToString(", ") { it.second }})"
                 continue
             }
             locked += LockedFile(
                 path = path,
                 sha256 = Upstream.sha256(bytes),
                 bytes = bytes.size.toLong(),
-                usedBy = domains.sorted().map { "coverage" to it },
+                usedBy = users.distinct().sortedWith(compareBy({ it.first }, { it.second })),
             )
             logger.lifecycle("  %-72s %,10d B".format(path, bytes.size))
         }

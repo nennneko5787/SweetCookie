@@ -1,0 +1,29 @@
+# Upstream files pinned for CODE GENERATION rather than for the coverage ledger.
+#
+# `spec/upstream/fetch.md` describes both uses and the lock file's `usedBy.kind` has always allowed
+# `codegen`, but until this file existed the only way to get a path into the lock was to declare it
+# as a coverage shard's `upstream.source` - which also enlists it in `specUpstreamDiff`, where it is
+# read as a list of Bedrock feature identifiers. The files below are not that. Wiring them into a
+# shard would manufacture ledger entries out of prose, which fetch.md warns is worse than absent.
+#
+# Everything here is subject to the same rules as the rest: NOASSERTION, fetched at build time,
+# never committed, never shipped, used only to generate source. The GENERATED code is committed, and
+# it may contain only what is factual correspondence - an id next to an id. Mojang's own strings do
+# not survive into it.
+
+targets:
+  - name: vanilla-item-names
+    generates: net.nennneko5787.lepus.core.registry.BedrockVanillaItems
+    reason: >-
+      A pack renaming or retexturing a VANILLA item writes Bedrock's internal short name for it -
+      `item.totem.name`, `textures/items/totem.png` - where Java spells the same item
+      `totem_of_undying`. The item identifiers themselves already agree; only the language key and
+      the texture path do not, and nothing in a pack says which item a short name belongs to.
+
+      The only bridge is the English display name: Bedrock's `item.totem.name=Totem of Undying`
+      against Java's `item.minecraft.totem_of_undying=Totem of Undying`. Hence these two files, and
+      hence a generator rather than a hand-written table - 0005 spent a session killing six
+      hand-fitted constants, and a thousand of them would be worse.
+    sources:
+      - resource_pack/texts/en_US.lang
+      - resource_pack/textures/item_texture.json
