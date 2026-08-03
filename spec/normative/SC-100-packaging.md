@@ -249,8 +249,18 @@ Java translation key is SC-110's concern, not this document's.
 
 `.lang` parsing: `key=value`, first `=` splits, keys and values are **not** trimmed of internal
 whitespace but are trimmed of trailing `\r`. A line whose first non-space characters are `##` is a
-comment. A trailing `#comment` on a value line is **not** stripped — Bedrock does not strip it, and
-packs contain `#` in values.
+comment. A value **ends at a tab immediately followed by `#`**. Nothing else is trimmed: the tab is
+already on the comment's side of the cut, and a value's own surrounding whitespace is the author's.
+
+**A tab, and only a tab.** This said the opposite until a Bedrock client settled it: a pack in the
+corpus writes `item.totem.name=<name>\t#` and that client displays the name alone, so the engine
+strips the comment. Mojang's own `en_US.lang` cannot arbitrate — at the pinned snapshot it contains
+no tab comment at all — which is why the question needed a screen rather than an argument.
+
+The reasoning behind the old rule survives as the limit on the new one. Treating **any** `#` as an
+end-of-line comment is what a properties parser does, and it silently truncates a translation
+containing a hash: "Slot #1" would lose three characters with no diagnostic. A hash after a space,
+or inside a sentence, stays in the value.
 
 ## 9. The virtual file system
 

@@ -25,11 +25,25 @@ class LocalisationTest {
 
     @Test
     @ProvesSpec("SC-100")
-    void doesNotStripATrailingHashComment() {
+    void keepsAHashThatBelongsToTheTranslation() {
         // Treating # as an end-of-line comment is what a properties parser does, and it silently
         // truncates any translation containing a hash - which is most translations involving a
-        // number. Bedrock does not strip it, so neither do we.
+        // number. A hash after a SPACE is part of what the translator wrote.
         assertEquals("Slot #1", LangFile.parse("ui.slot=Slot #1").get("ui.slot"));
+        assertEquals("A#B", LangFile.parse("k=A#B").get("k"));
+    }
+
+    @Test
+    @ProvesSpec("SC-100")
+    void stripsTheTrailingCommentAfterATab() {
+        // A TAB before the hash is the trailing-comment form, and this assertion used to say the
+        // opposite. A pack in the corpus writes exactly this and the Bedrock client shows the name
+        // alone, so keeping the comment put a tab and a hash in an item's displayed name. Mojang's
+        // own en_US.lang could not settle it: it contains no tab comment at all.
+        assertEquals("Totem of Hoshino",
+                LangFile.parse("item.totem.name=Totem of Hoshino\t#").get("item.totem.name"));
+        assertEquals("Wand",
+                LangFile.parse("item.wand.name=Wand\t# a note for translators").get("item.wand.name"));
     }
 
     @Test
