@@ -1,0 +1,19 @@
+﻿{
+  "format_version": 2,
+  "header": {
+    "name": "Lepus facing probe (resource half)",
+    "description": "Reads, on a Bedrock frame: which way a body-parented attachable root FACES in first person, and where its animated offset lands.",
+    "uuid": "8c4d91e2-3b7a-4f60-a2c8-1d9e6b5f4a01",
+    "version": [10, 0, 0],
+    "min_engine_version": [1, 20, 50]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "8c4d91e2-3b7a-4f60-a2c8-1d9e6b5f4a02",
+      "version": [10, 0, 0]
+    }
+  ]
+}
+
+

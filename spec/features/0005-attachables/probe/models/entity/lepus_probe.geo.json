@@ -1,0 +1,60 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.lepus_probe",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 8,
+        "visible_bounds_height": 8,
+        "visible_bounds_offset": [0, 2, 0]
+      },
+      "bones": [
+        { "name": "root", "pivot": [0, 0, 0] },
+        { "name": "waist", "parent": "root", "pivot": [0, 12, 0] },
+        { "name": "body", "parent": "waist", "pivot": [0, 24, 0] },
+
+        { "name": "root2", "parent": "body", "pivot": [0, 11, 6] },
+        { "name": "waist2", "parent": "root2", "pivot": [0, 21, 6] },
+
+        {
+          "name": "body2",
+          "parent": "waist2",
+          "pivot": [0, 28, 6],
+          "reset": true,
+          "cubes": [
+            { "origin": [-2, 23, 4], "size": [4, 5, 3], "uv": [0, 0] }
+          ]
+        },
+
+        {
+          "name": "nose",
+          "parent": "body2",
+          "pivot": [0, 25, 4],
+          "cubes": [
+            { "origin": [-1, 24, -2], "size": [2, 2, 6], "uv": [0, 0] }
+          ]
+        },
+
+        {
+          "name": "pillar",
+          "parent": "body2",
+          "pivot": [0, 28, 6],
+          "cubes": [
+            { "origin": [4, 20, 5], "size": [1, 12, 1], "uv": [0, 0] }
+          ]
+        },
+
+        {
+          "name": "slab",
+          "parent": "body2",
+          "pivot": [0, 28, 6],
+          "cubes": [
+            { "origin": [-10, 25, 5], "size": [6, 1, 1], "uv": [0, 0] }
+          ]
+        }
+      ]
+    }
+  ]
+}

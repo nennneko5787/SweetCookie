@@ -172,11 +172,45 @@ public final class AnimationSampler implements Playable {
     }
 
     /**
-     * The three channels as one transform: <b>translate, then rotate, then scale</b>.
+     * <b>The animation's position X passes through unchanged — a negation was tried and refuted by
+     * a frame.</b> SC-180 §3.6.
      *
-     * <p>The order is what makes an animated joint behave: the rotation is innermost so it turns the
-     * bone about its own pivot — {@code BoneMatrices} puts this inside the pivot for that reason —
-     * and the translation moves the turned bone rather than turning an already-moved one.
+     * <p>Two sources say a keyframe's X is inverted relative to the geometry's: the Bedrock Wiki
+     * ("dragging the handle in the positive direction actually gives you negative values on X") and
+     * Blockbench's issue tracker ("the X … position channel [is] inverted in keyframes"). Negating
+     * here on the strength of them <b>put the character off the screen</b>: her {@code -32} became
+     * two and a half blocks to the camera's left, some sixty degrees off axis, where the Bedrock
+     * client has her at the frame's edge. She was visible before the change and gone after it.
+     *
+     * <p>The reading that survives is that <b>Blockbench inverts what it DISPLAYS</b>, so that the
+     * handle a user drags matches edit mode — and the file it writes is already in the engine's
+     * space. Both quotations are about the editor's UI, which is what they say if read carefully;
+     * neither is about what the engine does with the number.
+     *
+     * <p>Kept as a named constant rather than deleted, because the argument for the negation is
+     * genuinely available in the documentation and will be found again. SC-180 §3.6 carries the
+     * measurement that settles it.
+     */
+    private static final float POSITION_X_SENSE = 1.0f;
+
+    /**
+     * The three channels as one transform: <b>the offset does NOT ride the rotation</b> — the bone
+     * translates, and rotates and scales in place about its pivot. SC-180 §4.1.3.
+     *
+     * <p><b>Measured, on the Bedrock client, with original-content probes</b> (probe v9,
+     * {@code spec/features/0005-attachables/probe/}): a position-only animation of
+     * {@code [-32,-2,-9]} moved the marker bones two blocks to the player's RIGHT in their rest
+     * orientation; a rotation-and-scale-only animation of {@code [0,-85,0]}×1.2 turned them IN
+     * PLACE, the forward marker swinging to the player's LEFT; and the full set landed at the same
+     * spot as position-only, rotated in place. Three independent readings, one rule: the channels
+     * are independent, and the translation is outermost.
+     *
+     * <p><b>This order was flipped once, on a documented argument, and the probe refuted it.</b>
+     * Mojang's "vertices are translated, rotated, then scaled" reads temptingly as the vertex
+     * being moved first and the rotation then carrying the offset — implemented that way, the
+     * probe's full set would have landed front-left, and on the Bedrock frame it lands right.
+     * The rotation-marker reading also settles §3.4.1's Y sense directly for the first time:
+     * forward → player's left under −85° is the standard right-handed turn this build uses.
      *
      * <p>Rotation composes Z, Y, X, matching the order a bone's own declared rotation uses. Two
      * different orders in one model would be a bug nothing could see until an animation turned a
@@ -187,7 +221,7 @@ public final class AnimationSampler implements Playable {
         Mat4f matrix = Mat4f.IDENTITY;
         if (position.isPresent()) {
             float[] at = position.get();
-            matrix = matrix.times(Mat4f.translation(at[0], at[1], at[2]));
+            matrix = matrix.times(Mat4f.translation(POSITION_X_SENSE * at[0], at[1], at[2]));
         }
         if (rotation.isPresent()) {
             float[] by = rotation.get();

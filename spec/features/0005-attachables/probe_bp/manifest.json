@@ -1,0 +1,19 @@
+﻿{
+  "format_version": 2,
+  "header": {
+    "name": "Lepus facing probe (behaviour half)",
+    "description": "Defines one custom item, lepus:probe, so the resource half's attachable renders in first person the way a custom item does.",
+    "uuid": "8c4d91e2-3b7a-4f60-a2c8-1d9e6b5f4a03",
+    "version": [10, 0, 0],
+    "min_engine_version": [1, 20, 50]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "8c4d91e2-3b7a-4f60-a2c8-1d9e6b5f4a04",
+      "version": [10, 0, 0]
+    }
+  ]
+}
+
+

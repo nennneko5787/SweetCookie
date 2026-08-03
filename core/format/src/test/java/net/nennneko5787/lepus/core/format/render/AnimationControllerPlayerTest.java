@@ -71,7 +71,7 @@ class AnimationControllerPlayerTest {
                   "format_version": "1.8.0",
                   "animations": {
                     "animation.t": {"loop": true, "animation_length": 1,
-                                    "bones": {"root": {"position": [%s, 0, 0]}}}
+                                    "bones": {"root": {"position": [0, %s, 0]}}}
                   }
                 }
                 """.formatted(by)).asObject().orElseThrow(), WHERE, new Diagnostics()).get(0));
@@ -86,11 +86,18 @@ class AnimationControllerPlayerTest {
         return out;
     }
 
-    private static float xOf(Playable playable, AttachableContext context) {
+    /**
+     * How far the active state's animation moves the bone, read on <b>Y</b>.
+     *
+     * <p>Y rather than X because the animation {@code position} channel's X runs opposite to the
+     * geometry's (SC-180 §3.6). This test is about which state is active, and a fixture that also
+     * rode on an axis convention would fail for two unrelated reasons at once.
+     */
+    private static float yOf(Playable playable, AttachableContext context) {
         Map<String, AnimationSampler.Channels> channels = new LinkedHashMap<>();
         playable.accumulate(new Playback(), context, 1.0f, channels);
         AnimationSampler.Channels root = channels.get("root");
-        return root == null ? 0f : root.transform().transform(0f, 0f, 0f)[0];
+        return root == null ? 0f : root.transform().transform(0f, 0f, 0f)[1];
     }
 
     private static AttachableContext wearer(AttachableContext.Wearer doing) {
@@ -103,7 +110,7 @@ class AnimationControllerPlayerTest {
                 new AnimationControllerPlayer(controller(WEARER), animations());
         AttachableContext context = wearer(AttachableContext.Wearer.STANDING);
         assertEquals("default", player.activeState(new Playback(), context));
-        assertEquals(1.0f, xOf(player, context), EPSILON);
+        assertEquals(1.0f, yOf(player, context), EPSILON);
     }
 
     /**
@@ -120,7 +127,7 @@ class AnimationControllerPlayerTest {
         AttachableContext context =
                 wearer(new AttachableContext.Wearer(true, false, false, false, false, false));
         assertEquals("sneaking", player.activeState(new Playback(), context));
-        assertEquals(10.0f, xOf(player, context), EPSILON);
+        assertEquals(10.0f, yOf(player, context), EPSILON);
     }
 
     /**
@@ -185,7 +192,7 @@ class AnimationControllerPlayerTest {
                 new AnimationControllerPlayer(controller(WEARER), partial);
         // `stand` is undefined, so the default state contributes nothing at all - not an identity
         // for the bone, which would erase what the model was declared with.
-        assertEquals(0.0f, xOf(player, wearer(AttachableContext.Wearer.STANDING)), EPSILON);
+        assertEquals(0.0f, yOf(player, wearer(AttachableContext.Wearer.STANDING)), EPSILON);
     }
 
     /** A state's blend expression multiplies the blend the entry playing the controller carries. */
@@ -202,6 +209,6 @@ class AnimationControllerPlayerTest {
                 }"""), animations());
         Map<String, AnimationSampler.Channels> channels = new LinkedHashMap<>();
         player.accumulate(new Playback(), wearer(AttachableContext.Wearer.STANDING), 0.5f, channels);
-        assertEquals(25.0f, channels.get("root").transform().transform(0f, 0f, 0f)[0], EPSILON);
+        assertEquals(25.0f, channels.get("root").transform().transform(0f, 0f, 0f)[1], EPSILON);
     }
 }

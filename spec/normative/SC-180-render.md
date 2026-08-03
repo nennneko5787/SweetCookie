@@ -210,6 +210,12 @@ x −3.0..4.1 and −4.3..2.7 — overlapping, each on the other's side of the c
 **A correction that is right on one axis is not evidence about the others.** One helper composes the
 sense for both paths, so a declared rotation and an animated one cannot disagree.
 
+**The Y sense is now measured directly rather than inferred.** Probe v9 (§4.1.3) put a
+rotation-only animation of `[0, -85, 0]` on a forward-pointing marker on the Bedrock client: the
+marker swings from forward to the **player's left**, which is the standard right-handed turn this
+build uses. Until then Y's non-inversion rested on a rifle-grip frame that a sceptic could call
+confounded; it no longer does.
+
 `TODO(SC-180)`: the same question is open for `poly_mesh` and for locator rotations, neither of which
 is drawn yet.
 
@@ -353,6 +359,111 @@ that animation's root → x = -32, which is the screen's right
 
 `TODO(SC-180)`: the three cannot all hold. **Do not resolve it by fitting a rotation to `body` —
 five constants were fitted that way and all five were refuted** (§4.2.1).
+
+#### What the vanilla files settle, and what they do not
+
+Asked in the form "read Mojang's own player files rather than a screenshot", which was the right
+instinct: two of the three open questions around this fall out of them, and the axis is not one.
+
+**Settled: there is no hidden first-person transform to find.** Across all eighteen animations of
+`player_firstperson.animation.json` the bones written are `rightarm` (9), `rightitem` (8), `leftarm`
+(7), `leftitem`, `head` and `body` — and `body` **once**, rotation only:
+
+```json
+"body": { "rotation": [ "query.target_x_rotation", "query.target_y_rotation", 0.0 ] }
+```
+
+`waist` and `root` are never written by any of them, and the player entity uses one geometry for both
+views (`geometry.humanoid.custom`, `scripts.scale` 0.9375) — there is no separate first-person rig.
+Mojang defines the angles as "the rotation required to aim at the entity's current target **if it has
+one, else it returns 0.0**", and a player has no such target. So the wearer's first-person skeleton is
+`body` at identity and `head` at half a turn, **which is what this build already had** — now derived
+from the source rather than from a measurement.
+
+**Settled: the wearer bone is not a choice between replacing and composing.** That argument ran for a
+day (§4.2.1). `base_pose` writes `body`'s **rotation**; the corpus's first-person animation writes
+`body`'s **position** (`[0, -1, -6]`). §4.1 composes per channel component, so the two never meet —
+there is nothing to arbitrate, and replacing throws away a third of a block of forward offset that
+the pack asked for. **A dilemma whose two horns touch different channels is not a dilemma.**
+
+**Refuted, by the instrument, before it reached a screen: the idea that the axis observations were
+taken in two different spaces.** The measurement that fixed the axis was made on `gun2`, which hangs
+below a `root3` that its own animation turns by `[0, 180, 0]` — so it looked as though that bone had
+been read one rotation below the space the other character's `root2` lives in, and "+x is the
+screen's right" would then satisfy both. **It does not.** `AddonSurvey` reports coordinates after the
+whole chain is composed, so that half turn is already in the number, and both characters sit at
+negative x in the same space:
+
+| | posed x | reported on screen |
+|---|---|---|
+| `gun2` | −4.43 … −1.96 | centre-**right**, and both clients agree |
+| the other character's `body2` | −26.08 … −14.62 | the Bedrock client shows her on the **left** |
+
+Two negative values cannot land on opposite sides of the screen under any single convention. So the
+contradiction is **not** in the axis rule and not in a missing vanilla transform: it is between the
+two screen observations themselves, and one of them is about something other than what it says.
+
+**RESOLVED — by two probes, and every number in the table above was right.** Probe v9 (§4.1.3)
+measured the composition: positions apply unrotated, so `-32` really is two blocks to the player's
+right, exactly as this section's axis reading says. Probe v10 (§4.2.1) measured the missing piece:
+**in first person the wearer's `body` bone carries a half turn**, which maps that right to the
+screen's LEFT for the one character whose rig hangs off `body` — and never touches the character
+who hangs off `waist`, which is why she was correct throughout and could not testify. The Bedrock
+client's left-side, point-blank frame and this section's axis table were never in conflict; the
+half turn between them was simply unmeasured. Three candidate resolutions shipped and were refuted
+on the way (§3.6's X negation, §4.1.3's offset-riding-rotation, §4.4's conditions-never-fire) —
+each explained the one frame in front of it, and only the instrument survived all of them.
+
+### 3.6 An animation's `position` X does NOT run opposite to the geometry's — tried, and refuted by a frame
+
+**This section was written the other way round and shipped for under an hour.** It is kept in the
+shape it was found, because the argument for the negation is genuinely available in the
+documentation, reads convincingly, and will be found again.
+
+**The claim:** a keyframe's `position` is measured on an X axis pointing the other way from the one a
+cube's `origin` and a bone's `pivot` use. Two independent sources appear to say so. The Bedrock Wiki,
+from the editor:
+
+> "If you move boxes in the positive X direction the box coordinates show as positive x values,
+> **however if you create a bone, and go to the animation tab, and try adjusting the position of the
+> bone … dragging the handle in the positive direction actually gives you negative values on X.**"
+
+and Blockbench's own issue tracker, from the other side:
+
+> "The X and Y rotation channels and **the X position channel are inverted in keyframes**."
+
+**Why it was convincing.** Every animation in the corpus that mattered writes `position` X as zero —
+the idles, and the first-person animation of the character whose placement was *confirmed correct*
+(`root3 position [0, 0, -11]`). The single exception is the first-person animation of the character
+whose placement was *wrong*: `root2 position [-32, -2, -9]`. One number, in one file, and it was the
+number the open question was about. A rule that touches exactly the broken case and nothing else is
+the most seductive kind there is.
+
+**The frame said no.** With X negated she left the view entirely, and the person looking reported
+that she had stopped being drawn at all:
+
+| | camera space, in blocks |
+|---|---|
+| before | 0.94 … 1.63 to the right, and 0.22 in front to 0.84 **behind** the eye — partly visible, the head across the near plane |
+| after | **2.25 … 2.94 to the left**, 0.36 … 1.41 in front — some sixty degrees off axis, outside the frustum |
+| the Bedrock client | at the frame's edge: thirty to forty-five degrees, with hair showing top-left |
+
+So the negation overshoots by more than it corrects. **Both quotations are about the editor's
+display** — Blockbench inverts what it *shows* so the drag handle matches edit mode, and the file it
+writes is already in the engine's space. Read carefully that is what they say; read quickly it is
+not.
+
+`AnimationSampler.POSITION_X_SENSE` is `+1` and named, so the next person to find those two sentences
+finds this measurement beside them.
+
+**What this does NOT settle.** The placement is still wrong — she is off-axis to the *right* by about
+a block and a half with her head across the near plane, where Bedrock has her at the left edge. The
+sign is not the whole error, and it may not be part of it at all. `TODO(SC-180)`: the magnitude and
+the space are still unexplained, and §3.4.5's contradiction is open again.
+
+`TODO(SC-180)`: the same sources say the X and Y *rotation* channels are inverted in keyframes,
+which does not match §3.4.1's measured senses (X and Z inverted, Y not). Given how this section
+turned out, **that is a statement about Blockbench's display too, until a frame says otherwise.**
 
 ### 3.5 Not yet parsed
 
@@ -656,6 +767,47 @@ length, which is where the wrap has to come from.
 value across the whole segment for it. It appears nowhere in the corpus, and the `pre`/`post` pair —
 which does the same thing at a single instant — is the form these packs would reach for.
 
+### 4.1.3 The offset does NOT ride the rotation — measured, on the Bedrock client, with probes
+
+**The three channels of one bone are independent: the position translates, and the rotation and
+scale turn and size the bone IN PLACE about its pivot.** The translation is outermost, exactly as
+this build always had it before one afternoon's excursion.
+
+**This is now a measurement, not a reading of prose.** Probe v9
+(`spec/features/0005-attachables/probe/`, 100 % original content, a behaviour-pack item so the
+attachable actually runs) split the corpus's heaviest keyframe — `rotation [0,-85,0]`,
+`position [-32,-2,-9]`, `scale 1.2` — across three items and put marker bones on a Bedrock client:
+
+| probe | Bedrock frame, third person | settles |
+|---|---|---|
+| position only | markers **two blocks to the player's RIGHT**, rest orientation | positions apply, unrotated; **−X = the player's right**, re-confirmed on screen |
+| rotation + scale only | markers turn **in place**; the forward marker swings to the **player's LEFT** | rotation does not displace; **§3.4.1's Y sense is right**, measured directly for the first time |
+| all three | markers at the **same spot as position-only**, turned in place, ×1.2 | the channels compose independently — **translate · rotate · scale, translation outermost** |
+
+**The opposite order shipped for part of a day and this probe refuted it.** Mojang's sentence —
+"Order of operations: vertices are translated, rotated, then scaled" — reads temptingly as the
+vertex being moved first and the rotation then carrying the offset. Implemented that way, the full
+probe would land front-left; the Bedrock frame has it right. It briefly *looked* confirmed because
+it happened to put the misplaced character on the correct side of the screen — a coincidence that
+survived until an instrument with no symmetry and no other animations measured the rule itself.
+**An argument from a sentence has now lost to a frame twice in this feature** (§3.6 is the other).
+
+#### What this reopens, and where the suspect now stands
+
+With the semantics pinned, her `.hand` puts her **two blocks to the player's right, off the
+first-person screen** — which is exactly where the full probe sits, invisible, in first person.
+**And the Bedrock client shows her large, close and to the LEFT.** The probe with her own numbers
+does not land where she appears, so **what the client draws for her cannot be her `.hand` playing.**
+
+The one difference left between the probe and her attachable is **the condition**: v9 plays
+unconditionally; hers plays through `v.main_hand && c.is_first_person`, with `v.main_hand` assigned
+in `pre_animation`. That is precisely the mechanism §4.4 recorded as untested — **`scripts.animate`
+conditions evaluated before `pre_animation`, or in a scope that cannot see its assignments** — and
+if it holds, her first-person animation has never played on a Bedrock screen, her left-side
+appearance is the rest pose seen from inside it, and the other character is unaffected because hers
+never plays anyway (§4.1, zero-length). Probe v10 (three items: no animation at all / her exact
+indirect condition / the same condition written inline) is built to read it. `TODO(SC-180)`.
+
 ### 4.2 Bones named after the wearer's are driven by the wearer
 
 **An attachable's geometry may name bones after the player's own, and those bones are not the
@@ -749,12 +901,21 @@ rotation cannot move a `waist`-parented attachable, and the survey output for he
 byte-for-byte unchanged. A change to a shared seam that can be shown *not* to reach the one case
 already confirmed correct is worth more than one that merely looks right in a screenshot.
 
-**`query.target_*_rotation` answers zero for a first-person player, and that is now measured.**
-§4.3 reasoned it; nothing had tested it, because this build passed zeroes to the wearer's bones for
-the whole of the feature and therefore never ran vanilla's documented input. Feeding the player's
-real pitch and head-minus-body yaw made the character **swing as the view turned**. The Bedrock
-client holds her still. So the queries answer zero here, `body` is identity, and what survives from
-`base_pose` is the half turn on `head` — a constant, which the same frame says nothing against.
+**`query.target_*_rotation` does not track the view in first person — measured** (feeding the
+player's real angles made the character swing where the Bedrock client holds her still). **But
+constant is not the same as zero, and reading it as zero cost weeks.** That frame only proves the
+value does not move; it says nothing about which constant it is. `body` was set to identity on that
+reading.
+
+**Probe v10 measured the constant: `body` carries a half turn in first person.** An animation-less
+`body`-parented rig on the Bedrock client is visible in first person with its +X marker on the
+screen's right, its −X marker on the left, and its forward marker straddling the camera — the whole
+rig turned 180° about the player's centre, with no pack animation anywhere to confound it. Whether
+the engine does that via `base_pose` with `target_y_rotation` answering 180, or upstream of Molang
+entirely, is not measured; the half turn is. `FIRST_PERSON_WEARER` now answers `R_y(180)` for both
+`body` and `head`, and the wearer's contribution combines with a pack's channels as one more
+animation in the stack — translation outermost, §4.1.3 — so the corpus's `body [0,-1,-6]` still
+pushes forward underneath it.
 
 **What `body` does carry in first person is half a turn**, and the difference between that sentence
 and the five fitted constants below is what makes it worth keeping. A half turn was tried three
@@ -875,7 +1036,21 @@ here. **That is a stub and it is not, on the evidence so far, observable**: the 
 only on channels whose bone declares no rotation about that axis, where zero is the right answer.
 It becomes wrong as soon as a pack aims a bone that has a declared angle on the same axis.
 
-### 4.4 The corpus's first-person animation does not run, and the reason is still open
+### 4.4 The corpus's first-person animation DOES run — closed by probe v10, reversing this section
+
+**Probe v10 closed this the other way.** Three items on the Bedrock client, held in the main hand in
+first person: one with no animation at all is **visible** — so an attachable whose animation does
+not play is seen, not hidden; one with the corpus's exact `pre_animation` indirection is invisible;
+one with the same condition written inline is invisible. Invisible here means *played and moved out
+of view* (§4.1.3's probes put the same keyframe two blocks right and behind), and the rest probe
+proves not-playing would have been visible. **Both condition forms fire. `pre_animation`'s
+assignments are visible to `scripts.animate`. Her first-person animation plays on Bedrock.**
+
+What actually distinguishes the clients' frames is §4.2.1's wearer half-turn, measured by the same
+probe. The section below is kept as this document's most instructive wrong conclusion: it reversed
+itself once already, and every paragraph of its reasoning was defensible at the time.
+
+#### The earlier state of this section, kept for the record
 
 **What is settled is the observation.** §4.1 records the frame: with the documented additive
 composition implemented, playing that animation spins a character half a turn through the camera,
@@ -907,6 +1082,16 @@ nothing has tested it, and this section has already been wrong once for want of 
 
 **Until then this build has the right behaviour for the wrong reason, and says so here rather than
 in a coverage note that would read as settled.**
+
+**The instrument for that test now exists, and the surrounding facts have hardened.** Probe v9
+(§4.1.3) played her exact keyframe unconditionally on the Bedrock client: it lands two blocks to
+the player's right, out of the first-person view — so if her condition were true there, she would
+be invisible, and she is not. The condition being **false** on Bedrock is now the only reading that
+fits every frame. Probe v10 splits the mechanism: one item with no animation at all (where does a
+rest pose sit in first person), one with her exact `pre_animation` indirection, one with the same
+condition written inline. Whichever pair matches decides whether the break is the scope, the
+timing, or the query itself. Note the shield's own `c.item_slot` lives in its animation
+*controller*'s entries, not in `scripts.animate` — vanilla proves the query, not the placement.
 
 **The field of view is not the variable, and that was measured.** The two clients are set to 60 and
 70 degrees, and **changing either moves nothing** — so both draw this pass with a projection that

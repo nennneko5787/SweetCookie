@@ -44,13 +44,21 @@ public final class AttachablePoser {
      * these at identity while the renderer turned them, and every extent it printed for a
      * `body`-parented attachable was a frame nobody was drawing. Whatever is here, both read it.
      *
-     * <p>Half a turn on each. `head`'s is vanilla's own — `base_pose` writes
-     * `[q.target_x_rotation, q.target_y_rotation + 180, 0]`, and those queries answer zero for a
-     * first-person player (§4.3, measured). `body`'s is §4.2.1's, and is what puts the corpus's
-     * `root2 position [-32, …]` on the side the Bedrock client shows.
+     * <p><b>Half a turn on `body`, and it is a measurement.</b> Probe v10
+     * ({@code spec/features/0005-attachables/probe/}) put an animation-less `body`-parented rig on
+     * the Bedrock client in first person: it is VISIBLE, its +X marker on the screen's right, its
+     * −X marker on the left, its forward marker straddling the camera — the whole rig turned half a
+     * turn about the player's centre. The `waist`-parented character never sees this bone, which is
+     * why she was correct all along and could never testify about it.
+     *
+     * <p>`head`'s half turn is vanilla's own — `base_pose` writes
+     * `[q.target_x_rotation, q.target_y_rotation + 180, 0]`. `body` was identity here for as long
+     * as this map existed, on the reading that those queries answer zero in first person; the probe
+     * says the engine turns `body` regardless, which base_pose expresses if `q.target_y_rotation`
+     * answers 180 there rather than 0. The mechanism is a guess; the half turn is not.
      */
     public static final Map<String, Mat4f> FIRST_PERSON_WEARER = Map.of(
-            "body", Mat4f.IDENTITY,
+            "body", Mat4f.rotationY(180.0f),
             "head", Mat4f.rotationY(180.0f));
 
     /** One entry of {@code scripts.animate}: something to play, and how much of it. */
@@ -142,8 +150,13 @@ public final class AttachablePoser {
         }
         Map<String, Mat4f> extra = new LinkedHashMap<>();
         channels.forEach((bone, accumulated) -> extra.put(bone, accumulated.transform()));
+        // A bone both the pack and the wearer pose combines AS THE CHANNELS WOULD: the wearer's
+        // contribution is one more animation in the stack (vanilla's base_pose IS one), so a pack
+        // position and a wearer rotation build one transform, translation outermost - §4.1, and
+        // the same v9 probe that pinned that order. Composing the other way round (driver outside)
+        // sent the corpus's `body [0,-1,-6]` BACKWARDS the moment the wearer's half turn arrived.
         skeleton.forEach((bone, driven) ->
-                extra.merge(bone, driven, (animated, driver) -> driver.times(animated)));
+                extra.merge(bone, driven, (animated, driver) -> animated.times(driver)));
         if (extra.isEmpty()) {
             return BoneMatrices.bindPose(geometry);
         }

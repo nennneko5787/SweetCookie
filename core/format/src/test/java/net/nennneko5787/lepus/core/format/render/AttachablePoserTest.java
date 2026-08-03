@@ -82,6 +82,81 @@ class AttachablePoserTest {
     }
 
     /**
+     * <b>An animation's {@code position} reaches the bone unchanged, X included.</b> SC-180 §3.6.
+     *
+     * <p>Negating X here is documented and wrong. The Bedrock Wiki says "dragging the handle in the
+     * positive direction actually gives you negative values on X", and Blockbench's issue tracker
+     * says "the X … position channel [is] inverted in keyframes" — <b>both are describing the
+     * editor's display</b>, not what the engine does with the number in the file.
+     *
+     * <p>It was implemented anyway, and a frame refuted it inside an hour: the one animation in the
+     * corpus with a large X, {@code -32}, became two and a half blocks to the camera's left, about
+     * sixty degrees off axis, and the character vanished from a view she had been partly visible in.
+     *
+     * <p>This test exists so the next reader who finds those two quotations has the measurement
+     * beside them. Asserted on all three components, because "X passes through" is only meaningful
+     * next to the two that were never in doubt.
+     */
+    @Test
+    void anAnimationsPositionReachesTheBoneUnchanged() {
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(moving("root", "[32, 5, 7]"), Optional.<String>empty())),
+                List.of());
+        float[] at = at(poser);
+        assertEquals(32.0f, at[0], EPSILON);
+        assertEquals(5.0f, at[1], EPSILON);
+        assertEquals(7.0f, at[2], EPSILON);
+    }
+
+    /**
+     * <b>The offset does not ride the rotation: the bone translates, and turns in place.</b>
+     * SC-180 §4.1.3.
+     *
+     * <p>Measured on the Bedrock client with the original-content probe v9, using the corpus's own
+     * heaviest keyframe — rotation {@code [0,-85,0]}, position {@code [-32,-2,-9]}, scale
+     * {@code 1.2} on one bone. Position-only moved the markers two blocks to the player's right in
+     * rest orientation; rotation-only turned them in place, forward swinging to the player's left;
+     * the full set landed where position-only did, rotated in place. The channels are independent.
+     *
+     * <p><b>The opposite order shipped for part of a day</b>, argued from Mojang's "vertices are
+     * translated, rotated, then scaled" — read as the rotation carrying the offset. Under it the
+     * probe's full set would sit front-left; the Bedrock frame has it right. An argument from a
+     * sentence lost to a frame for the second time in this feature, and this test is the frame's
+     * side of it: the bone's origin must land exactly at the written position, rotation present or
+     * not, and a rotated point must differ from it only by the in-place turn.
+     */
+    @Test
+    void anAnimatedOffsetDoesNotRideTheRotation() {
+        AnimationSampler hand = new AnimationSampler(AnimationFiles.parse(Json.parse("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.t": {"loop": true, "animation_length": 1,
+                                    "bones": {"root": {
+                                      "rotation": [0, -85, 0],
+                                      "position": [-32, -2, -9],
+                                      "scale": 1.2
+                                    }}}
+                  }
+                }
+                """).asObject().orElseThrow(), WHERE, new Diagnostics()).get(0));
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(hand, Optional.<String>empty())),
+                List.of());
+        Map<String, Mat4f> pose = poser.at(new Playback(), AttachableContext.thirdPerson(true));
+        // The bone's own origin: the raw position, untouched by the -85.
+        float[] origin = pose.get("root").transform(0f, 0f, 0f);
+        assertEquals(-32.0f, origin[0], 0.01f);
+        assertEquals(-2.0f, origin[1], 0.01f);
+        assertEquals(-9.0f, origin[2], 0.01f);
+        // A point one unit out turns about that origin - in place, scaled by 1.2.
+        float[] out = pose.get("root").transform(1f, 0f, 0f);
+        assertEquals(-32.0f + 0.1046f, out[0], 0.01f);
+        assertEquals(-2.0f, out[1], 0.01f);
+        assertEquals(-9.0f + 1.1954f, out[2], 0.01f);
+    }
+
+    /**
      * Two animations naming one bone <b>add, per channel component</b>. SC-180 §4.1.
      *
      * <p>Ten and one hundred rather than two numbers that could be confused: adding reads 110, the
@@ -98,20 +173,20 @@ class AttachablePoserTest {
     @Test
     void twoAnimationsNamingOneBoneAdd() {
         AttachablePoser poser = new AttachablePoser(geometry(),
-                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
-                        Map.entry(moving("root", "[100, 0, 0]"), Optional.<String>empty())),
+                List.of(Map.entry(moving("root", "[0, 10, 0]"), Optional.<String>empty()),
+                        Map.entry(moving("root", "[0, 100, 0]"), Optional.<String>empty())),
                 List.of());
-        assertEquals(110.0f, at(poser)[0], EPSILON);
+        assertEquals(110.0f, at(poser)[1], EPSILON);
     }
 
     /** A bone only one animation names gets exactly that one, with nothing added to it. */
     @Test
     void aBoneOnlyOneAnimationNamesKeepsThatOne() {
         AttachablePoser poser = new AttachablePoser(geometry(),
-                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
-                        Map.entry(moving("other", "[100, 0, 0]"), Optional.<String>empty())),
+                List.of(Map.entry(moving("root", "[0, 10, 0]"), Optional.<String>empty()),
+                        Map.entry(moving("other", "[0, 100, 0]"), Optional.<String>empty())),
                 List.of());
-        assertEquals(10.0f, at(poser)[0], EPSILON);
+        assertEquals(10.0f, at(poser)[1], EPSILON);
     }
 
     /**
@@ -131,22 +206,22 @@ class AttachablePoserTest {
     void anEntrysClockStartsTheFirstFrameItPlays() {
         AttachablePoser poser = new AttachablePoser(geometry(),
                 List.of(Map.entry(sampler("root", "position",
-                        "{\"0.0\": [0, 0, 0], \"1.0\": [10, 0, 0]}"), Optional.of("v.on"))),
+                        "{\"0.0\": [0, 0, 0], \"1.0\": [0, 10, 0]}"), Optional.of("v.on"))),
                 List.of());
         Playback playback = new Playback();
         // Two and a half seconds in which it never played, so its clock never started.
         playback.advanceTo(2.5f);
         AttachableContext off = AttachableContext.thirdPerson(true);
-        assertEquals(0.0f, poser.at(playback, off).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+        assertEquals(0.0f, poser.at(playback, off).get("root").transform(0f, 0f, 0f)[1], EPSILON);
 
         // Now it plays. Its first frame is its t=0, NOT the shared clock's 2.5.
         AttachableContext on = AttachableContext.thirdPerson(true);
         on.write(MolangContext.Scope.VARIABLE, "on", 1.0f);
-        assertEquals(0.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+        assertEquals(0.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[1], EPSILON);
 
         // Half a second later it is halfway, and the shared clock's three seconds are irrelevant.
         playback.advanceTo(3.0f);
-        assertEquals(5.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+        assertEquals(5.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[1], EPSILON);
     }
 
     /**
@@ -158,11 +233,11 @@ class AttachablePoserTest {
     @Test
     void anEntryWhoseConditionIsFalseClaimsNothing() {
         AttachablePoser poser = new AttachablePoser(geometry(),
-                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
-                        Map.entry(moving("root", "[100, 0, 0]"),
+                List.of(Map.entry(moving("root", "[0, 10, 0]"), Optional.<String>empty()),
+                        Map.entry(moving("root", "[0, 100, 0]"),
                                 Optional.of("c.is_first_person"))),
                 List.of());
-        assertEquals(10.0f, at(poser)[0], EPSILON);
+        assertEquals(10.0f, at(poser)[1], EPSILON);
     }
 
     /**
@@ -182,10 +257,10 @@ class AttachablePoserTest {
     @Test
     void aFractionalConditionAppliesThatMuchOfIt() {
         AttachablePoser poser = new AttachablePoser(geometry(),
-                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
-                        Map.entry(moving("root", "[100, 0, 0]"), Optional.of("0.5"))),
+                List.of(Map.entry(moving("root", "[0, 10, 0]"), Optional.<String>empty()),
+                        Map.entry(moving("root", "[0, 100, 0]"), Optional.of("0.5"))),
                 List.of());
-        assertEquals(60.0f, at(poser)[0], EPSILON);
+        assertEquals(60.0f, at(poser)[1], EPSILON);
     }
 
     /**
@@ -202,15 +277,15 @@ class AttachablePoserTest {
                   "format_version": "1.8.0",
                   "animations": {
                     "animation.t": {"loop": true, "animation_length": 1, "blend_weight": 0.5,
-                                    "bones": {"root": {"position": [100, 0, 0]}}}
+                                    "bones": {"root": {"position": [0, 100, 0]}}}
                   }
                 }
                 """).asObject().orElseThrow(), WHERE, new Diagnostics()).get(0));
         AttachablePoser poser = new AttachablePoser(geometry(),
-                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
+                List.of(Map.entry(moving("root", "[0, 10, 0]"), Optional.<String>empty()),
                         Map.entry(half, Optional.of("0.5"))),
                 List.of());
-        assertEquals(35.0f, at(poser)[0], EPSILON);
+        assertEquals(35.0f, at(poser)[1], EPSILON);
     }
 
     /**

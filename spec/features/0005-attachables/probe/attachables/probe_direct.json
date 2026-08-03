@@ -1,0 +1,22 @@
+{
+  "format_version": "1.16.100",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "lepus:probe_direct",
+      "materials": { "default": "entity_alphatest" },
+      "textures": { "default": "textures/blocks/wool_colored_red" },
+      "geometry": { "default": "geometry.lepus_probe" },
+      "animations": {
+        "main_hand": "animation.lepus_probe.full",
+        "off_hand": "animation.lepus_probe.full"
+      },
+      "scripts": {
+        "animate": [
+          { "main_hand": "c.item_slot == 'main_hand' && c.is_first_person" },
+          { "off_hand": "c.item_slot == 'off_hand' && c.is_first_person" }
+        ]
+      },
+      "render_controllers": [ "controller.render.item_default" ]
+    }
+  }
+}

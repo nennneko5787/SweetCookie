@@ -105,9 +105,16 @@ entries:
       halo sits above and behind the eye and would be invisible anyway, but an armour attachable
       that reaches in front of the player is a real omission rather than a hidden one.
 
-      NOT yet confirmed against a Bedrock client. The reference screenshot puts the character at the
-      left edge of the view, which agrees with SC-180 section 4.1's composition rule; whether the
-      remaining overlap between the camera and her head matches has not been measured.
+      Confirmed against the Bedrock client in COMPOSITION: the body-parented character appears at
+      the screen's left, point-blank, face visible, on both clients - the product of three measured
+      rules (channels independent and translation outermost, SC-180 section 4.1.3; conditions fire,
+      section 4.4; the wearer's `body` carries a half turn in first person, section 4.2.1), each
+      read off original-content probes rather than fitted.
+
+      A sub-block placement residual remains and is deliberately not fitted: both clients draw this
+      pass with a fixed projection that ignores the FOV setting (measured), so the residual is
+      plausibly the two engines' fixed projections differing - not pack data, and a constant tuned
+      to it would be a hand-fitted number of exactly the kind the constitution forbids.
   - id: attachable/worn
     status: partial
     impl: net.nennneko5787.lepus.client.render.AttachableLayer

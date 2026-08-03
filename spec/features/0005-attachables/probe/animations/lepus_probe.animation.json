@@ -1,0 +1,32 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.lepus_probe.pos": {
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "root2": {
+          "position": [-32, -2, -9]
+        }
+      }
+    },
+    "animation.lepus_probe.rot": {
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "root2": {
+          "rotation": [0, -85, 0],
+          "scale": 1.2
+        }
+      }
+    },
+    "animation.lepus_probe.full": {
+      "loop": "hold_on_last_frame",
+      "bones": {
+        "root2": {
+          "rotation": [0, -85, 0],
+          "position": [-32, -2, -9],
+          "scale": 1.2
+        }
+      }
+    }
+  }
+}
