@@ -49,14 +49,51 @@ banner_pattern -> 無し              （Java 側に同名 9 個。選ぶのは�
 
 **525 という数字が設計を決めた。** 「だいたい同じ綴りだろう」で済ませる案は 3 分の 1 以上で外れる。
 
+## 段階 D — 名前の消費側 ✅
+
+- [x] **表に 1 列足りなかった。** Java はブロックのアイテム形を `block.minecraft.`、それ以外を
+      `item.minecraft.` で呼ぶ。**どちらかはパスから導けない**ので、生成する 2 列目を
+      **鍵の全体**にした。`item.` と決め打つとブロックは 1 つも改名できない
+- [x] `BedrockVanillaNames.javaLangKeyOfBedrockKey` — パックの鍵をまるごと解決する
+- [x] `BlockBinding.languages` にバニラ改名の走査を追加
+- [x] **これは `lepus` 名前空間に出して勝つ。** 言語は名前空間もパックも横断して 1 つに
+      マージされるので、`item.minecraft.*` をこちらに書けばバニラの分を上書きできる。
+      **テクスチャ側にはこの手が無い**（本物の差し替えが要る）
+
+**触らなかったもの**: パックの行末は `ホシのトーテム\t#` で、`LangFile` には
+「統合版は末尾の `#` を落とさない」と記録がある。Mojang 自身の `en_US.lang` には
+タブ末尾コメントが**1 件も無い**ので、この資料では確かめも否定もできない。
+**記録を推測で覆さない。** 統合版の画面 1 枚で決まる話なので、そちらを待つ。
+
+## 段階 E — アイコンの消費側 ✅
+
+- [x] `item_texture.json` を読む。**先頭に `//` コメントがある**ので、パーサに許可が要る
+- [x] **2 通りの解決。どちらも照合であって推測ではない**:
+      1. キーが言語の短い名前でもあるとき、その項目が指す Java のアイテム
+      2. **配列のとき、要素のファイル名を Java のアイテム名の集合と突き合わせて完全一致だけ採る**
+- [x] **配列が肝だった。** Bedrock は剣 7 本を `sword` 1 キーに並べて aux 値で選ぶので、
+      主要な道具と武器は全部そこにいて、キーはどの言語項目とも一致しない。
+      `diamond_sword` / `diamond_axe` はここで拾える
+- [x] **惜しいものは落とす。** `gold_axe` は Java が `golden_axe` なので不一致 ⇒ 採らない。
+      間違ったテクスチャは、変わらないテクスチャより悪い
+- [x] **Java のアイテムのスプライトだけ。** ブロックのアイコンはモデルから描かれるので、
+      `item/<x>.png` を差し替えても誰も読まない。表から外してある
+- [x] `.tga` は `SCE-2043`。Bedrock は読めて Java は読めない
+- [x] `BedrockVanillaTextures` ＋ `TableResource`（2 つの表で読み方が食い違わないよう共通化）
+- [x] テスト 5 件。全項目が `item/` を指すことも主張している
+
+```
+262 テクスチャパス
+textures/items/totem        -> item/totem_of_undying
+textures/items/diamond_sword -> item/diamond_sword   （配列から）
+textures/items/gold_axe     -> 無し                   （Java は golden_axe）
+```
+
 ## 残り
 
-- [ ] **段階 D — 名前の消費側**。パックの `.lang` の `item.<短い名前>.name` を
-      Java の `item.minecraft.<path>` として生成パックに出す。`BedrockVanillaNames` は用意できた
-- [ ] **段階 E — アイコンの消費側**。`textures/items/<x>.png` → `assets/minecraft/textures/item/<path>.png`。
-      **`item_texture.json` をまだ読んでいない** — テクスチャのパスの短い名前が言語キーの
-      短い名前と一致するとは限らない（`stone` の言語キーは `stone.stone`、テクスチャは
-      `textures/blocks/stone.png`）。ここは別の解決が要る可能性が高い
-- [ ] **未対応 401 件の手当て**（ユーザー方針: あとで手動）。作業リストは生成器が出す。
-      多くは Bedrock 側で同じ表示名を複数の短い名前が持つもの（`anvil` と `anvil.intact` など）
-- [ ] エンティティの表（`entity.*` ↔ `entity.minecraft.*`）。今回はやらない
+- [ ] **実機確認**。トーテムの名前とアイコンが変わるはず
+- [ ] **未対応の手当て**（ユーザー方針: あとで手動）。作業リストは
+      `build/upstream/vanilla-names.unmatched.txt`。多くは Bedrock 側で同じ表示名を複数の
+      短い名前が持つもの（`anvil` と `anvil.intact` など）
+- [ ] ブロックのテクスチャ差し替え（モデル経由なので別の設計が要る）
+- [ ] エンティティの表（`entity.*` ↔ `entity.minecraft.*`）

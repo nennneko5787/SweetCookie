@@ -1,12 +1,5 @@
 package net.nennneko5787.lepus.core.registry;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import net.nennneko5787.lepus.core.api.SpecImpl;
@@ -41,7 +34,8 @@ public final class BedrockVanillaNames {
     /** Where the generated table is served from. Committed, so the build works offline. */
     private static final String RESOURCE = "/lepus/vanilla-names.tsv";
 
-    private static final Map<String, String> BY_SHORT_NAME = load();
+    private static final Map<String, String> BY_SHORT_NAME =
+            TableResource.load(BedrockVanillaNames.class, RESOURCE);
 
     private BedrockVanillaNames() {
     }
@@ -93,34 +87,4 @@ public final class BedrockVanillaNames {
         return BY_SHORT_NAME.size();
     }
 
-    /**
-     * Reads the generated table.
-     *
-     * <p>An unreadable or absent table leaves this empty rather than throwing. Nothing here is
-     * required for an add-on to load — a pack whose rename cannot be resolved keeps the vanilla
-     * name, which is the same outcome as a name this table never knew.
-     */
-    private static Map<String, String> load() {
-        Map<String, String> out = new LinkedHashMap<>();
-        try (InputStream in = BedrockVanillaNames.class.getResourceAsStream(RESOURCE)) {
-            if (in == null) {
-                return Map.of();
-            }
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isEmpty() || line.charAt(0) == '#') {
-                    continue;
-                }
-                int tab = line.indexOf('\t');
-                if (tab > 0 && tab < line.length() - 1) {
-                    out.put(line.substring(0, tab), line.substring(tab + 1));
-                }
-            }
-        } catch (IOException unreadable) {
-            return Map.of();
-        }
-        return Collections.unmodifiableMap(out);
-    }
 }

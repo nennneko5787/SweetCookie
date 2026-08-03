@@ -34,6 +34,39 @@ is visible on the wire.
 
 Confusing them is a review-blocking defect (constitution rule 4).
 
+### 2.1 A third relation: what Bedrock calls something that already exists
+
+Both spaces above are about content a pack **brings**. A pack may also address content that was
+already there — renaming the totem, retexturing the sword — and then no identifier is derived,
+because Minecraft registered the thing years ago. The relation needed is **equivalence**, not
+derivation, and it runs the other way: given Bedrock's spelling, which vanilla thing is it.
+
+The identifiers themselves already agree; `minecraft:totem_of_undying` is that in both games. What
+does not agree is the two places Bedrock uses an **internal short name** instead:
+
+| | Bedrock | Java |
+|---|---|---|
+| translation | `item.totem.name`, `tile.wool.white.name` | `item.minecraft.totem_of_undying`, `block.minecraft.white_wool` |
+| item picture | `textures/items/totem.png` | `textures/item/totem_of_undying.png` |
+
+**Measured, not assumed: 525 of 1,437 names are spelled differently on the two sides**, so treating
+the short name as the Java path is wrong for more than a third of the game and wrong in ways
+inspection does not catch — `wool.white` is `white_wool`.
+
+The tables are **generated** (`./gradlew generateBedrockConstants`, `spec/upstream/fetch.md`) by
+joining Mojang's two language files on the English display name, and an entry survives only when
+that name is unique in **both** games. Nothing is fitted by hand and nothing is assumed by pattern.
+
+**Ambiguity yields no mapping.** Bedrock has one `banner_pattern`; Java has nine items called
+"Banner Pattern". Choosing among them would be a fitted constant, so none of them are mapped and
+such an item keeps its vanilla name and picture. Refusing leaves a pack's intent unapplied where
+choosing would apply it to the wrong thing, and only the second is a defect. A human answer may be
+recorded in `spec/upstream/vanilla-names.manual.yaml`, which the generator merges and which wins.
+
+The implementation is `core/registry`'s `BedrockVanillaNames` and `BedrockVanillaTextures`, beside
+`IdMapper` — that one derives an identifier for content a pack brings, these recognise content that
+was already there. None of the three has a coverage entry, because none is a Bedrock feature.
+
 ## 3. Logical identity
 
 ```

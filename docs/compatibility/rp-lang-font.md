@@ -7,7 +7,7 @@ Ledger: [`spec/coverage/rp-lang-font.yaml`](../../spec/coverage/rp-lang-font.yam
 
 | Feature | Status | Notes |
 |---|---|---|
-| `texts/lang_files` | stub |  |
+| `texts/lang_files` | partial | A pack's `.lang` entries reach the generated pack's own language files, and both kinds of key are read. An add-on's own content is keyed by the identifier it declared; a VANILLA item is keyed by Bedrock's internal short name - `item.totem.name` - which is a different spelling from Java's for 525 of the 1,437 names that can be matched at all, and is resolved through the generated equivalence table (SC-120 section 2.1). A short name with no unambiguous answer is left alone and the item keeps its vanilla name. This lands in Lepus's own namespace and still overrides vanilla, because a language is merged across every namespace and every pack in load order. No file of Mojang's is replaced for the naming half; the picture half needs a real override and has one. `minecraft:display_name` holds a KEY rather than a name and is followed, which is how spawn eggs and the 18 items borrowing their key resolve at all. |
 | `font/glyph_pages` | stub | 256x256 atlases in a 16x16 grid. |
 | `font/default8` | stub |  |
 | `font/glyph_sizes` | stub | Binary width table. |

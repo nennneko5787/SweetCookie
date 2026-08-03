@@ -92,6 +92,11 @@ tasks.register<GenerateBedrockConstantsTask>("generateBedrockConstants") {
             "core/registry/src/main/resources/lepus/vanilla-names.tsv"
         )
     )
+    textureOutputFile.set(
+        layout.projectDirectory.file(
+            "core/registry/src/main/resources/lepus/vanilla-item-textures.tsv"
+        )
+    )
     // Where Java's own language file lives is the loader plugin's business, not ours, so the jar is
     // asked for rather than located. Lazily, and from one node only: every node ships the same
     // en_us.json for its version, and resolving four would cost four Minecraft provisions.

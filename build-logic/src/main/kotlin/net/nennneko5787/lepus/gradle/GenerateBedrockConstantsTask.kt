@@ -68,7 +68,15 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
+    /** Where the Bedrock-texture-path to Java-texture-path table is written. */
+    @get:OutputFile
+    abstract val textureOutputFile: RegularFileProperty
+
+    // Mojang's item_texture.json opens with a `//` line telling you not to copy it. Bedrock's
+    // parser takes comments and so must this one; the default mapper stops on the first slash.
     private val json = ObjectMapper()
+        .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_COMMENTS, true)
+        .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_TRAILING_COMMA, true)
 
     @TaskAction
     fun generate() {
@@ -97,6 +105,12 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
         out.parentFile.mkdirs()
         out.writeText(render(joined))
 
+        val textures = textureTable(joined)
+        val textureOut = textureOutputFile.get().asFile
+        textureOut.parentFile.mkdirs()
+        textureOut.writeText(renderTextures(textures))
+        logger.lifecycle("generateBedrockConstants: ${textures.size} texture path(s)")
+
         val unmatched = bedrock.values.flatten().toSortedSet() - joined.keys
         val worklist = project.layout.buildDirectory.file("upstream/vanilla-names.unmatched.txt")
             .get().asFile
@@ -105,7 +119,10 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
 
         logger.lifecycle(
             "generateBedrockConstants: ${joined.size} mapping(s) " +
-                "(${joined.count { it.key != it.value }} where the spellings differ, " +
+                // Against the PATH, not the whole key: every value now carries a `item.minecraft.`
+                // or `block.minecraft.` prefix, so comparing the whole thing says "all of them".
+                "(${joined.count { it.key != it.value.substringAfterLast('.') }} " +
+                "where the spellings differ, " +
                 "${manual.size} by hand), ${unmatched.size} unmatched."
         )
         logger.lifecycle("  table    ${out.relativeTo(project.projectDir)}")
@@ -142,8 +159,8 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
         return out
     }
 
-    /** Java's own names, as display name -> the item paths carrying it. */
-    private fun readJavaNames(): Map<String, MutableSet<String>> {
+    /** Java's own language file, parsed once. */
+    private val javaLang by lazy {
         val entry = "assets/minecraft/lang/en_us.json"
         val jar = minecraftJars.files.firstOrNull { candidate ->
             candidate.isFile && candidate.extension == "jar" && runCatching {
@@ -154,12 +171,20 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
                 "This task reads Java's own language file to join against Bedrock's; without it\n" +
                 "there is no bridge between the two spellings. See spec/upstream/fetch.md."
         )
-
+        logger.lifecycle("generateBedrockConstants: Java names from ${jar.name}")
         val text = ZipFile(jar).use { zip ->
             zip.getInputStream(zip.getEntry(entry)).readBytes().toString(Charsets.UTF_8)
         }
+        json.readTree(text)
+    }
+
+    private fun readJavaLangKeys(): List<String> =
+        javaLang.fieldNames().asSequence().toList()
+
+    /** Java's own names, as display name -> the keys carrying it. */
+    private fun readJavaNames(): Map<String, MutableSet<String>> {
         val out = mutableMapOf<String, MutableSet<String>>()
-        val root = json.readTree(text)
+        val root = javaLang
         root.fieldNames().forEach { key ->
             val path = when {
                 key.startsWith("item.minecraft.") -> key.removePrefix("item.minecraft.")
@@ -175,7 +200,79 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
             // renames nothing at all. The path is still one substring away for the texture side.
             if (value.isNotEmpty()) out.getOrPut(value) { mutableSetOf() } += key
         }
-        logger.lifecycle("generateBedrockConstants: Java names from ${jar.name}")
+        return out
+    }
+
+    /**
+     * Bedrock's item texture paths, as path -> the Java texture the same picture lives at.
+     *
+     * <p>Two ways in, and both are checks rather than guesses.
+     *
+     * <p><b>By key.</b> `item_texture.json` names one picture under a key, and where that key is
+     * also a language short name the name table already says which item it is - `totem` is
+     * `textures/items/totem` and `item.minecraft.totem_of_undying`, so the picture belongs at
+     * `item/totem_of_undying`.
+     *
+     * <p><b>By file name.</b> A key may hold an ARRAY instead: Bedrock puts all seven swords under
+     * `sword` and picks by aux value, so the key names a family and no language entry matches it.
+     * Every common tool and weapon is in one of those thirty keys. The file name is then checked
+     * against Java's own item paths and accepted only on an exact hit - `diamond_axe` is a Java
+     * item so it is taken, `gold_axe` is not (Java spells it `golden_axe`) so it is dropped rather
+     * than bent into place. Refusing on a near-miss is the point: a wrong texture is worse than an
+     * unchanged one, and only an exact name is evidence.
+     *
+     * <p>Java items only. A block's icon is drawn from its model rather than from a sprite, so
+     * writing `item/<name>.png` for one would replace a picture nothing reads.
+     */
+    private fun textureTable(names: Map<String, String>): Map<String, String> {
+        val javaItems = javaItemPaths()
+        val out = sortedMapOf<String, String>()
+        val root = json.readTree(
+            cacheDir.get().asFile.resolve("resource_pack/textures/item_texture.json")
+        )
+        val data = root["texture_data"] ?: return out
+
+        data.fieldNames().forEach { key ->
+            val paths = mutableListOf<String>()
+            val textures = data[key]["textures"] ?: return@forEach
+            when {
+                textures.isTextual -> paths += textures.asText()
+                textures.isArray -> textures.forEach { element ->
+                    when {
+                        element.isTextual -> paths += element.asText()
+                        element.isObject -> element["path"]?.asText()?.let { paths += it }
+                    }
+                }
+            }
+
+            // The key's own answer, when the name table has one and it names an ITEM.
+            val byKey = names[key]?.takeIf { it.startsWith("item.minecraft.") }
+                ?.removePrefix("item.minecraft.")
+
+            for (path in paths) {
+                val fileName = path.substringAfterLast('/')
+                val target = when {
+                    // One picture under a key the name table resolved: that key IS the item.
+                    paths.size == 1 && byKey != null -> byKey
+                    // Otherwise the file name has to prove itself against Java's own item list.
+                    fileName in javaItems -> fileName
+                    else -> null
+                } ?: continue
+                out[path] = "item/$target"
+            }
+        }
+        return out
+    }
+
+    /** Every path Java names an item under, for the file-name check to be a check. */
+    private fun javaItemPaths(): Set<String> {
+        val out = mutableSetOf<String>()
+        readJavaLangKeys().forEach { key ->
+            if (key.startsWith("item.minecraft.")) {
+                val path = key.removePrefix("item.minecraft.")
+                if (!path.contains('.')) out += path
+            }
+        }
         return out
     }
 
@@ -203,5 +300,18 @@ abstract class GenerateBedrockConstantsTask : DefaultTask() {
         appendLine("# No upstream content is reproduced here - an id beside an id is a fact about two")
         appendLine("# games, not Mojang's data. Constitution rule 10, spec/upstream/fetch.md.")
         mapping.forEach { (shortName, path) -> appendLine("$shortName\t$path") }
+    }
+
+    private fun renderTextures(mapping: Map<String, String>): String = buildString {
+        appendLine("# GENERATED by ./gradlew generateBedrockConstants. Do not edit.")
+        appendLine("#")
+        appendLine("# Where a picture Bedrock keeps at one path belongs in Java. Java ITEMS only: a")
+        appendLine("# block's icon is drawn from its model rather than from a sprite, so replacing")
+        appendLine("# item/<name>.png for one would change a picture nothing reads.")
+        appendLine("#")
+        appendLine("# Resolved either through the key's language entry, or - for the thirty keys that")
+        appendLine("# hold a whole family, where every common tool and weapon lives - by checking the")
+        appendLine("# file name against Java's own item paths and taking only an exact hit.")
+        mapping.forEach { (bedrock, java) -> appendLine("$bedrock\t$java") }
     }
 }

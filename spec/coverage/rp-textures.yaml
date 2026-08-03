@@ -20,6 +20,34 @@ entries:
       Becomes a Java .mcmeta animation.
   - id: texture_list.json
     status: stub
+  - id: textures/vanilla_replacement
+    status: partial
+    impl: net.nennneko5787.lepus.core.registry.BedrockVanillaTextures
+    diagnostics: [SCE-2043]
+    fields:
+      item_icons: partial
+      block_textures: missing
+      entity_textures: missing
+    fidelity: >-
+      A pack retexturing something VANILLA ships the file at Bedrock's own path -
+      `textures/items/totem.png` - where Java wants `textures/item/totem_of_undying.png`. Neither
+      the folder nor the file name agrees and nothing in the pack says which item is meant, so the
+      path is resolved through a generated table (SC-120 section 2.1) and served as a replacement in
+      the `minecraft` namespace.
+
+      Resolved two ways, both checks. Through the texture key's own language entry where there is
+      one; otherwise by matching the file name against Java's own item paths and taking only an
+      exact hit - Bedrock files all seven swords under one `sword` key and picks by aux value, so
+      the second way is what reaches every common tool and weapon. `gold_axe` is dropped because
+      Java spells it `golden_axe`, and a near-miss is not evidence.
+
+      JAVA ITEMS ONLY, which is the honest limit. A block's icon is drawn from its model rather than
+      from a sprite, so a pack retexturing a block cannot be served by replacing a picture; those
+      paths are absent from the table and the block keeps its vanilla look. Entity textures are
+      likewise untouched.
+
+      Bedrock also accepts Targa and Java reads no such thing. A `.tga` replacement is reported as
+      SCE-2043 rather than served as a file the client cannot decode.
   - id: textures/tint_color
     status: stub
   - id: textures/overlay_color

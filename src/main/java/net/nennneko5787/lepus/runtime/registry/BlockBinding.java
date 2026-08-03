@@ -35,6 +35,7 @@ import net.nennneko5787.lepus.core.format.json.JsonValue;
 import net.nennneko5787.lepus.core.format.value.BedrockId;
 import net.nennneko5787.lepus.core.format.value.PackId;
 import net.nennneko5787.lepus.core.registry.BedrockVanillaNames;
+import net.nennneko5787.lepus.core.registry.BedrockVanillaTextures;
 import net.nennneko5787.lepus.core.registry.BlockLedger;
 import net.nennneko5787.lepus.core.registry.BlockSlot;
 import net.nennneko5787.lepus.core.registry.IdMapper;
@@ -368,9 +369,66 @@ public final class BlockBinding {
             overrides.put("items/" + name.get().getPath() + ".json",
                     AddonResourcePack.utf8(wrapped.get()));
         });
+        overrides.putAll(vanillaTextures());
         VANILLA_ATTACHABLE_FILES = files;
         VANILLA_OVERRIDES = overrides;
         return bound;
+    }
+
+    /**
+     * The vanilla item pictures the enabled packs replace. SC-120 §2.
+     *
+     * <p>A Bedrock pack retextures a vanilla item by shipping the file at <b>Bedrock's</b> path —
+     * {@code textures/items/totem.png} — and Java wants the same picture at
+     * {@code item/totem_of_undying.png}. Neither the folder nor the file name agrees, so this walks
+     * the paths {@link BedrockVanillaTextures} knows and asks each pack whether it ships one.
+     *
+     * <p><b>That direction, rather than listing what the pack ships</b>: the table is a few hundred
+     * entries and a pack is thousands of files in an archive, so asking is cheaper than enumerating
+     * and needs no directory walk. Later packs win, as everywhere else.
+     *
+     * <p>{@code .png} only. Bedrock also accepts {@code .tga} and Java reads no such thing; a pack
+     * retexturing in that format is reported rather than served as a file the client cannot decode.
+     */
+    private static Map<String, byte[]> vanillaTextures() {
+        Map<String, byte[]> out = new LinkedHashMap<>();
+        if (BedrockVanillaTextures.size() == 0) {
+            return out;
+        }
+        Lepus.addons().ir().ifPresent(ir -> {
+            for (PackId pack : WorldActivation.current().order()) {
+                ir.byId(pack).ifPresent(packIr -> {
+                    for (String bedrockPath : BedrockVanillaTextures.knownBedrockPaths()) {
+                        String java = BedrockVanillaTextures.javaTextureOf(bedrockPath).orElse(null);
+                        if (java == null) {
+                            continue;
+                        }
+                        Optional<byte[]> png = readFrom(packIr, bedrockPath + ".png");
+                        if (png.isPresent()) {
+                            out.put("textures/" + java + ".png", png.get());
+                            continue;
+                        }
+                        if (packIr.source().vfs().read(bedrockPath + ".tga").isPresent()) {
+                            System.out.println("[Lepus] SCE-2043 a pack replaces \""
+                                    + bedrockPath + ".tga\"; Bedrock reads Targa and Java does not,"
+                                    + " so that item keeps its vanilla picture");
+                        }
+                    }
+                });
+            }
+        });
+        return out;
+    }
+
+    /** One file out of one pack, or empty. Unreadable counts as absent — constitution rule 5. */
+    private static Optional<byte[]> readFrom(PackIr pack, String path) {
+        return pack.source().vfs().read(path).map(source -> {
+            try {
+                return source.read();
+            } catch (java.io.IOException unreadable) {
+                return null;
+            }
+        });
     }
 
     /**

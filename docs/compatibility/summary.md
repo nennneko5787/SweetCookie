@@ -5,7 +5,7 @@
 Every Bedrock feature identifier Lepus knows about, and what it does with it.
 Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conventions.md).
 
-**1363 tracked feature identifiers across 38 domains.**
+**1364 tracked feature identifiers across 38 domains.**
 
 | Domain | Spec | Total | implemented | partial | stub | unsupported | wontfix |
 |---|---|--:|--:|--:|--:|--:|--:|
@@ -35,19 +35,19 @@ Definitions are normative in [SC-000 section 3](../../spec/normative/SC-000-conv
 | [rp-client-entity](rp-client-entity.md) | SC-180 | 15 | 0 | 0 | 15 | 0 | 0 |
 | [rp-fog](rp-fog.md) | SC-180 | 2 | 0 | 0 | 1 | 1 | 0 |
 | [rp-geometry](rp-geometry.md) | SC-180 | 17 | 0 | 1 | 16 | 0 | 0 |
-| [rp-lang-font](rp-lang-font.md) | SC-180 | 4 | 0 | 0 | 4 | 0 | 0 |
+| [rp-lang-font](rp-lang-font.md) | SC-180 | 4 | 0 | 1 | 3 | 0 | 0 |
 | [rp-materials](rp-materials.md) | SC-180 | 8 | 0 | 0 | 5 | 0 | 3 |
 | [rp-particles](rp-particles.md) | SC-180 | 33 | 0 | 0 | 33 | 0 | 0 |
 | [rp-render-controllers](rp-render-controllers.md) | SC-180 | 13 | 0 | 0 | 13 | 0 | 0 |
 | [rp-sounds](rp-sounds.md) | SC-180 | 8 | 0 | 0 | 7 | 0 | 1 |
-| [rp-textures](rp-textures.md) | SC-180 | 8 | 0 | 0 | 7 | 1 | 0 |
+| [rp-textures](rp-textures.md) | SC-180 | 9 | 0 | 1 | 7 | 1 | 0 |
 | [rp-ui](rp-ui.md) | SC-180 | 3 | 0 | 0 | 0 | 0 | 3 |
 | [script-api-server](script-api-server.md) | SC-200 | 18 | 0 | 0 | 14 | 2 | 2 |
 | [script-api-server-ui](script-api-server-ui.md) | SC-200 | 5 | 0 | 0 | 5 | 0 | 0 |
 | [spawn-rules](spawn-rules.md) | SC-190 | 16 | 0 | 0 | 16 | 0 | 0 |
 | [structures](structures.md) | SC-190 | 6 | 0 | 0 | 3 | 3 | 0 |
 | [trading](trading.md) | SC-190 | 9 | 0 | 0 | 9 | 0 | 0 |
-| **total** | | **1363** | **2** | **38** | **1288** | **25** | **10** |
+| **total** | | **1364** | **2** | **40** | **1287** | **25** | **10** |
 
 ## How to read this
 
