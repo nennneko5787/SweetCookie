@@ -34,6 +34,7 @@ import net.nennneko5787.lepus.core.format.ir.item.ItemProfile;
 import net.nennneko5787.lepus.core.format.json.JsonValue;
 import net.nennneko5787.lepus.core.format.value.BedrockId;
 import net.nennneko5787.lepus.core.format.value.PackId;
+import net.nennneko5787.lepus.core.registry.BedrockVanillaNames;
 import net.nennneko5787.lepus.core.registry.BlockLedger;
 import net.nennneko5787.lepus.core.registry.BlockSlot;
 import net.nennneko5787.lepus.core.registry.IdMapper;
@@ -790,6 +791,25 @@ public final class BlockBinding {
                                 if (name != null && !name.isBlank()) {
                                     target.put(DisplayNames.javaKey(id), name);
                                 }
+                            });
+                            // And the entries that rename something VANILLA. SC-120 section 2.
+                            //
+                            // Those are not keyed by anything the loop above knows: the pack writes
+                            // Bedrock's own short name for the item - `item.totem.name`,
+                            // `tile.wool.white.name` - which is a different spelling from Java's for
+                            // 525 of the 1,443 names that can be matched at all. A short name with
+                            // no safe answer is left alone and the item keeps its vanilla name.
+                            //
+                            // This lands in OUR namespace rather than vanilla's, and still wins: a
+                            // language is merged across every namespace and every pack in order, so
+                            // an `item.minecraft.*` key written here overrides the one vanilla
+                            // shipped. The texture half has no such luck and needs a real override.
+                            entries.forEach((key, name) -> {
+                                if (name == null || name.isBlank()) {
+                                    return;
+                                }
+                                BedrockVanillaNames.javaLangKeyOfBedrockKey(key)
+                                        .ifPresent(javaKey -> target.put(javaKey, name));
                             });
                         }));
             }

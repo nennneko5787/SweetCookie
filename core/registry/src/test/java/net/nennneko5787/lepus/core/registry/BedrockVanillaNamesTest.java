@@ -26,17 +26,27 @@ class BedrockVanillaNamesTest {
     }
 
     @Test
+    void whichPrefixJavaUsesIsCarried() {
+        // NOT derivable from the path, and getting it wrong renames nothing at all: Java names a
+        // block's item form under `block.minecraft.` and everything else under `item.minecraft.`.
+        assertEquals(Optional.of("item.minecraft.totem_of_undying"),
+                BedrockVanillaNames.javaLangKeyOf("totem"));
+        assertEquals(Optional.of("block.minecraft.white_wool"),
+                BedrockVanillaNames.javaLangKeyOf("wool.white"));
+    }
+
+    @Test
     void aLangKeyIsResolvedWholeSoCallersDoNotEachStripIt() {
-        assertEquals(Optional.of("totem_of_undying"),
-                BedrockVanillaNames.javaPathOfLangKey("item.totem.name"));
+        assertEquals(Optional.of("item.minecraft.totem_of_undying"),
+                BedrockVanillaNames.javaLangKeyOfBedrockKey("item.totem.name"));
         // `tile.` counts too: a block's item form is spelled that way in Bedrock, and reading only
         // `item.` lost every door and sign.
-        assertEquals(Optional.of("white_wool"),
-                BedrockVanillaNames.javaPathOfLangKey("tile.wool.white.name"));
+        assertEquals(Optional.of("block.minecraft.white_wool"),
+                BedrockVanillaNames.javaLangKeyOfBedrockKey("tile.wool.white.name"));
         // Anything else is not a name at all.
-        assertEquals(Optional.empty(), BedrockVanillaNames.javaPathOfLangKey("item.totem"));
+        assertEquals(Optional.empty(), BedrockVanillaNames.javaLangKeyOfBedrockKey("item.totem"));
         assertEquals(Optional.empty(),
-                BedrockVanillaNames.javaPathOfLangKey("entity.creeper.name"));
+                BedrockVanillaNames.javaLangKeyOfBedrockKey("entity.creeper.name"));
     }
 
     @Test

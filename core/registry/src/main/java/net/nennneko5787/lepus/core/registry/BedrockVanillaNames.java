@@ -47,33 +47,44 @@ public final class BedrockVanillaNames {
     }
 
     /**
-     * The Java path for one of Bedrock's short names, or empty when there is no safe answer.
+     * Java's translation key for one of Bedrock's short names, or empty when there is no safe
+     * answer.
+     *
+     * <p>The whole key, because which prefix it carries is not derivable: Java names a block's item
+     * form under {@code block.minecraft.} and everything else under {@code item.minecraft.}, so a
+     * caller renaming white wool needs the first and a caller assuming {@code item.} renames
+     * nothing.
      *
      * @param shortName what stands between {@code item.}/{@code tile.} and {@code .name} in a
      *                  Bedrock language file — {@code totem}, {@code stone.stone}, {@code wool.white}
      */
-    public static Optional<String> javaPathOf(String shortName) {
+    public static Optional<String> javaLangKeyOf(String shortName) {
         return shortName == null ? Optional.empty()
                 : Optional.ofNullable(BY_SHORT_NAME.get(shortName));
     }
 
+    /** The item's path alone, for the callers naming a texture rather than a translation. */
+    public static Optional<String> javaPathOf(String shortName) {
+        return javaLangKeyOf(shortName).map(key -> key.substring(key.lastIndexOf('.') + 1));
+    }
+
     /**
-     * The Java path a Bedrock language key names, or empty.
+     * Java's translation key for a whole Bedrock one, or empty.
      *
      * <p>Takes the whole key so that callers do not each re-derive which prefixes count.
-     * {@code item.} and {@code tile.} both do: a block's item form is {@code tile.} in Bedrock and
-     * {@code block.minecraft.} in Java, and reading only the first lost every door and sign.
+     * {@code item.} and {@code tile.} both do: a block's item form is {@code tile.} in Bedrock, and
+     * reading only the first lost every door and sign.
      */
-    public static Optional<String> javaPathOfLangKey(String key) {
+    public static Optional<String> javaLangKeyOfBedrockKey(String key) {
         if (key == null || !key.endsWith(".name")) {
             return Optional.empty();
         }
         String body = key.substring(0, key.length() - ".name".length());
         if (body.startsWith("item.")) {
-            return javaPathOf(body.substring("item.".length()));
+            return javaLangKeyOf(body.substring("item.".length()));
         }
         return body.startsWith("tile.")
-                ? javaPathOf(body.substring("tile.".length()))
+                ? javaLangKeyOf(body.substring("tile.".length()))
                 : Optional.empty();
     }
 
