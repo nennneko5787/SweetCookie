@@ -36,6 +36,38 @@ public final class AttachableContext implements MolangContext {
     private final float slot;
     private float targetXRotation;
     private float targetYRotation;
+    private Wearer wearer = Wearer.STANDING;
+
+    /**
+     * What the player carrying this is doing, for the queries a controller branches on. SC-180 §5.
+     *
+     * <p><b>These are the questions the corpus actually asks</b>, taken from its own controller and
+     * its own {@code scripts.animate} rather than from the query list: sneaking, in water, swimming,
+     * gliding, sleeping and on fire. Every one of them read zero until now, which is why a pack that
+     * ships a sneaking pose, a swimming pose and a burning pose showed the standing one in all four
+     * situations.
+     *
+     * <p>One query the same controller asks is deliberately absent: {@code query.is_speeding} is in
+     * no version of Mojang's documentation, so it answers zero <b>in Bedrock too</b>, and the state
+     * it guards is unreachable on both clients. Answering it here would be this build inventing a
+     * feature the pack's author never got.
+     */
+    public record Wearer(boolean sneaking, boolean inWater, boolean swimming, boolean gliding,
+            boolean sleeping, boolean onFire) {
+
+        /** A player doing nothing in particular, which is what a still frame evaluates against. */
+        public static final Wearer STANDING = new Wearer(false, false, false, false, false, false);
+    }
+
+    /**
+     * What the wearer is doing this frame. Returns itself, like {@link #looking}.
+     *
+     * <p>Per frame and per draw, so there is nothing to share and nothing to make immutable for.
+     */
+    public AttachableContext doing(Wearer doing) {
+        this.wearer = doing;
+        return this;
+    }
 
     private AttachableContext(boolean firstPerson, String slot) {
         this.firstPerson = firstPerson;
@@ -119,6 +151,13 @@ public final class AttachableContext implements MolangContext {
                 // looking, which is the head's own pitch and yaw.
                 case "target_x_rotation" -> targetXRotation;
                 case "target_y_rotation" -> targetYRotation;
+                // What the WEARER is doing. A controller's transitions are these and little else.
+                case "is_sneaking" -> wearer.sneaking() ? 1f : 0f;
+                case "is_in_water", "is_in_water_or_rain" -> wearer.inWater() ? 1f : 0f;
+                case "is_swimming" -> wearer.swimming() ? 1f : 0f;
+                case "is_gliding" -> wearer.gliding() ? 1f : 0f;
+                case "is_sleeping" -> wearer.sleeping() ? 1f : 0f;
+                case "is_onfire", "is_on_fire" -> wearer.onFire() ? 1f : 0f;
                 default -> delegate.read(scope, name);
             };
         }
@@ -161,7 +200,11 @@ public final class AttachableContext implements MolangContext {
     }
 
     private static boolean queried(String name) {
-        String lower = name.toLowerCase(java.util.Locale.ROOT);
-        return lower.equals("target_x_rotation") || lower.equals("target_y_rotation");
+        return QUERIED.contains(name.toLowerCase(java.util.Locale.ROOT));
     }
+
+    private static final java.util.Set<String> QUERIED = java.util.Set.of(
+            "target_x_rotation", "target_y_rotation",
+            "is_sneaking", "is_in_water", "is_in_water_or_rain", "is_swimming", "is_gliding",
+            "is_sleeping", "is_onfire", "is_on_fire");
 }

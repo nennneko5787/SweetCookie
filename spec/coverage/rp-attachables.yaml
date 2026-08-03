@@ -15,13 +15,65 @@ entries:
   - id: attachable/textures
     status: stub
   - id: attachable/animations
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.render.AttachablePoser
+    fields:
+      animation: ok
+      animation_controller: ok
+    fidelity: >-
+      Short name -> identifier, resolved against every enabled pack in order, animations first and
+      controllers second. A name that resolves to neither is skipped: Mojang's own controllers are
+      not in the add-on, and one pack in the corpus misspells one of its own entries.
+
+      SC-180 sections 4 and 5 carry the divergences of what the resolved things then do.
   - id: attachable/animation_controllers
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.render.AnimationControllerPlayer
+    fields:
+      shipped_by_the_pack: ok
+      vanilla: missing
+    fidelity: >-
+      An entry of `scripts.animate` naming a controller now runs it. Resolution is by short name
+      against the attachable's own `animations` map, animations first and controllers second, so a
+      controller naming another controller resolves to nothing - nothing in the surveyed corpus does
+      it, and it needs a cycle check rather than an ordering.
+
+      A controller the add-on does not ship resolves to nothing and plays nothing. Two of the three
+      attachables in the corpus name `controller.animation.elytra.default`, which is in Mojang's
+      resource pack; that file may not be vendored (constitution rule 10) and is not fetched at
+      runtime. Its five states name animations those attachables mostly do not define, so most of it
+      would draw nothing even if it were resolved.
+
+      The machine's state is kept per holder, one transition per frame. SC-180 section 5.2.
   - id: attachable/render_controllers
     status: stub
   - id: attachable/scripts
-    status: stub
+    status: partial
+    impl: net.nennneko5787.lepus.core.format.render.AttachablePoser
+    fields:
+      pre_animation: ok
+      animate: ok
+      animate_blend: ok
+      scale: missing
+      initialize: missing
+      parent_setup: missing
+    fidelity: >-
+      `pre_animation` runs first every frame, and its assignments are what the `animate` conditions
+      read - evaluating them the other way round leaves every `v.` at zero, which answers "no" to
+      every question a pack asks about itself.
+
+      An `animate` entry's Molang expression is a BLEND AMOUNT, not a condition: SC-180 section
+      4.1.1. Every condition in the surveyed corpus is a comparison answering zero or one, so this
+      is indistinguishable there and differs for vanilla's own entries, which blend a walk by
+      `query.modified_move_speed`.
+
+      An entry naming an animation CONTROLLER rather than an animation runs it - SC-180 section 5 -
+      unless the controller is one the add-on does not ship, which is the case for the two
+      attachables naming Mojang's `controller.animation.elytra.default`.
+
+      An animation's clock is the HOLDER's, starting the first frame that entry's blend is non-zero
+      and running from then on whatever the blend does. `scripts.initialize`, `scripts.scale` and
+      `scripts.variables` are still not read. SC-180 section 4.1.1.
   - id: attachable/item
     status: stub
     notes: >-

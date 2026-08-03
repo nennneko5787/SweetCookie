@@ -17,17 +17,23 @@ import net.nennneko5787.lepus.core.format.value.Provenance;
  * whole reason the model sits where it does in first person. Anything that tried to place it with an
  * item display transform instead would be fighting this file.
  *
- * @param name    {@code animation.<name>}, as the pack spells it
- * @param loop    whether it repeats. Bedrock also has {@code "hold_on_last_frame"}, kept as false
- *                here with the distinction recorded in the coverage ledger rather than guessed at
- * @param length  {@code animation_length} in seconds, absent when the pack states none
- * @param bones   bone name → what happens to it
+ * @param name        {@code animation.<name>}, as the pack spells it
+ * @param loop        whether it repeats. Bedrock also has {@code "hold_on_last_frame"}, kept as
+ *                    false here with the distinction recorded in the coverage ledger rather than
+ *                    guessed at
+ * @param length      {@code animation_length} in seconds, absent when the pack states none
+ * @param blendWeight {@code blend_weight}, absent when the pack states none, which Bedrock reads as
+ *                    one. "How much this animation is blended with the others. 0.0 = off. 1.0 =
+ *                    fully apply all transforms. Can be an expression" — so it is a number OR
+ *                    Molang, which is exactly what a {@link Component} is
+ * @param bones       bone name → what happens to it
  */
 @SpecImpl("SC-180#animation/bones")
 public record AnimationIr(
         String name,
         boolean loop,
         Optional<Float> length,
+        Optional<Component> blendWeight,
         Map<String, Bone> bones,
         Provenance provenance) {
 
@@ -74,6 +80,16 @@ public record AnimationIr(
         }
     }
 
+    /** How a channel moves INTO a keyframe and out of it. SC-180 §4.1.2. */
+    public enum LerpMode {
+
+        /** A straight line between the two values. Bedrock's default. */
+        LINEAR,
+
+        /** A spline through the neighbouring keyframes too, so the motion has no corners. */
+        CATMULLROM
+    }
+
     /**
      * One value at one time: three components, each a number or a Molang expression.
      *
@@ -82,15 +98,32 @@ public record AnimationIr(
      * {@code query.life_time}, and {@code this}, which is the channel's own current value. They are
      * compiled where something is ready to run them, with provenance to report against.
      *
-     * @param components exactly three, in x, y, z order
+     * <p><b>Two values, not one.</b> Bedrock lets a keyframe hold a {@code pre} and a {@code post} —
+     * the value the channel arrives at and the value it leaves with — which is how an animation
+     * steps instantly at one instant. They are equal for every keyframe that does not, which is
+     * every keyframe of the surveyed corpus, and keeping them apart is what lets a segment ask for
+     * "the value at the end of the incoming edge" without knowing whether the pack wrote one value
+     * or two.
+     *
+     * @param pre  what the channel is worth arriving at this time; exactly three, in x, y, z order
+     * @param post what it is worth leaving it; the same three when the pack wrote one value
+     * @param lerp how the segment that STARTS here is drawn. Bedrock's {@code lerp_mode}, which sits
+     *             on the keyframe rather than on the channel — and a segment is a curve when either
+     *             of its two ends asks for one
      */
-    public record Keyframe(List<Component> components) {
+    public record Keyframe(List<Component> pre, List<Component> post, LerpMode lerp) {
 
         public Keyframe {
-            if (components.size() != 3) {
+            if (pre.size() != 3 || post.size() != 3) {
                 throw new IllegalArgumentException("a keyframe has three components");
             }
-            components = List.copyOf(components);
+            pre = List.copyOf(pre);
+            post = List.copyOf(post);
+        }
+
+        /** One value for both sides, interpolated linearly: what most keyframes are. */
+        public Keyframe(List<Component> components) {
+            this(components, components, LerpMode.LINEAR);
         }
 
         /** The same number on all three axes, which is how Bedrock writes {@code "scale": 0}. */
@@ -103,9 +136,15 @@ public record AnimationIr(
                     Component.of(x), Component.of(y), Component.of(z)));
         }
 
+        /** True when the pack wrote two different values here, so the channel steps at this time. */
+        public boolean steps() {
+            return !pre.equals(post);
+        }
+
         /** True when every component is a plain number, so nothing has to be evaluated. */
         public boolean isNumeric() {
-            return components.stream().allMatch(component -> component.molang().isEmpty());
+            return pre.stream().allMatch(component -> component.molang().isEmpty())
+                    && post.stream().allMatch(component -> component.molang().isEmpty());
         }
     }
 

@@ -68,7 +68,12 @@ public final class FirstPersonAttachables {
                     toPlayerSpace(poseStack, player);
                     AttachableGeometry.submit(collector, poseStack, bound.texture(),
                             bound.geometry(),
-                            bound.poseAt(AttachableClock.seconds(),
+                            // The SAME playback the third-person layer uses for this hand: the
+                            // player and the slot name it, not the view. Looking down at your own
+                            // hands must not restart an animation, and it did while the clock was
+                            // one number for the whole client.
+                            bound.poseAt(AttachablePlaybacks.of(player.getId(),
+                                    hand == InteractionHand.MAIN_HAND ? "main_hand" : "off_hand"),
                                     // NOT told where the player is looking, and that is the same
                                     // fact as the space above. The model is fixed to the screen, so
                                     // a bone that aimed itself at the gaze would swing WITHIN a
@@ -76,7 +81,12 @@ public final class FirstPersonAttachables {
                                     // character does not turn her head at all; the third-person one
                                     // does, which is why the layer still passes these.
                                     AttachableContext
-                                            .firstPerson(hand == InteractionHand.MAIN_HAND),
+                                            .firstPerson(hand == InteractionHand.MAIN_HAND)
+                                            // What the player is DOING, which this view needs as
+                                            // much as the other: the corpus poses the first-person
+                                            // hand differently while sneaking, and asks with
+                                            // `query.is_sneaking` in the entry's own blend.
+                                            .doing(WearerState.of(player)),
                                     // The wearer's own bones, at rest. A first-person view draws no
                                     // player model to read them from, and the space is not the
                                     // player's anyway — but they must still be SUPPLIED, because a

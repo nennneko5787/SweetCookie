@@ -108,6 +108,113 @@ class AnimationSamplerTest {
         assertPoint(sampler.at(9.0f, NO_WORLD).get("arm").transform(0, 0, 0), 0, 8, 0);
     }
 
+    /**
+     * A curved channel, written the way the corpus writes them: {@code lerp_mode} on every keyframe.
+     *
+     * <p>Values that make the curve and the line disagree by a readable amount — a peak and a
+     * trough, so the spline overshoots where a line cannot.
+     */
+    private static final String CURVED = """
+            {
+              "format_version": "1.8.0",
+              "animations": {
+                "animation.x": {
+                  "bones": { "arm": { "position": {
+                    "0.0": { "post": [0,   0, 0], "lerp_mode": "catmullrom" },
+                    "1.0": { "post": [0,  10, 0], "lerp_mode": "catmullrom" },
+                    "2.0": { "post": [0,   0, 0], "lerp_mode": "catmullrom" },
+                    "3.0": { "post": [0, -10, 0], "lerp_mode": "catmullrom" }
+                  } } }
+                }
+              }
+            }""";
+
+    /**
+     * {@code catmullrom} is a spline through the neighbouring keyframes, not a line. SC-180 §4.1.2.
+     *
+     * <p>Half way from 10 down to 0, with 0 behind and −10 ahead, the curve reads <b>6.25</b> where
+     * a line reads 5 — it leaves the peak flat and steepens into the fall, which is the whole point
+     * of the mode. The number is the uniform tension-half form evaluated by hand, so a change to the
+     * arithmetic has to disagree with a written-out expectation rather than with itself.
+     *
+     * <p>233 keyframes of the surveyed corpus ask for this and were sampled as straight lines.
+     */
+    @Test
+    void aCatmullromSegmentCurvesThroughItsNeighbours() {
+        assertPoint(sampler(CURVED).at(1.5f, NO_WORLD).get("arm").transform(0, 0, 0),
+                0, 6.25f, 0);
+    }
+
+    /**
+     * At the ends of a channel the curve clamps: the end keyframe stands in for its own neighbour.
+     *
+     * <p>There is no keyframe before the first one, and inventing a tangent by extrapolating would
+     * let the bone start outside every value the pack wrote. Half way through the first segment this
+     * reads 5.625 — curved, because there IS a keyframe on the far side, and not the 6.25 of a
+     * segment with neighbours on both.
+     */
+    @Test
+    void theFirstAndLastSegmentsClampTheMissingNeighbour() {
+        assertPoint(sampler(CURVED).at(0.5f, NO_WORLD).get("arm").transform(0, 0, 0),
+                0, 5.625f, 0);
+    }
+
+    /**
+     * <b>Either</b> end of a segment asking for a curve is enough. SC-180 §4.1.2.
+     *
+     * <p>Bedrock's editor takes the linear path only when the keyframe before is linear AND the one
+     * after is too, so a single {@code catmullrom} keyframe curves the segment on both sides of it.
+     * A reader that asked only the earlier keyframe would sample the run-up to every eased landing
+     * as a straight line — and would agree with this build's other tests, because the corpus marks
+     * every keyframe of a curved channel.
+     */
+    @Test
+    void aSegmentCurvesWhenOnlyItsLaterKeyframeAsksFor() {
+        AnimationSampler sampler = sampler("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.x": {
+                      "bones": { "arm": { "position": {
+                        "0.0": [0,   0, 0],
+                        "1.0": [0,  10, 0],
+                        "2.0": { "post": [0, 0, 0], "lerp_mode": "catmullrom" },
+                        "3.0": [0, -10, 0]
+                      } } }
+                    }
+                  }
+                }""");
+        assertPoint(sampler.at(1.5f, NO_WORLD).get("arm").transform(0, 0, 0), 0, 6.25f, 0);
+    }
+
+    /**
+     * A keyframe with two values steps: the channel arrives at one and leaves with the other.
+     *
+     * <p>The incoming segment ends at {@code pre} and the outgoing one starts at {@code post}, so
+     * the bone is at 10 an instant before the keyframe and at 0 an instant after. Reading `post` for
+     * both — which this sampler did — makes the approach a ramp to the wrong value and loses the
+     * step entirely.
+     */
+    @Test
+    void aKeyframeWithTwoValuesStepsBetweenThem() {
+        AnimationSampler sampler = sampler("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.x": {
+                      "bones": { "arm": { "position": {
+                        "0.0": [0, 0, 0],
+                        "1.0": { "pre": [0, 10, 0], "post": [0, 0, 0] },
+                        "2.0": [0, 10, 0]
+                      } } }
+                    }
+                  }
+                }""");
+        assertPoint(sampler.at(0.5f, NO_WORLD).get("arm").transform(0, 0, 0), 0, 5, 0);
+        assertPoint(sampler.at(1.0f, NO_WORLD).get("arm").transform(0, 0, 0), 0, 0, 0);
+        assertPoint(sampler.at(1.5f, NO_WORLD).get("arm").transform(0, 0, 0), 0, 5, 0);
+    }
+
     @Test
     void aBoneTheAnimationDoesNotMentionIsAbsentRatherThanIdentity() {
         // The caller composes this OVER the model's bind pose. An identity written for an

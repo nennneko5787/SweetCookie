@@ -9,6 +9,7 @@ import net.nennneko5787.lepus.core.api.SpecImpl;
 import net.nennneko5787.lepus.core.format.ir.geometry.GeometryIr;
 import net.nennneko5787.lepus.core.format.render.AttachablePoser;
 import net.nennneko5787.lepus.core.format.render.Mat4f;
+import net.nennneko5787.lepus.core.format.render.Playback;
 import net.nennneko5787.lepus.core.molang.MolangContext;
 
 /**
@@ -48,8 +49,8 @@ public final class BoundAttachables {
          * to: {@code scripts.animate} conditions on {@code c.is_first_person}, so the same item is
          * two different poses depending on who is looking. See {@code AttachablePoser}.
          */
-        public Map<String, Mat4f> poseAt(float seconds, MolangContext context) {
-            return poser.at(seconds, context, Map.of());
+        public Map<String, Mat4f> poseAt(Playback playback, MolangContext context) {
+            return poser.at(playback, context, Map.of());
         }
 
         /**
@@ -58,9 +59,9 @@ public final class BoundAttachables {
          * <p>A halo is a cube-less {@code head} bone at the player's head pivot with the ring
          * beneath it; nothing in the pack turns that bone, because Bedrock turns it.
          */
-        public Map<String, Mat4f> poseAt(float seconds, MolangContext context,
+        public Map<String, Mat4f> poseAt(Playback playback, MolangContext context,
                 Map<String, Mat4f> skeleton) {
-            return poser.at(seconds, context, skeleton);
+            return poser.at(playback, context, skeleton);
         }
 
     }

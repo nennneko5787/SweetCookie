@@ -116,6 +116,9 @@ public final class IrLoader {
     /** Where Bedrock looks for animations — resource pack only. */
     private static final String ANIMATIONS_ROOT = "animations";
 
+    /** Where Bedrock looks for animation controllers — the resource pack's, which play animations. */
+    private static final String ANIMATION_CONTROLLERS_ROOT = "animation_controllers";
+
     private static ResourceIr resources(LoadedPack pack, Diagnostics into) {
         if (!pack.manifest().hasResources()) {
             return ResourceIr.EMPTY;
@@ -186,7 +189,22 @@ public final class IrLoader {
                             .parse(root, where, into)
                             .forEach(one -> animations.put(one.name(), one)));
         }
-        return new ResourceIr(geometries, icons, attachables, animations);
+        // Animation controllers: the state machine that decides WHICH animation plays (SC-180 §5).
+        // Every attachable in the surveyed corpus names one and none of them was ever read, so
+        // sneaking, swimming, burning and sleeping were authored and never drawn.
+        Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationControllerIr>
+                controllers = new LinkedHashMap<>();
+        for (String path : pack.vfs().walk(ANIMATION_CONTROLLERS_ROOT).sorted().toList()) {
+            if (!VfsPath.extension(path).equals("json")) {
+                continue;
+            }
+            Provenance where = pack.provenanceOf(path);
+            read(pack, path, where, into).ifPresent(root ->
+                    net.nennneko5787.lepus.core.format.ir.animation.AnimationControllerFiles
+                            .parse(root, where, into)
+                            .forEach(one -> controllers.put(one.name(), one)));
+        }
+        return new ResourceIr(geometries, icons, attachables, animations, controllers);
     }
 
     private static Optional<JsonObject> read(

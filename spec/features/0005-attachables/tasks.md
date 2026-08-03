@@ -400,6 +400,129 @@ X 修正のときに +1、どちらも検算なし）。SC-180 §3.4.1 に
       背中に回り込む位置（エリトラのコントローラ）はここで出る
 - [ ] E: render controller
 
+## 第 3 セッション（2026-08-03）— 引き継ぎの「次にやること」を上から
+
+前回の引き継ぎが順序付きで残していた 5 件のうち、1・2・4 の半分が入った。**どれも実機の
+スクリーンショットからではなく、一次文献を読んで決めた。**
+
+### 1. `scripts.animate` の条件は「混ぜる量」だった ✅
+
+Microsoft Learn の原文:
+
+> "the query in the scripts section is **only a blend value** for the animation. It defines
+> 'how much' the animation plays, **not when** it plays and when it doesn't."
+
+- [x] 条件 → `float` の重み。`AttachablePoser` が真偽ではなく数を渡す
+- [x] 回転・位置は `+= 重み × 値`、**スケールは `×= 1 + 重み × (値 − 1)`**。
+      スケールで「off」は倍率 1 であって 0 ではない — 加算側の式を写すと、
+      フェードアウトした瞬間にスケールされたボーンが消える
+- [x] `blend_weight`（アニメーション側が宣言する同じ量）を**新規に実装**。両者は掛け算
+- [x] SC-180 §4.1.1 を新設、テスト 4 件、`specAll` 緑
+
+**コーパスのフレームは 1 枚も変わらない。** 条件は全部比較式で 0 か 1 しか返さないから。
+バニラが `query.modified_move_speed` で歩行を混ぜる側が正しくなる。
+
+**規範の文が嘘をついていた。** §4.1 は「`blend_weight` は parse しているが適用していない」と
+書いていたが、**parse すらしていなかった**（`AnimationFiles` に該当行なし、`AnimationIr` に
+置き場なし）。コーパスが誰も書かない項目なので、コード・台帳・文書の 3 つが**揃って**
+持っていない能力を主張し続けられた。**入力が触らない項目の記述は、隣の散文ではなく
+パーサに照合すること。**
+
+### 2. `catmullrom` と `pre`/`post` ✅ — 実測 233 箇所
+
+- [x] `AnimationIr.Keyframe` が `pre` / `post` / `lerp` を持つ。
+      **セグメントは「前のキーフレームの `post` → 後のキーフレームの `pre`」**
+- [x] `lerp_mode` はキーフレーム側にあり、**両端のどちらかが `catmullrom` なら曲線**。
+      参照実装が「前が linear **かつ** 後が linear か step のときだけ直線」と書いている。
+      前だけ見る実装だと、着地の助走が全部直線になる
+- [x] 一様（時間で媒介変数を割らない）・張力 1/2 の Catmull-Rom。端はクランプ、
+      **段差のあるキーフレームは曲線を止める**
+- [x] テストの期待値は手計算（6.25 / 5.625）で書いた。実装と独立に一致
+
+**数え直したら 227 ではなく 233 だった**（22 ファイル）。引き継ぎの数字を信じずに
+インストール済みパックを grep した。`pre` は**コーパスに 0 件** — それでも入れたのは、
+サンプラーがセグメントの両端に「どちら側の値か」を訊く形になった時点で、区別が
+ただで手に入るから。
+
+**根拠は Blockbench の実装**（`getCatmullromLerp` / `BoneAnimator.interpolate`）。
+統合版の挙動を推測するのではなく、統合版向けに書かれた編集器が何をしているかを読んだ。
+
+### 5. アニメーションコントローラ ✅ — **「バニラ待ち」という前提が間違いだった**
+
+引き継ぎには「`default_controller` は `controller.animation.elytra.default` ＝統合版バニラの
+ファイルなので、解決手段から考える必要がある」と書いてあった。**パックを読んだら違った。**
+
+| コーパスの 3 つ | コントローラの在処 |
+|---|---|
+| シロコ 2 種 | `controller.animation.elytra.default` ＝ Mojang のパック。持ってこられない（憲章 10） |
+| **ホシノ（トーテム）** | **`controller.animation.hoshino_totem.default` をパック自身が同梱**。7 状態 |
+
+**つまり最初から詰まっていなかった。必要だったのはパックを読むことだった。**
+
+- [x] `AnimationControllerIr` / `AnimationControllerFiles`（`initial_state`・状態・順序付き遷移・
+      数値で書かれたガード）。テスト 3 件
+- [x] `Playable` — `scripts.animate` の 1 項目が指すもの。アニメーションとコントローラは
+      呼び出し側から見て同じ 1 文（「今やっていることを、この量だけ足せ」）
+- [x] `AnimationControllerPlayer`。遷移は順序どおり・最初に非ゼロを返したものが勝ち（Mojang 明記）
+- [x] `IrLoader` が `animation_controllers/` を歩く。`ResourceIr` に載る
+- [x] `BlockBinding` / `AddonSurvey` の両方で短縮名 → アニメーション → コントローラの順に解決
+- [x] **装着者の状態を答える** — `is_sneaking` / `is_in_water` / `is_swimming` / `is_gliding` /
+      `is_sleeping` / `is_onfire`。三人称はレンダーステート、一人称はプレイヤー本体から。
+      `Pose` の定数も `LivingEntityRenderState` のフィールドも**両バージョンで同一**（jar で確認）
+- [x] 実パックで確認: 立ち＝`default` 状態、スニーク＝`sneaking` 状態に入り、
+      `hoshino_sleep`（`!is_sneaking && !is_in_water`）が正しく落ちる
+
+**フレーム間の記憶は持っていない。** 毎フレーム初期状態から遷移をたどる。コーパスの
+コントローラは「どの状態も既定状態から 1 ホップで届き、どの状態も自分のガードの否定で戻る」
+構造なので一致する。ずれるのは `query.all_animations_finished` / `blend_transition` /
+`on_entry`・`on_exit` — **どれも per-holder の状態が要る**（アニメーションの時計と同じ宿題）。
+
+**循環はコーパス自身にある。** `walking` 状態の戻り条件が `!query.is_gliding`（滑空していなければ
+真＝ほぼ常に真）なので `default → walking → default`。統合版は 1 フレーム 1 遷移でちらつくだけ。
+こちらは再訪で止める。**どちらも何も描かない**（両状態のアニメーションが未定義）。
+
+**`query.is_speeding` はわざと 0 のまま。** Mojang のどの版の文書にも無い＝統合版でも 0 で、
+その状態は**両クライアントで到達不能**。ここで答えると、パック作者が一度も得ていない挙動を
+こちらが発明することになる。
+
+**同じリストにパックの誤字もある**（`scripts` が `atsuiyo`、`animations` は `atuiyo`）。
+解決せず・報告して・その 1 項目だけ落ちる。憲章 5。測定器が出したので見つかった。
+
+### per-holder の再生状態 ✅ — 抽象論ではなく実害が出たので入れた
+
+`animation.hoshino_totem.sleep` は **600 秒**で、t≈301.75〜599.2 の間 `head2` を
+`[-23, -10, 9]`（寝ている姿勢）に固定する。idle は `head2` の **position しか**書かないので
+上書きされない。**周期の約半分が「寝ている」。**
+
+時計がクライアント起動からの 1 本だったので、**位相＝稼働時間 mod 600**。統合版は
+「持ち始めてから」なので、**持った瞬間に既に寝ていることがあった**。画面上は「頭が変な角度で
+固まっている」で、姿勢のバグに見える — だから何セッション見ても報告されなかった。
+
+- [x] `Playback`（`core`）— `Playable` の同一性で開始時刻を、コントローラの現在状態を持つ。
+      **混ぜる量が初めて非ゼロになったフレームで時計が始まる**（Mojang:
+      「once true … it won't play from the start again」）
+- [x] `Playable.accumulate` の第 1 引数が秒から `Playback` に
+- [x] コントローラは **1 フレーム 1 遷移**、前フレームの状態から。記憶を持つのでコーパスの
+      循環（`walking`）が統合版と同じくちらつく
+- [x] `AttachablePlaybacks`（`src/main`）— エンティティ ID ＋ スロットで引く。
+      `AvatarRenderState.id` は両バージョンにある。1 分描かれなければ捨てる
+- [x] `AddonSurvey` は `currentState`（進めない読み取り）で報告 — 測定器が machine を
+      余分に 1 歩進めて「描いていない状態」を印字するのを防ぐ
+- [x] テスト 2 件追加、4 ノードコンパイル、`specAll` 緑
+
+### 残っているもの（順に）
+
+- [ ] **実機確認** — この 3 セッション分、まだ 1 度も画面を見ていない
+- [ ] **3. `relative_to`** — 回転を親でなくエンティティ基準に。バニラの look-at が使う
+- [ ] **4b. `override_previous_animation`** — 加算既定からの脱出口。コーパスに 0 件
+- [ ] `anim_time_update` / `start_delay` / `blend_transition` / `on_entry`・`on_exit` /
+      `query.all_animations_finished` — **土台（`Playback`）はできたので、あとは parse とクエリ**
+- [ ] **アニメーションごとの時計** — 文献の後半（「一度始まったら止まらない／
+      最初から再生し直さない」）は未実装。全部が 1 本の壁時計から引かれている。
+      per-holder の状態が要る（`anim_time_update` / `start_delay` /
+      `query.all_animations_finished` も同じものを待っている）
+- [ ] ループするアニメーションの補間がループ点をまたがない（参照実装はまたぐ）
+
 ## 分かったこと
 
 **Molang は書かなくてよい。** `core/molang` にパーサ・クロージャ生成・math・スコープ付き

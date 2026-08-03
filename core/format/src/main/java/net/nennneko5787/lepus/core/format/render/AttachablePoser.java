@@ -14,20 +14,23 @@ import net.nennneko5787.lepus.core.molang.MolangExpr;
  * What an attachable looks like right now: which animations play, and the pose they make.
  * SC-170 §5, SC-180 §4, SC-130 §4.
  *
- * <p><b>{@code scripts.animate} is a list of decisions, not a list of animations.</b> An entry may
- * be a bare name that always plays, or an object whose one entry plays <em>while a Molang expression
- * is true</em>. Playing only the unconditional ones is what a first pass does, and it is why a model
- * looked identical in first and third person when Bedrock shows two quite different things: the
- * entry that distinguishes them is exactly the conditional one.
+ * <p><b>{@code scripts.animate} is a list of amounts, not a list of animations.</b> An entry may be
+ * a bare name, or an object whose one entry carries a Molang expression — and that expression is
+ * <em>how much</em> of the animation to apply, not whether to apply it. Mojang: "the query in the
+ * scripts section is only a blend value for the animation. It defines 'how much' the animation
+ * plays, not when it plays and when it doesn't." Reading it as a switch is right for a condition
+ * that only ever answers zero or one, which is what the corpus writes, and wrong for every vanilla
+ * entry that blends a walk by {@code query.modified_move_speed}. SC-180 §4.1.1.
  *
  * <p><b>{@code pre_animation} runs first, every frame.</b> Its statements assign to {@code v.} —
  * {@code v.main_hand = c.item_slot == 'main_hand';} — and the conditions then read those variables.
  * Evaluating the conditions without running it first leaves every such variable at zero, which
  * silently answers "false" to every question a pack asks about itself.
  *
- * <p><b>Two animations that name the same bone do not both get it.</b> The last one in the list
- * takes it whole. SC-180 §4.1, where the two rules that were tried instead are recorded along with
- * what each looked like on screen.
+ * <p><b>Two animations that name the same bone both get it.</b> Their channel components add, in
+ * order, and a transform is built once at the end — each scaled by its own blend. SC-180 §4.1,
+ * where the three rules that were tried instead are recorded along with what each looked like on
+ * screen.
  */
 @SpecImpl({"SC-170#attachable/scripts", "SC-180#animation/bones"})
 public final class AttachablePoser {
@@ -50,8 +53,8 @@ public final class AttachablePoser {
             "body", Mat4f.IDENTITY,
             "head", Mat4f.rotationY(180.0f));
 
-    /** One entry of {@code scripts.animate}: something to play, and when. */
-    private record Track(AnimationSampler animation, Optional<MolangExpr> when) {
+    /** One entry of {@code scripts.animate}: something to play, and how much of it. */
+    private record Track(Playable animation, Optional<MolangExpr> when) {
     }
 
     private final GeometryIr geometry;
@@ -59,15 +62,17 @@ public final class AttachablePoser {
     private final List<MolangExpr> preAnimation;
 
     /**
-     * @param animations   in {@code scripts.animate} order, each with its condition's source or empty
+     * @param animations   in {@code scripts.animate} order, each with its blend expression's source
+     *                     or empty. An entry may be an animation or an animation CONTROLLER — a pack
+     *                     writes both in the same list and looks both up in the same map
      * @param preAnimation the {@code scripts.pre_animation} statements, in order
      */
     public AttachablePoser(GeometryIr geometry,
-            List<Map.Entry<AnimationSampler, Optional<String>>> animations,
+            List<Map.Entry<Playable, Optional<String>>> animations,
             List<String> preAnimation) {
         this.geometry = geometry;
         this.tracks = new ArrayList<>();
-        for (Map.Entry<AnimationSampler, Optional<String>> entry : animations) {
+        for (Map.Entry<Playable, Optional<String>> entry : animations) {
             tracks.add(new Track(entry.getKey(), entry.getValue().map(AttachablePoser::compile)));
         }
         this.preAnimation = preAnimation.stream().map(AttachablePoser::compile).toList();
@@ -76,11 +81,10 @@ public final class AttachablePoser {
     /**
      * Every bone's transform at a moment, for the contexts this frame is in.
      *
-     * <p><b>A bone belongs to the LAST animation in {@code scripts.animate} that names it.</b>
-     * SC-180 §4.1.
+     * <p><b>Every animation that names a bone contributes to it, by its blend.</b> SC-180 §4.1.
      */
-    public Map<String, Mat4f> at(float seconds, MolangContext context) {
-        return at(seconds, context, Map.of());
+    public Map<String, Mat4f> at(Playback playback, MolangContext context) {
+        return at(playback, context, Map.of());
     }
 
     /**
@@ -104,7 +108,7 @@ public final class AttachablePoser {
      *
      * @param skeleton bone name → the wearer's transform for it, in Bedrock's space
      */
-    public Map<String, Mat4f> at(float seconds, MolangContext context,
+    public Map<String, Mat4f> at(Playback playback, MolangContext context,
             Map<String, Mat4f> skeleton) {
         // `pre_animation` FIRST, as documented — its assignments are what the conditions read.
         //
@@ -115,10 +119,16 @@ public final class AttachablePoser {
         for (MolangExpr statement : preAnimation) {
             statement.evaluate(context);
         }
-        boolean[] plays = new boolean[tracks.size()];
+        // A CONDITION IS AN AMOUNT, NOT A SWITCH. SC-180 §4.1.1. Mojang: "the query in the scripts
+        // section is only a blend value for the animation. It defines 'how much' the animation
+        // plays, not when it plays and when it doesn't." A bare entry is a blend of one; an entry
+        // with an expression is a blend of whatever that expression answers, which for the
+        // corpus's `v.main_hand && c.is_first_person` is still zero or one, and for vanilla's
+        // `query.modified_move_speed` is a walk that grows with the walking.
+        float[] blend = new float[tracks.size()];
         for (int track = 0; track < tracks.size(); track++) {
             Optional<MolangExpr> when = tracks.get(track).when();
-            plays[track] = when.isEmpty() || when.get().evaluate(context) != 0f;
+            blend[track] = when.isEmpty() ? 1.0f : when.get().evaluate(context);
         }
         // PER CHANNEL, ADDITIVELY, IN ORDER — and the transform built once at the end. SC-180 §4.1.
         // Bedrock's own documentation: "the skeleton is reset to its default pose ... then
@@ -128,10 +138,7 @@ public final class AttachablePoser {
         // which is what this used to build before picking one of them.
         Map<String, AnimationSampler.Channels> channels = new LinkedHashMap<>();
         for (int track = 0; track < tracks.size(); track++) {
-            if (!plays[track]) {
-                continue;
-            }
-            tracks.get(track).animation().accumulate(seconds, context, channels);
+            tracks.get(track).animation().accumulate(playback, context, blend[track], channels);
         }
         Map<String, Mat4f> extra = new LinkedHashMap<>();
         channels.forEach((bone, accumulated) -> extra.put(bone, accumulated.transform()));

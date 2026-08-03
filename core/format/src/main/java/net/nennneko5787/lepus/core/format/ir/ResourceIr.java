@@ -33,23 +33,42 @@ public record ResourceIr(Map<String, GeometryIr> geometries,
                 net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> items,
         Map<net.nennneko5787.lepus.core.format.value.BedrockId,
                 net.nennneko5787.lepus.core.format.ir.attachable.AttachableIr> attachables,
-        Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationIr> animations) {
+        Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationIr> animations,
+        Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationControllerIr>
+                controllers) {
 
     public static final ResourceIr EMPTY =
-            new ResourceIr(Map.of(), Map.of(), Map.of(), Map.of());
+            new ResourceIr(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
 
     public ResourceIr {
         geometries = Collections.unmodifiableMap(new LinkedHashMap<>(geometries));
         items = Collections.unmodifiableMap(new LinkedHashMap<>(items));
         attachables = Collections.unmodifiableMap(new LinkedHashMap<>(attachables));
         animations = Collections.unmodifiableMap(new LinkedHashMap<>(animations));
+        controllers = Collections.unmodifiableMap(new LinkedHashMap<>(controllers));
     }
 
     /** Geometry and items, for the callers that predate attachables. */
     public ResourceIr(Map<String, GeometryIr> geometries,
             Map<net.nennneko5787.lepus.core.format.value.BedrockId,
                     net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> items) {
-        this(geometries, items, Map.of(), Map.of());
+        this(geometries, items, Map.of(), Map.of(), Map.of());
+    }
+
+    /** Everything but the controllers, for the callers written before there were any. */
+    public ResourceIr(Map<String, GeometryIr> geometries,
+            Map<net.nennneko5787.lepus.core.format.value.BedrockId,
+                    net.nennneko5787.lepus.core.format.ir.item.ItemDefIr> items,
+            Map<net.nennneko5787.lepus.core.format.value.BedrockId,
+                    net.nennneko5787.lepus.core.format.ir.attachable.AttachableIr> attachables,
+            Map<String, net.nennneko5787.lepus.core.format.ir.animation.AnimationIr> animations) {
+        this(geometries, items, attachables, animations, Map.of());
+    }
+
+    /** The animation controller of that name, if any pack declares one. */
+    public Optional<net.nennneko5787.lepus.core.format.ir.animation.AnimationControllerIr>
+            controller(String name) {
+        return Optional.ofNullable(controllers.get(name));
     }
 
     /** The animation of that name, if any pack declares one. */
@@ -66,7 +85,7 @@ public record ResourceIr(Map<String, GeometryIr> geometries,
 
     /** Geometry only, for the callers that predate the client-side item definitions. */
     public ResourceIr(Map<String, GeometryIr> geometries) {
-        this(geometries, Map.of(), Map.of(), Map.of());
+        this(geometries, Map.of(), Map.of(), Map.of(), Map.of());
     }
 
     public Optional<GeometryIr> geometry(String identifier) {

@@ -22,8 +22,9 @@ import net.nennneko5787.lepus.core.molang.MolangExpr;
  * cost that does not show up in a profile as one line, and the compiler already folds constants
  * (SC-130 §6), so a folded expression costs a field read.
  */
-@SpecImpl("SC-180#animation/bones")
-public final class AnimationSampler {
+@SpecImpl({"SC-180#animation/bones", "SC-180#animation/blend_weight", "SC-180#animation/lerp_mode",
+        "SC-180#animation/pre_post_keyframes", "SC-180#animation/loop"})
+public final class AnimationSampler implements Playable {
 
     private final AnimationIr animation;
     private final Map<String, MolangExpr> compiled = new LinkedHashMap<>();
@@ -93,38 +94,79 @@ public final class AnimationSampler {
      * separating scale out, and adding two scale channels would make a bone that two animations both
      * leave alone twice its size — the corpus never has two animations scale one bone, so nothing
      * here can tell the two apart. `TODO(SC-180)`.
+     *
+     * @param blend how much of this animation to apply — Mojang's {@code blend_weight}, "0.0 = off.
+     *              1.0 = fully apply all transforms". It scales what this animation contributes, so
+     *              a bone that only it names lands part-way; combined with {@code this} it is a
+     *              proportion of the way to the value the expression names, because
+     *              {@code carried + blend * (target - carried)} is a lerp. SC-180 §4.1.1
      */
-    public void accumulate(float seconds, MolangContext context, Map<String, Channels> into) {
-        if (finishedAndGone()) {
+    @Override
+    public void accumulate(Playback playback, MolangContext context, float blend,
+            Map<String, Channels> into) {
+        float weighted = blend * blendWeight(context);
+        // THE CLOCK STARTS HERE, on the first frame this holder blends it in, and runs from then on
+        // whatever the blend does. An animation that has never played has no time at all, which is
+        // not the same as a time of zero: the second would have every animation of every pack
+        // already advancing before anything asked for it. SC-180 §4.1.1.
+        float elapsed = playback.timeOf(this, weighted != 0.0f);
+        if (elapsed == Playback.NOT_STARTED || finishedAndGone() || weighted == 0.0f) {
             return;
         }
-        float time = timeIn(seconds);
+        float time = timeIn(elapsed);
         animation.bones().forEach((bone, channels) -> {
             if (channels.rotation().isEmpty() && channels.position().isEmpty()
                     && channels.scale().isEmpty()) {
                 return;
             }
             Channels carried = into.computeIfAbsent(bone, name -> new Channels());
-            add(channels.rotation(), time, context, carried.rotation);
-            add(channels.position(), time, context, carried.position);
-            multiply(channels.scale(), time, context, carried.scale);
+            add(channels.rotation(), time, context, weighted, carried.rotation);
+            add(channels.position(), time, context, weighted, carried.position);
+            multiply(channels.scale(), time, context, weighted, carried.scale);
         });
     }
 
+    /**
+     * The animation's own {@code blend_weight}, or one. SC-180 §4.1.1.
+     *
+     * <p>Mojang: "How much this animation is blended with the others. 0.0 = off. 1.0 = fully apply
+     * all transforms. Can be an expression." It is the same quantity the caller passes — the pack
+     * saying it about the animation rather than about the entry that plays it — so the two
+     * multiply: an animation declared at half strength, played at half blend, contributes a quarter.
+     *
+     * <p>Evaluated per frame because it may be an expression, and against the plain context: there
+     * is no channel here for {@code this} to mean anything about.
+     */
+    private float blendWeight(MolangContext context) {
+        return animation.blendWeight()
+                .map(weight -> weight.number()
+                        .orElseGet(() -> expression(weight.molang().orElse("1")).evaluate(context)))
+                .orElse(1.0f);
+    }
+
     private void add(Optional<AnimationIr.Channel> channel, float time, MolangContext context,
-            float[] carried) {
+            float blend, float[] carried) {
         value(channel, time, context, carried).ifPresent(by -> {
             for (int axis = 0; axis < 3; axis++) {
-                carried[axis] += by[axis];
+                carried[axis] += blend * by[axis];
             }
         });
     }
 
+    /**
+     * Scale, blended towards one rather than towards zero.
+     *
+     * <p>A blend of zero has to mean "this animation is off", and off for a multiplied channel is a
+     * factor of one, not of nothing. So the factor is interpolated from one: {@code 1 + blend * (v -
+     * 1)}, which is {@code v} at full blend and leaves the bone alone at none. Deriving it rather
+     * than copying the additive line matters — {@code blend * v} would shrink every scaled bone to
+     * nothing the moment a pack faded an animation out.
+     */
     private void multiply(Optional<AnimationIr.Channel> channel, float time, MolangContext context,
-            float[] carried) {
+            float blend, float[] carried) {
         value(channel, time, context, carried).ifPresent(by -> {
             for (int axis = 0; axis < 3; axis++) {
-                carried[axis] *= by[axis];
+                carried[axis] *= 1.0f + blend * (by[axis] - 1.0f);
             }
         });
     }
@@ -211,10 +253,17 @@ public final class AnimationSampler {
     /**
      * One channel's value at a time, interpolated between the keyframes that bracket it.
      *
-     * <p>Linear, and <b>held at both ends</b>: before the first keyframe and after the last, the
-     * nearest one answers. Bedrock's other interpolations — {@code catmullrom}, and the step a
-     * {@code pre}/{@code post} pair makes — are recorded in the ledger rather than approximated
-     * here, because an approximation that is right most of the time is the hardest kind to find.
+     * <p><b>Held at both ends</b>: before the first keyframe and after the last, the nearest one
+     * answers. A looping animation does NOT wrap round to its first keyframe for the segment past
+     * its last one — Bedrock's own editor does, and doing it here needs the animation's length,
+     * which a channel does not have. `TODO(SC-180)`.
+     *
+     * <p><b>A segment leaves its {@code before} keyframe by that keyframe's {@code post} value and
+     * arrives at its {@code after} keyframe's {@code pre} one.</b> They differ only where a pack
+     * wrote both, which is how an animation steps at an instant.
+     *
+     * <p>The curve is {@code catmullrom} when <em>either</em> end asks for it, and a straight line
+     * otherwise. SC-180 §4.1.2.
      */
     private Optional<float[]> value(Optional<AnimationIr.Channel> channel, float time,
             MolangContext context, float[] carried) {
@@ -225,19 +274,84 @@ public final class AnimationSampler {
         Map.Entry<Float, AnimationIr.Keyframe> before = frames.floorEntry(time);
         Map.Entry<Float, AnimationIr.Keyframe> after = frames.ceilingEntry(time);
         if (before == null) {
-            return Optional.of(evaluate(after.getValue(), context, carried));
+            return Optional.of(evaluate(after.getValue().pre(), context, carried));
         }
         if (after == null || before.getKey().equals(after.getKey())) {
-            return Optional.of(evaluate(before.getValue(), context, carried));
+            return Optional.of(evaluate(before.getValue().post(), context, carried));
         }
         float span = after.getKey() - before.getKey();
         float t = span <= 0.0f ? 0.0f : (time - before.getKey()) / span;
-        float[] from = evaluate(before.getValue(), context, carried);
-        float[] to = evaluate(after.getValue(), context, carried);
-        return Optional.of(new float[] {
-                from[0] + (to[0] - from[0]) * t,
-                from[1] + (to[1] - from[1]) * t,
-                from[2] + (to[2] - from[2]) * t});
+        float[] from = evaluate(before.getValue().post(), context, carried);
+        float[] to = evaluate(after.getValue().pre(), context, carried);
+        if (before.getValue().lerp() != AnimationIr.LerpMode.CATMULLROM
+                && after.getValue().lerp() != AnimationIr.LerpMode.CATMULLROM) {
+            return Optional.of(new float[] {
+                    from[0] + (to[0] - from[0]) * t,
+                    from[1] + (to[1] - from[1]) * t,
+                    from[2] + (to[2] - from[2]) * t});
+        }
+        return Optional.of(catmullrom(
+                outside(frames.lowerEntry(before.getKey()), before.getValue(), true, from,
+                        context, carried),
+                from, to,
+                outside(frames.higherEntry(after.getKey()), after.getValue(), false, to,
+                        context, carried),
+                t));
+    }
+
+    /**
+     * The control point beyond one end of a curved segment, or that end again. SC-180 §4.1.2.
+     *
+     * <p>A Catmull-Rom segment is shaped by the keyframe on each side of it as well as by its own
+     * two ends, and there is not always one: at the first and last segments of a channel the end
+     * point stands in for its own neighbour, which is the standard clamp and is what makes the
+     * curve start and stop without overshooting.
+     *
+     * <p><b>A keyframe that steps ends the curve.</b> If the segment's own end carries two values,
+     * the neighbour past it is not used — the pack asked for a discontinuity there, and reaching
+     * across it for a tangent would smooth out the very thing it wrote. That condition is on the
+     * SEGMENT's end keyframe, not on the neighbour.
+     *
+     * @param neighbour the keyframe past the end, if the channel has one
+     * @param end       the segment's own keyframe at that side
+     * @param earlier   whether the neighbour sits before the segment or after it, which decides
+     *                  which of its two values faces the segment: the one it leaves with, or the
+     *                  one it arrives at
+     * @param fallback  that end's value, used when there is no neighbour to reach for
+     */
+    private float[] outside(Map.Entry<Float, AnimationIr.Keyframe> neighbour,
+            AnimationIr.Keyframe end, boolean earlier, float[] fallback, MolangContext context,
+            float[] carried) {
+        if (neighbour == null || end.steps()) {
+            return fallback;
+        }
+        return evaluate(earlier ? neighbour.getValue().post() : neighbour.getValue().pre(),
+                context, carried);
+    }
+
+    /**
+     * A uniform Catmull-Rom spline through four values, sampled between the middle two.
+     *
+     * <p>The standard tension-half form, and the one Bedrock's editor evaluates — it builds a
+     * two-dimensional spline through the neighbouring keyframes and reads the value off it, which
+     * for four points at parameter {@code t} is exactly this. <b>Uniform</b>: the keyframes' times
+     * do not space the parameter, so two keyframes a second apart and two a frame apart shape the
+     * curve equally. That is what the reference does, and copying it matters more than the
+     * arithmetic being defensible on its own.
+     */
+    private static float[] catmullrom(float[] p0, float[] p1, float[] p2, float[] p3, float t) {
+        float[] out = new float[3];
+        for (int axis = 0; axis < 3; axis++) {
+            float v0 = (p2[axis] - p0[axis]) * 0.5f;
+            float v1 = (p3[axis] - p1[axis]) * 0.5f;
+            float squared = t * t;
+            float cubed = t * squared;
+            out[axis] = (2.0f * p1[axis] - 2.0f * p2[axis] + v0 + v1) * cubed
+                    + (-3.0f * p1[axis] + 3.0f * p2[axis] - 2.0f * v0 - v1) * squared
+                    + v0 * t
+                    + p1[axis];
+        }
+        return out;
     }
 
     /**
@@ -253,11 +367,11 @@ public final class AnimationSampler {
      * {@link #at} supplies zero, because it applies one animation onto a bind pose and there is
      * nothing below it.
      */
-    private float[] evaluate(AnimationIr.Keyframe keyframe, MolangContext context,
-            float[] carried) {
+    private float[] evaluate(java.util.List<AnimationIr.Component> components,
+            MolangContext context, float[] carried) {
         float[] out = new float[3];
         for (int axis = 0; axis < 3; axis++) {
-            AnimationIr.Component component = keyframe.components().get(axis);
+            AnimationIr.Component component = components.get(axis);
             if (component.number().isPresent()) {
                 out[axis] = component.number().get();
                 continue;

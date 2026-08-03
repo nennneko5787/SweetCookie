@@ -14,14 +14,16 @@ import net.nennneko5787.lepus.core.format.json.Json;
 import net.nennneko5787.lepus.core.format.json.JsonObject;
 import net.nennneko5787.lepus.core.format.value.PackId;
 import net.nennneko5787.lepus.core.format.value.Provenance;
+import net.nennneko5787.lepus.core.molang.MolangContext;
 import org.junit.jupiter.api.Test;
 
 /**
- * Which animation owns a bone when several name it. SC-180 §4.1.
+ * What several animations naming one bone do to it, and how much of each applies. SC-180 §4.1.
  *
- * <p><b>The last one takes it.</b> Three rules have been in this file — matrix composition, value
- * addition, and this — and each was put here to explain a screenshot. Only this one survives every
- * screenshot taken so far. SC-180 §4.1 records what the other two looked like when they were wrong,
+ * <p><b>They add, per channel component, each by its blend.</b> Four rules have been in this file —
+ * matrix composition, last-one-wins, value addition, and addition weighted by the blend the pack
+ * asked for. Three were put here to explain a screenshot and only the last two were read out of
+ * Mojang's documentation. SC-180 §4.1 records what each of the others looked like when it was wrong,
  * because "it fixed the thing I was looking at" is what all three had in common.
  *
  * <p>Asserted as a transformed point rather than as a matrix: "the cube is here" is the claim, and
@@ -49,15 +51,23 @@ class AttachablePoserTest {
     }
 
     private static AnimationSampler moving(String bone, String position) {
+        return sampler(bone, "position", position);
+    }
+
+    private static AnimationSampler scaling(String bone, String scale) {
+        return sampler(bone, "scale", scale);
+    }
+
+    private static AnimationSampler sampler(String bone, String channel, String value) {
         JsonObject root = Json.parse("""
                 {
                   "format_version": "1.8.0",
                   "animations": {
                     "animation.t": {"loop": true, "animation_length": 1,
-                                    "bones": {"%s": {"position": %s}}}
+                                    "bones": {"%s": {"%s": %s}}}
                   }
                 }
-                """.formatted(bone, position)).asObject().orElseThrow();
+                """.formatted(bone, channel, value)).asObject().orElseThrow();
         return new AnimationSampler(AnimationFiles.parse(root, WHERE, new Diagnostics()).get(0));
     }
 
@@ -67,7 +77,7 @@ class AttachablePoserTest {
     // Without a length these fixtures test that rule instead of the composition they are about.
 
     private static float[] at(AttachablePoser poser) {
-        Map<String, Mat4f> pose = poser.at(0f, AttachableContext.thirdPerson(true));
+        Map<String, Mat4f> pose = poser.at(new Playback(), AttachableContext.thirdPerson(true));
         return pose.get("root").transform(0f, 0f, 0f);
     }
 
@@ -105,10 +115,45 @@ class AttachablePoserTest {
     }
 
     /**
-     * A conditional entry that reads false is not in the list at all, so it cannot claim a bone.
+     * <b>An animation's clock starts when its blend first becomes non-zero.</b> SC-180 §4.1.1.
      *
-     * <p>Which is what makes the two views differ: {@code c.is_first_person} decides whether the
-     * animation that would take the root bone gets to run.
+     * <p>Mojang: "the animation will start playing once [the query] is true/1, but it will never
+     * stop playing … <b>It won't play from the start again.</b>" So an entry that has never played
+     * has no time at all, and one that has plays from where its own clock has reached — not from
+     * where a clock shared by the whole client has.
+     *
+     * <p>Asserted on a one-second loop from 0 to 10 held out for two seconds: a shared clock reads
+     * the animation at t=2, which for a one-second loop is the start again by coincidence, so this
+     * uses <b>2.5</b> seconds and the two answers are 5 and 0. The entry that has just started must
+     * read 0.
+     */
+    @Test
+    void anEntrysClockStartsTheFirstFrameItPlays() {
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(sampler("root", "position",
+                        "{\"0.0\": [0, 0, 0], \"1.0\": [10, 0, 0]}"), Optional.of("v.on"))),
+                List.of());
+        Playback playback = new Playback();
+        // Two and a half seconds in which it never played, so its clock never started.
+        playback.advanceTo(2.5f);
+        AttachableContext off = AttachableContext.thirdPerson(true);
+        assertEquals(0.0f, poser.at(playback, off).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+
+        // Now it plays. Its first frame is its t=0, NOT the shared clock's 2.5.
+        AttachableContext on = AttachableContext.thirdPerson(true);
+        on.write(MolangContext.Scope.VARIABLE, "on", 1.0f);
+        assertEquals(0.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+
+        // Half a second later it is halfway, and the shared clock's three seconds are irrelevant.
+        playback.advanceTo(3.0f);
+        assertEquals(5.0f, poser.at(playback, on).get("root").transform(0f, 0f, 0f)[0], EPSILON);
+    }
+
+    /**
+     * A conditional entry whose expression answers zero contributes nothing.
+     *
+     * <p>Which is what makes the two views differ: {@code c.is_first_person} answers one in first
+     * person and zero in third, and zero is a blend of none.
      */
     @Test
     void anEntryWhoseConditionIsFalseClaimsNothing() {
@@ -118,5 +163,71 @@ class AttachablePoserTest {
                                 Optional.of("c.is_first_person"))),
                 List.of());
         assertEquals(10.0f, at(poser)[0], EPSILON);
+    }
+
+    /**
+     * <b>A condition is how much, not whether.</b> SC-180 §4.1.1.
+     *
+     * <p>Mojang: "the query in the scripts section is only a blend value for the animation. It
+     * defines 'how much' the animation plays, not when it plays and when it doesn't." Half of a
+     * hundred is fifty, and the ten beneath it is untouched — so this reads 60, where a switch
+     * reads 110 and no entry at all reads 10. Three numbers apart, for the same reason the two
+     * above are.
+     *
+     * <p>Nothing in the surveyed corpus writes a fraction here: every condition in it is a
+     * comparison, which answers zero or one either way. This is asserted for vanilla's own entries,
+     * which blend a walk cycle by {@code query.modified_move_speed}, and because a rule that only
+     * happens to agree on the inputs at hand is the kind that is found wrong by the next pack.
+     */
+    @Test
+    void aFractionalConditionAppliesThatMuchOfIt() {
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
+                        Map.entry(moving("root", "[100, 0, 0]"), Optional.of("0.5"))),
+                List.of());
+        assertEquals(60.0f, at(poser)[0], EPSILON);
+    }
+
+    /**
+     * The animation's own {@code blend_weight} multiplies the entry's. SC-180 §4.1.1.
+     *
+     * <p>Two packs' worth of the same quantity: the animation says how strongly it applies, the
+     * entry that plays it says how much of it to play. A quarter of a hundred is twenty-five, on
+     * top of the untouched ten.
+     */
+    @Test
+    void anAnimationsOwnBlendWeightMultipliesTheEntrys() {
+        AnimationSampler half = new AnimationSampler(AnimationFiles.parse(Json.parse("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.t": {"loop": true, "animation_length": 1, "blend_weight": 0.5,
+                                    "bones": {"root": {"position": [100, 0, 0]}}}
+                  }
+                }
+                """).asObject().orElseThrow(), WHERE, new Diagnostics()).get(0));
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(moving("root", "[10, 0, 0]"), Optional.<String>empty()),
+                        Map.entry(half, Optional.of("0.5"))),
+                List.of());
+        assertEquals(35.0f, at(poser)[0], EPSILON);
+    }
+
+    /**
+     * A blended scale fades towards <b>one</b>, not towards zero.
+     *
+     * <p>Off has to leave the bone the size it was. The additive line would make a half-blended
+     * {@code scale 3} into a factor of 1.5 by multiplying the value, and Bedrock's own wording —
+     * "0.0 = off. 1.0 = fully apply all transforms" — says off is a bone nothing has scaled. So the
+     * factor runs from one: half of a threefold scale is twofold, and a point one unit out lands at
+     * two.
+     */
+    @Test
+    void aBlendedScaleFadesTowardsOne() {
+        AttachablePoser poser = new AttachablePoser(geometry(),
+                List.of(Map.entry(scaling("root", "[3, 3, 3]"), Optional.of("0.5"))),
+                List.of());
+        Map<String, Mat4f> pose = poser.at(new Playback(), AttachableContext.thirdPerson(true));
+        assertEquals(2.0f, pose.get("root").transform(1f, 0f, 0f)[0], EPSILON);
     }
 }

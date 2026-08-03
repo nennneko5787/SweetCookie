@@ -298,7 +298,7 @@ reasoning and each will come back the same way.
 
 | dropped | uses in the surveyed corpus |
 |---|---|
-| `lerp_mode: catmullrom` and `post` keyframes — §4 samples linearly | **227** |
+| ~~`lerp_mode: catmullrom` and `post` keyframes — §4 samples linearly~~ **closed, §4.1.2** | **233**, counted again against the installed packs rather than trusted from this row |
 | `reset` on a bone — not in `BONE_KEYS`, so it lands in the unknown bag | 2, and both on the bones of the one model whose first-person placement is wrong |
 
 Neither is the cause of that placement, and the checks are worth recording so they are not redone:
@@ -307,8 +307,11 @@ first-person question turns on; and `reset` **appears in no version of Mojang's 
 1.12, 1.16 or 1.21 — and in no vanilla model**, which makes it a Blockbench artefact that Bedrock
 most likely ignores too.
 
-**The first entry is a real fidelity gap and should be closed on its own merits.** Two hundred and
-twenty-seven keyframes in one pack sample as straight lines where Bedrock curves them.
+**The first entry was a real fidelity gap and has been closed on its own merits** (§4.1.2). Two
+hundred and thirty-three keyframes across twenty-two files sampled as straight lines where Bedrock
+curves them, and none of them belonged to the model whose placement this section is about — which is
+why it stayed open while the placement question was worked: it explains none of that, and it was
+still wrong.
 
 ### 3.4.4 `binding` decides what a bone attaches to, and its absence decides too
 
@@ -454,10 +457,17 @@ additive composition, both clients agree for both characters.
 non-looping animation cannot be told from a holding one. Bedrock ends both, but removes the pose of
 one and keeps the other. No corpus animation is plainly non-looping, so nothing can see it yet.
 
-`blend_weight` and `override_previous_animation` are parsed and not applied — the latter is
-documented as "should the animation pose of the bone be set to the bind pose before applying this
+`blend_weight` **is now parsed and applied** — §4.1.1. `override_previous_animation` is neither: it
+is documented as "should the animation pose of the bone be set to the bind pose before applying this
 animation", which is the escape hatch from the additive default. Neither appears in the surveyed
 corpus. `TODO(SC-180)`.
+
+**That sentence read "`blend_weight` and `override_previous_animation` are parsed and not applied"
+for as long as this section has existed, and the first half of it was never true** — `AnimationFiles`
+did not read the field at all, and `AnimationIr` had nowhere to put it. Nothing caught it because
+nothing in the corpus writes the field, so the ledger, the code and this document agreed on a
+capability none of them had. **A claim about a field no input exercises is worth checking against the
+parser rather than against the other prose.**
 
 #### Four rules have been in this position. Three were adopted without a source
 
@@ -528,6 +538,123 @@ entries in the same order, and the hand they are held in was ruled out on the Be
 difference is not in the composition at all; it is §4.2.1, a wearer bone that only one of them hangs
 off and that only first person drives. **A rule that cannot distinguish two cases is evidence that
 the distinction is somewhere else, not that the rule needs another clause.**
+
+### 4.1.1 A condition in `scripts.animate` is an amount, not a switch
+
+**The Molang expression beside an entry of `scripts.animate` is how MUCH of that animation applies,
+not whether it applies.** Mojang states it, in the passage that explains why a tutorial's animation
+plays only once:
+
+> "The reason for that is the fact that **the query in the scripts section is only a blend value for
+> the animation. It defines 'how much' the animation plays, not when it plays and when it doesn't.**
+> That's why the animation will start playing once `!query.is_on_ground` is `true/1`, but it will
+> never stop playing. It will just fade out once the value is `false/0` again, and the next time it
+> will fade into the animation again. It won't play from the start again."
+
+The same quantity is spelled `blend_weight` inside the animation file — "default = '1.0'. How much
+this animation is blended with the others. 0.0 = off. 1.0 = fully apply all transforms. Can be an
+expression." **They are one number said twice, from the two ends, so they multiply**: an animation
+declared at half strength, played by an entry blending at half, contributes a quarter.
+
+So a channel's contribution to §4.1's running sum is scaled by that number:
+
+| channel | contribution | why not the obvious thing |
+|---|---|---|
+| rotation, position | `carried += blend × value` | — |
+| scale | `carried ×= 1 + blend × (value − 1)` | **off must mean a factor of one.** `blend × value` would shrink every scaled bone to nothing the instant a pack faded an animation out |
+
+**With `this`, a partial blend is a lerp and not an approximation of one.** The corpus's `set` idiom
+is `target − this`; adding `blend × (target − carried)` to `carried` lands proportionally between
+where the animation found the bone and where it aims it. That falls out of the two rules rather than
+being arranged, which is the reason to believe it.
+
+Nothing in the surveyed corpus writes a fraction here — every condition in it is a comparison, which
+answers zero or one — so **this changes no frame of the corpus, and reading the conditions as
+booleans was right for every input this build has seen.** It is wrong for vanilla's own entries,
+which blend a walk cycle by `query.modified_move_speed`, and that is the case worth being correct
+for before it arrives.
+
+**The other half of the quoted passage is the clock, and it is now implemented.** Bedrock starts an
+animation's own time when its blend first becomes non-zero and never restarts it — an animation that
+fades out and back in resumes where it was. So the clock belongs to the **holder**, not to the
+animation, which everyone carrying one of these items shares: `Playback` keys it by the `Playable`'s
+identity and the renderer keeps one per entity id and slot.
+
+**What that was costing was visible, in the corpus, on the character whose first-person placement is
+the open question.** One of her animations runs for **six hundred seconds**: the head is written
+awake until t≈300 and then holds a slept pose from t≈301.75 to t≈599.2, so roughly half of every
+cycle is a character asleep. Nothing later overrides it — the idle that follows in `scripts.animate`
+writes that bone's *position* only. Against the old clock, measured from when the client started, the
+phase was the client's uptime modulo six hundred: she fell asleep five minutes after the game
+launched rather than five minutes after being picked up, and could be asleep the instant she was
+first drawn. **A head at a fixed odd angle is the symptom, and it reads as a posing bug rather than
+as a clock** — which is why it went unreported through every session that looked at her.
+
+`TODO(SC-180)`: the clock now exists, and three things that need it are still not read —
+`anim_time_update` (whose default is `query.anim_time + query.delta_time`, i.e. exactly this),
+`start_delay`, and `query.all_animations_finished`. They are parsing and query work now rather than
+architecture.
+
+A holder is forgotten after a minute without being drawn, which bounds the store on a busy server;
+a player who walks out of render distance and back starts their animations afresh, as Bedrock does
+when it stops and restarts drawing them.
+
+Nor is the *fade* a duration here. `blend_transition` gives one, and it belongs to an animation
+controller's states (§5); no documentation gives `scripts.animate` a fade time of its own, so this
+build applies the blend as the expression answers it and does not invent a time constant to smooth
+it with.
+
+### 4.1.2 A segment is a curve when either of its ends says so, and a keyframe holds two values
+
+**A keyframe carries a `pre` and a `post` — the value the channel arrives at and the value it leaves
+with.** A segment therefore runs from its earlier keyframe's `post` to its later keyframe's `pre`,
+and the two differ only where the pack wrote both, which is how an animation steps at an instant.
+Reading `post` for both ends — which this build did — turns every step into a ramp on the incoming
+edge.
+
+**`lerp_mode` sits on the keyframe, not on the channel, and a segment is curved when EITHER of its
+two ends asks for it.** The reference implementation is explicit about the direction of that test:
+it takes the straight line only when the earlier keyframe is linear *and* the later one is linear or
+a step, and falls to the spline when either says `catmullrom`. A reader that asked only the earlier
+keyframe would sample the run-up to every eased landing as a line.
+
+The spline is the **uniform, tension-half Catmull-Rom** through four values: the neighbour before the
+segment, its two ends, and the neighbour after.
+
+```
+v0 = (p2 − p0) / 2                      p1 = the segment's earlier end (its `post`)
+v1 = (p3 − p1) / 2                      p2 = its later end (that keyframe's `pre`)
+f(t) = (2p1 − 2p2 + v0 + v1) t³
+     + (−3p1 + 3p2 − 2v0 − v1) t²
+     + v0 t + p1
+```
+
+**Uniform**, so the keyframes' times do not space the parameter: two keyframes a second apart and two
+a frame apart shape the curve equally. That is what Bedrock's editor evaluates — it builds a
+two-dimensional spline through the neighbouring keyframes and reads the value off it, which for four
+points is exactly the above — and copying it matters more than the arithmetic being defensible alone.
+
+Two rules about the neighbours:
+
+| case | control point |
+|---|---|
+| no keyframe past that end | **the end itself**, which is the standard clamp and is what stops the curve overshooting outside every value the pack wrote |
+| the segment's own end **steps** (two values) | the end itself again — the pack asked for a discontinuity there, and reaching across it for a tangent smooths out the thing it wrote |
+
+**This was a real fidelity gap, not a hypothetical one: 233 keyframes across 22 files of the surveyed
+corpus ask for `catmullrom`, and every one of them was sampled as a straight line.** The `pre`/`post`
+half is the opposite case — no animation in that corpus writes two values — and is implemented
+because the sampler now has to ask each end of a segment for a *side*, which makes the distinction
+free rather than speculative.
+
+`TODO(SC-180)`: a looping animation does not wrap its interpolation. The reference joins the last
+keyframe to the first across the loop point, and reaches round the ends for the two outer control
+points; this build holds the outermost keyframe instead. The channel does not know the animation's
+length, which is where the wrap has to come from.
+
+`TODO(SC-180)`: Bedrock's third mode, `step`, is not read. The reference holds the earlier keyframe's
+value across the whole segment for it. It appears nowhere in the corpus, and the `pre`/`post` pair —
+which does the same thing at a single instant — is the form these packs would reach for.
 
 ### 4.2 Bones named after the wearer's are driven by the wearer
 
@@ -711,10 +838,13 @@ screenshot fixes a position and a facing at once, where prose fixes neither.
 
 Two vanilla facts fell out of the same reading and are recorded so they are not re-derived:
 
-- `controller.animation.elytra.default` — which the corpus names as `default_controller` and this
-  build reports unresolved — is a five-state machine that plays whichever of `default`, `gliding`,
-  `sneaking`, `sleeping`, `swimming` the **attachable's own** `animations` map defines. That is how
-  the corpus's `sleeping` entries ever play: nothing in `scripts.animate` names them.
+- `controller.animation.elytra.default` — which two of the corpus's three attachables name as
+  `default_controller`, and which this build still reports unresolved because it is Mojang's file —
+  is a five-state machine that plays whichever of `default`, `gliding`, `sneaking`, `sleeping`,
+  `swimming` the **attachable's own** `animations` map defines. That is how the corpus's `sleeping`
+  entries ever play: nothing in `scripts.animate` names them. **The third attachable ships its own
+  controller and is now run** — §5.1, where the assumption that this was blocked on Mojang's file is
+  corrected.
 - The player's sneak pose is a **third-person** animation. First person does not tip the torso, so
   the crouch pitch `WearerSkeleton.upright` records as missing is not a divergence.
 
@@ -796,10 +926,82 @@ person looks like is Bedrock's behaviour, not the pack's intent.
 
 A finite state machine: states with `animations[]` (each with a Molang blend weight),
 `transitions[]` guarded by Molang conditions, `blend_transition`, `on_entry` and `on_exit` scripts,
-and `particle_effects` / `sound_effects` per state.
+and `particle_effects` / `sound_effects` per state. The initial state is `initial_state`, and
+`default` when the pack names none.
 
-`TODO(SC-180)`: transition evaluation order, whether multiple transitions in one frame are
-permitted, and the guard against transition loops.
+**This is where a Bedrock pack says *when*.** §4.1.1 establishes that a condition in
+`scripts.animate` cannot: it is an amount, and an animation it starts never restarts. Mojang's own
+tutorial reaches for a controller at exactly that point — "if we want to start the animation every
+time the query changes, we need a different approach. This is where animation controllers come in."
+
+**Transitions are ordered and the first non-zero one wins.** Mojang: "the first to return non-zero is
+the state to transition to". So the IR keeps a list; a map keyed by the target state would silently
+decide between two guards that are both true by hash order.
+
+### 5.1 The corpus's controllers are not the ones this document assumed
+
+For most of this feature's life the note here read: the corpus's attachables name
+`controller.animation.elytra.default`, that file is in Mojang's resource pack rather than in the
+add-on, and so nothing can be done until a way to resolve it is found. **That is true of two of the
+three attachables and false of the third, which ships its own controller in its own pack** — seven
+states, its own transitions, and six of its states naming animations the attachable defines.
+
+The consequence is that this was never blocked. **What was needed was to read the pack.**
+
+| what the corpus names | where it lives |
+|---|---|
+| `controller.animation.elytra.default` (two attachables) | Mojang's resource pack. Not resolvable here, and not vendorable — constitution rule 10 |
+| `controller.animation.hoshino_totem.default` (one attachable) | **in the add-on**, and now read |
+
+Both cases behave the same way from the renderer: a name that resolves to nothing plays nothing.
+That is also what the elytra controller would mostly do if it were resolved — its five states name
+`default`, `gliding`, `sneaking`, `sleeping` and `swimming`, and the attachables that borrow it
+define two of those five, so the other three are authored to draw nothing.
+
+### 5.2 The machine remembers, one transition per frame
+
+**The state is the holder's**, kept in the same `Playback` as the animation clocks (§4.1.1) and keyed
+by entity id and slot. Each frame the machine takes **at most one transition**, from where the last
+frame left it, and the first guard that fires wins — which is Bedrock's.
+
+An earlier build had no memory and resolved the machine from its initial state every frame, chasing
+transitions until none fired or a state repeated. It agreed with this for every controller in the
+corpus, and the reason was structural rather than lucky: every state carries the transition back out
+that its own guard's negation opens, and every state is one hop from the initial one, so a holder's
+first frame lands in the right state either way. **It is recorded because "no rule can tell these
+apart" is not the same as "the rule does not matter"** — it parts company for anything that depends
+on how the entity got here, and the corpus contains one such case already:
+
+One controller has a `walking` state whose way back is `!query.is_gliding`, true whenever the player
+is not gliding, so `default → walking → default` is a cycle **in the file itself**. Bedrock takes one
+transition per frame and flickers between the two; the memoryless version froze at the repeat. Both
+states draw nothing, so nothing on screen distinguishes them — this build flickers because that is
+what the client does, not because anything showed it.
+
+Still not implemented: `blend_transition`, `on_entry` / `on_exit`, and
+`query.all_animations_finished`. The first is a cross-fade whose length is a fact about the state
+just left, which is now expressible and simply not read. `TODO(SC-180)`.
+
+### 5.3 The queries a controller asks are about the wearer, and they used to read zero
+
+A controller's guards are `query.is_sneaking`, `query.is_in_water`, `query.is_swimming`,
+`query.is_gliding`, `query.is_sleeping`, `query.is_onfire` — and nothing else, in the whole corpus.
+Every one of them answered zero until now, which is why a pack that ships a sneaking pose, a
+swimming pose and a burning pose drew the standing one in all four situations.
+
+They are answered from the render state in third person and from the player in first, which are the
+same six facts from the two sources the two views have. `Pose`'s constants and
+`LivingEntityRenderState`'s fields are identical on 1.21.11 and 26.2, checked against both jars.
+
+**One query is deliberately left reading zero.** `query.is_speeding` guards the `walking` state
+above and **appears in no version of Mojang's documentation**, so it answers zero on a Bedrock client
+too and that state is unreachable on both. Answering it here would be this build inventing a feature
+the pack's author never got — and it would make a screenshot of this build disagree with the Bedrock
+client for a reason nobody could find later.
+
+**The same pack has a plain typo in the same list**: `scripts.animate` plays `atsuiyo` and the
+`animations` map defines `atuiyo`. It resolves to nothing, is reported as unresolved, and costs the
+one entry. Constitution rule 5 — and the survey prints it, which is how it was found.
 
 ## 6. Client entity definitions and render controllers
 

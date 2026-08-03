@@ -52,8 +52,8 @@ of its long tail of identifiers is still untouched.
 
 **Rendering**
 
-- [ ] Attachables — first-person and worn 3D models, animated. In progress, 2/10
-- [ ] Bedrock skeletal animation files — 0/22
+- [ ] Attachables — first-person and worn 3D models, animated. In progress, 5/10
+- [ ] Bedrock skeletal animation files — 6/22
 - [ ] Render controllers 0/13, client entity definitions 0/15
 - [ ] Snowstorm particles — 0/33
 

@@ -142,7 +142,8 @@ public final class AddonSurvey {
                     new net.nennneko5787.lepus.core.format.render.AnimationSampler(animation);
             var poser = new net.nennneko5787.lepus.core.format.render.AttachablePoser(
                     geometry, List.of(Map.entry(sampler, Optional.<String>empty())), List.of());
-            pose = poser.at(0f, net.nennneko5787.lepus.core.molang.MolangContext.standalone());
+            pose = poser.at(new net.nennneko5787.lepus.core.format.render.Playback(),
+                    net.nennneko5787.lepus.core.molang.MolangContext.standalone());
         }
         List<String> lines = new ArrayList<>();
         lines.add(geometryId + ": " + geometry.bones().size() + " bones, "
@@ -220,6 +221,33 @@ public final class AddonSurvey {
      */
     public static List<String> attachableReport(Path root, String identifier, String view,
             String slot) throws IOException {
+        return attachableReport(root, identifier, view, slot, "");
+    }
+
+    /** As below, with nothing held out. */
+    public static List<String> attachableReport(Path root, String identifier, String view,
+            String slot, String doing) throws IOException {
+        return attachableReport(root, identifier, view, slot, doing, "");
+    }
+
+    /**
+     * As above, with the wearer doing something. SC-180 §5.
+     *
+     * <p><b>An animation controller answers questions about the wearer and nothing else.</b> An
+     * instrument that could only ask about a player standing still could only ever report the
+     * initial state, which is the state whose animation the corpus most often does not define — so
+     * it would print "the controller draws nothing" and be right for the wrong reason.
+     *
+     * @param doing comma-separated: {@code sneaking}, {@code in_water}, {@code swimming},
+     *              {@code gliding}, {@code sleeping}, {@code on_fire}
+     * @param skip  short names of {@code scripts.animate} entries to leave out, comma-separated.
+     *              <b>Composition is additive and later entries read what earlier ones left</b>
+     *              (SC-180 §4.1), so no entry has a contribution of its own to print — the honest
+     *              measurement of "what does this one do" is the pose with it against the pose
+     *              without it. That is what this exists for
+     */
+    public static List<String> attachableReport(Path root, String identifier, String view,
+            String slot, String doing, String skip) throws IOException {
         List<Path> sources = new ArrayList<>();
         try (Stream<Path> entries = Files.list(root)) {
             entries.forEach(sources::add);
@@ -249,31 +277,57 @@ public final class AddonSurvey {
         }
 
         // Exactly the binder's resolution: every entry of scripts.animate that names something a
-        // pack ships, in the pack's order, each keeping its condition.
-        List<Map.Entry<AnimationSampler, Optional<String>>> playing = new ArrayList<>();
+        // pack ships, in the pack's order, each keeping its blend expression - and a name may be an
+        // animation OR a controller, resolved in that order, because a controller's states name the
+        // same short names (SC-180 §5). An instrument that resolved only animations would report a
+        // frame the renderer does not draw, which is the failure this tool has already had twice.
+        Map<String, net.nennneko5787.lepus.core.format.render.Playable> byShortName =
+                new java.util.LinkedHashMap<>();
+        attachable.animations().forEach((shortName, named) -> {
+            for (PackIr pack : ir.packs()) {
+                pack.resource().animation(named).ifPresent(animation ->
+                        byShortName.put(shortName, new AnimationSampler(animation)));
+            }
+        });
+        attachable.animations().forEach((shortName, named) -> {
+            if (byShortName.containsKey(shortName)) {
+                return;
+            }
+            for (PackIr pack : ir.packs()) {
+                pack.resource().controller(named).ifPresent(controller ->
+                        byShortName.put(shortName,
+                                new net.nennneko5787.lepus.core.format.render
+                                        .AnimationControllerPlayer(controller, byShortName)));
+            }
+        });
+        List<Map.Entry<net.nennneko5787.lepus.core.format.render.Playable, Optional<String>>>
+                playing = new ArrayList<>();
         List<String> skipped = new ArrayList<>();
+        java.util.Set<String> heldOut = new java.util.LinkedHashSet<>();
+        for (String name : skip.split(",")) {
+            if (!name.isBlank()) {
+                heldOut.add(name.trim());
+            }
+        }
         for (AttachableIr.Play play : attachable.animate()) {
             String named = attachable.animations().get(play.name());
-            AnimationIr animation = null;
-            for (PackIr pack : ir.packs()) {
-                var found = named == null ? Optional.<AnimationIr>empty()
-                        : pack.resource().animation(named);
-                if (found.isPresent()) {
-                    animation = found.get();
-                }
-            }
-            if (animation == null) {
+            var playable = byShortName.get(play.name());
+            if (playable == null) {
                 skipped.add(play.name() + " (" + named + ")");
                 continue;
             }
-            playing.add(Map.entry(new AnimationSampler(animation), play.condition()));
+            if (heldOut.contains(play.name())) {
+                continue;
+            }
+            playing.add(Map.entry(playable, play.condition()));
         }
 
         boolean firstPerson = "first".equalsIgnoreCase(view);
         boolean mainHand = !"off".equalsIgnoreCase(slot);
-        AttachableContext context = firstPerson
+        AttachableContext context = (firstPerson
                 ? AttachableContext.firstPerson(mainHand)
-                : AttachableContext.thirdPerson(mainHand);
+                : AttachableContext.thirdPerson(mainHand))
+                .doing(wearerDoing(doing));
         // The bones the WEARER drives, as a player standing still and looking straight ahead has
         // them. The renderer composes the wearer's transform outside the pack's (SC-180 §4.2)
         // rather than replacing it, so these report what a frame computes for a still player.
@@ -296,12 +350,19 @@ public final class AddonSurvey {
         // pose made it print "no" for entries the pose had applied, and the extents beside it said
         // otherwise. Whichever order the poser uses, this must use the same one — it has now been
         // wrong in both directions on the same day.
+        // ONE playback for the report, so the clocks and the controller's state are this holder's -
+        // a fresh one, which is a player who has just picked the item up. Reading the state back
+        // afterwards must not step the machine again; `currentState` is for that.
+        net.nennneko5787.lepus.core.format.render.Playback playback =
+                new net.nennneko5787.lepus.core.format.render.Playback();
         Map<String, Mat4f> pose = new AttachablePoser(geometry, playing, attachable.preAnimation())
-                .at(0f, context, skeleton);
+                .at(playback, context, skeleton);
 
         List<String> lines = new ArrayList<>();
         lines.add(identifier + " as " + geometryId + ", " + (firstPerson ? "first" : "third")
-                + " person, " + (mainHand ? "main" : "off") + " hand, t=0");
+                + " person, " + (mainHand ? "main" : "off") + " hand, t=0"
+                + (doing.isBlank() ? "" : ", wearer " + doing)
+                + (heldOut.isEmpty() ? "" : ", WITHOUT " + heldOut));
         List<String> ran = new ArrayList<>();
         for (AttachableIr.Play play : attachable.animate()) {
             String verdict = play.condition()
@@ -321,6 +382,17 @@ public final class AddonSurvey {
         if (!skipped.isEmpty()) {
             lines.add("  unresolved: " + skipped);
         }
+        // WHICH STATE each controller is in, and whether that state draws anything. A controller
+        // whose current state names an animation the attachable does not define is the normal case
+        // (SC-180 §5), and on screen it is indistinguishable from a controller that did not run at
+        // all - which is what this build did with every one of them until now.
+        byShortName.forEach((shortName, playable) -> {
+            if (playable instanceof net.nennneko5787.lepus.core.format.render
+                    .AnimationControllerPlayer machine) {
+                lines.add("  controller " + shortName + ": state "
+                        + machine.currentState(playback));
+            }
+        });
         // An expression that would not compile answers zero and costs one channel, which on screen
         // is a limb resting at its bind angle - indistinguishable from an animation that simply does
         // not move it. The sampler has always recorded these; nothing asked.
@@ -579,6 +651,21 @@ public final class AddonSurvey {
         return lines;
     }
 
+    /** The wearer's state, as a comma-separated list of the things a controller asks about. */
+    private static AttachableContext.Wearer wearerDoing(String doing) {
+        java.util.Set<String> flags = new java.util.LinkedHashSet<>();
+        for (String flag : doing.split(",")) {
+            flags.add(flag.trim().toLowerCase(java.util.Locale.ROOT));
+        }
+        return new AttachableContext.Wearer(
+                flags.contains("sneaking"),
+                flags.contains("in_water"),
+                flags.contains("swimming"),
+                flags.contains("gliding"),
+                flags.contains("sleeping"),
+                flags.contains("on_fire"));
+    }
+
     /** {@code ./gradlew --project-dir core :testkit:survey -Paddons=<path>} */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -599,7 +686,9 @@ public final class AddonSurvey {
         if (args.length >= 2 && args[1].startsWith("attachable.")) {
             attachableReport(Path.of(args[0]), args[1].substring("attachable.".length()),
                     args.length > 2 ? args[2] : "third",
-                    args.length > 3 ? args[3] : "main").forEach(System.out::println);
+                    args.length > 3 ? args[3] : "main",
+                    args.length > 4 ? args[4] : "",
+                    args.length > 5 ? args[5] : "").forEach(System.out::println);
             return;
         }
         // Every folder as ONE set, because that is what the runtime sees. Surveying the behaviour

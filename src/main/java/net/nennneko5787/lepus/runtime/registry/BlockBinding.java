@@ -23,8 +23,10 @@ import net.nennneko5787.lepus.core.format.ir.block.BlockTransform;
 import net.nennneko5787.lepus.core.format.ir.block.TerrainTextures;
 import net.nennneko5787.lepus.core.format.ir.attachable.AttachableIr;
 import net.nennneko5787.lepus.core.format.ir.geometry.GeometryIr;
+import net.nennneko5787.lepus.core.format.render.AnimationControllerPlayer;
 import net.nennneko5787.lepus.core.format.render.AnimationSampler;
 import net.nennneko5787.lepus.core.format.render.AttachablePoser;
+import net.nennneko5787.lepus.core.format.render.Playable;
 import net.nennneko5787.lepus.core.format.text.DisplayNames;
 import net.nennneko5787.lepus.core.format.ir.item.ItemDefIr;
 import net.nennneko5787.lepus.core.format.ir.item.ItemProfile;
@@ -272,35 +274,62 @@ public final class BlockBinding {
     }
 
     /**
-     * What an attachable plays, resolved to samplers. SC-180 §4.
+     * What an attachable plays, resolved. SC-180 §4, §5.
      *
-     * <p><b>Conditions travel with their animation and are decided per frame</b>, not here: the
-     * answer to {@code v.main_hand && c.is_first_person} depends on who is looking, and binding
+     * <p><b>Blend expressions travel with their animation and are decided per frame</b>, not here:
+     * the answer to {@code v.main_hand && c.is_first_person} depends on who is looking, and binding
      * happens once. See {@code AttachablePoser}.
      *
-     * <p>A name that resolves to nothing is skipped in silence rather than reported, because that is
-     * exactly what a controller reference looks like from here — {@code default_controller} names a
-     * controller, and every attachable in the corpus has one.
+     * <p><b>A name may resolve to an animation or to a CONTROLLER</b>, and a pack writes both in the
+     * same list. Controllers are built after the animations because a controller's states name the
+     * same short names — Mojang's elytra one asks for {@code sleeping} and {@code swimming}, and the
+     * corpus's own asks for six more. A controller naming another controller resolves to nothing:
+     * nothing in the corpus does it, and building that needs a cycle check rather than an ordering.
+     *
+     * <p>A name that resolves to neither is skipped in silence. Two of the three attachables in the
+     * corpus point at {@code controller.animation.elytra.default}, which is Mojang's file and not in
+     * the add-on — an absence this build may not fill in, and one Bedrock itself resolves.
      */
-    private static List<Map.Entry<AnimationSampler, Optional<String>>> animationsOf(
+    private static List<Map.Entry<Playable, Optional<String>>> animationsOf(
             AttachableIr attachable) {
-        List<Map.Entry<AnimationSampler, Optional<String>>> out = new ArrayList<>();
+        Map<String, Playable> byShortName = new LinkedHashMap<>();
+        attachable.animations().forEach((shortName, identifier) ->
+                resourceOf(resource -> resource.animation(identifier))
+                        .ifPresent(animation -> byShortName.put(shortName,
+                                new AnimationSampler(animation))));
+        attachable.animations().forEach((shortName, identifier) -> {
+            if (byShortName.containsKey(shortName)) {
+                return;
+            }
+            resourceOf(resource -> resource.controller(identifier))
+                    .ifPresent(controller -> byShortName.put(shortName,
+                            new AnimationControllerPlayer(controller, byShortName)));
+        });
+        List<Map.Entry<Playable, Optional<String>>> out = new ArrayList<>();
         for (AttachableIr.Play play : attachable.animate()) {
-            String identifier = attachable.animations().get(play.name());
-            if (identifier == null) {
+            Playable playable = byShortName.get(play.name());
+            if (playable == null) {
                 continue;
             }
-            Lepus.addons().ir().ifPresent(ir -> {
-                for (PackId pack : WorldActivation.current().order()) {
-                    ir.byId(pack).map(PackIr::resource)
-                            .flatMap(resource -> resource.animation(identifier))
-                            .ifPresent(animation -> out.add(Map.entry(
-                                    new AnimationSampler(animation),
-                                    play.condition())));
-                }
-            });
+            out.add(Map.entry(playable, play.condition()));
         }
         return out;
+    }
+
+    /** The first enabled pack, in order, whose resource half answers. */
+    private static <T> Optional<T> resourceOf(
+            java.util.function.Function<net.nennneko5787.lepus.core.format.ir.ResourceIr,
+                    Optional<T>> ask) {
+        return Lepus.addons().ir().flatMap(ir -> {
+            T found = null;
+            for (PackId pack : WorldActivation.current().order()) {
+                Optional<T> candidate = ir.byId(pack).map(PackIr::resource).flatMap(ask);
+                if (candidate.isPresent()) {
+                    found = candidate.get();
+                }
+            }
+            return Optional.ofNullable(found);
+        });
     }
 
     /**

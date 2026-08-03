@@ -59,10 +59,16 @@ public final class AttachableLayer extends RenderLayer<AvatarRenderState, Player
         // after the player's. Built once: six model parts read per draw would be the same six.
         Map<String, Mat4f> skeleton = WearerSkeleton.of(getParentModel());
 
+        // What the wearer is DOING, for the animation controller that branches on it (SC-180 §5).
+        // Built once per draw: the six answers are the same for every slot on one player.
+        AttachableContext.Wearer doing = WearerState.of(state);
+
         boolean rightIsMain = state.mainArm == net.minecraft.world.entity.HumanoidArm.RIGHT;
-        held(state.rightHandItemStack, AttachableContext.thirdPerson(rightIsMain).looking(xRot, yRot),
+        held(state.rightHandItemStack, state.id, rightIsMain ? "main_hand" : "off_hand",
+                AttachableContext.thirdPerson(rightIsMain).looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
-        held(state.leftHandItemStack, AttachableContext.thirdPerson(!rightIsMain).looking(xRot, yRot),
+        held(state.leftHandItemStack, state.id, rightIsMain ? "off_hand" : "main_hand",
+                AttachableContext.thirdPerson(!rightIsMain).looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
 
         // And what the player is WEARING. A Bedrock halo is an armour piece with an attachable, and
@@ -73,27 +79,33 @@ public final class AttachableLayer extends RenderLayer<AvatarRenderState, Player
         // head slot) which is already resolved to a render state and cannot be read back. An
         // earlier note in this project said worn slots were unreachable; it was looking at the
         // wrong field.
-        draw(state.headEquipment, AttachableContext.worn("head").looking(xRot, yRot),
+        draw(state.headEquipment, state.id, "head",
+                AttachableContext.worn("head").looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
-        draw(state.chestEquipment, AttachableContext.worn("chest").looking(xRot, yRot),
+        draw(state.chestEquipment, state.id, "chest",
+                AttachableContext.worn("chest").looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
-        draw(state.legsEquipment, AttachableContext.worn("legs").looking(xRot, yRot),
+        draw(state.legsEquipment, state.id, "legs",
+                AttachableContext.worn("legs").looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
-        draw(state.feetEquipment, AttachableContext.worn("feet").looking(xRot, yRot),
+        draw(state.feetEquipment, state.id, "feet",
+                AttachableContext.worn("feet").looking(xRot, yRot).doing(doing),
                 skeleton, poseStack, collector, light);
     }
 
     /** A stack in a hand, which draws only when the pack did not declare it as something worn. */
-    private void held(ItemStack stack, AttachableContext context, Map<String, Mat4f> skeleton,
-            PoseStack poseStack, SubmitNodeCollector collector, int light) {
+    private void held(ItemStack stack, int entity, String slot, AttachableContext context,
+            Map<String, Mat4f> skeleton, PoseStack poseStack, SubmitNodeCollector collector,
+            int light) {
         if (stack == null || AddonItem.wornRatherThanHeld(stack)) {
             return;
         }
-        draw(stack, context, skeleton, poseStack, collector, light);
+        draw(stack, entity, slot, context, skeleton, poseStack, collector, light);
     }
 
-    private void draw(ItemStack stack, AttachableContext context, Map<String, Mat4f> skeleton,
-            PoseStack poseStack, SubmitNodeCollector collector, int light) {
+    private void draw(ItemStack stack, int entity, String slot, AttachableContext context,
+            Map<String, Mat4f> skeleton, PoseStack poseStack, SubmitNodeCollector collector,
+            int light) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
@@ -104,7 +116,10 @@ public final class AttachableLayer extends RenderLayer<AvatarRenderState, Player
                     toPlayerSpace(poseStack);
                     AttachableGeometry.submit(collector, poseStack, bound.texture(),
                             bound.geometry(),
-                            bound.poseAt(AttachableClock.seconds(), context, skeleton),
+                            // THIS holder's playback: when each of her animations began and which
+                            // state her controller is in. Per slot as well as per player - the two
+                            // hands are two attachables whose clocks start at different moments.
+                            bound.poseAt(AttachablePlaybacks.of(entity, slot), context, skeleton),
                             AttachableGeometry.ON_PLAYER,
                             light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                             NO_TINT);

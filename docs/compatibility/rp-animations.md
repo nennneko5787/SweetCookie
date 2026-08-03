@@ -11,20 +11,20 @@ Ledger: [`spec/coverage/rp-animations.yaml`](../../spec/coverage/rp-animations.y
 | `animation/rotation` | stub |  |
 | `animation/position` | stub |  |
 | `animation/scale` | stub |  |
-| `animation/lerp_mode` | stub | linear and catmullrom. |
-| `animation/pre_post_keyframes` | stub | Allows a discontinuity at one instant. |
-| `animation/loop` | stub |  |
+| `animation/lerp_mode` | partial | A segment is curved when EITHER of its two keyframes asks for it, which is the direction the reference implementation tests in - it takes the straight line only when the earlier keyframe is linear and the later one is linear or a step. The spline is the uniform tension-half Catmull-Rom through the two neighbouring keyframes as well as the segment's own ends, clamped at the ends of a channel. SC-180 section 4.1.2. Uniform, so keyframe times do not space the parameter. That is what the reference does and it is copied rather than improved on. A looping animation does not wrap: the reference joins the last keyframe to the first across the loop point and reaches round for the outer control points, and this holds the outermost keyframe instead. `step` is not read. It appears nowhere in the surveyed corpus, where a `pre`/`post` pair is the form used for a discontinuity. |
+| `animation/pre_post_keyframes` | partial | A segment runs from its earlier keyframe's `post` to its later keyframe's `pre`, so a keyframe carrying both steps at that instant. A keyframe that steps also ends a Catmull-Rom curve: the neighbour past it is not reached for, because the pack asked for the discontinuity. NOT exercised by anything: no animation in the surveyed corpus writes two values. Claimed on unit tests and on the reference implementation's behaviour, not on a frame. Exactly at a keyframe's own time this answers `post`, the value it leaves with. The reference answers `pre` there. The difference is one instant of a discontinuity and nothing can see it. |
+| `animation/loop` | partial | A looping animation wraps against `animation_length`; one that does not hold its last frame. The clock it wraps against is the HOLDER's, starting the first frame the animation's blend is non-zero - SC-180 section 4.1.1, and the reason a six-hundred-second animation in the surveyed corpus used to be at an arbitrary phase. `hold_on_last_frame` collapses to `loop: false` in the IR, so a plain non-looping animation cannot be told from a holding one. Bedrock ends both, but removes the pose of one and keeps the other. No animation in the surveyed corpus is plainly non-looping, so nothing can see the difference yet. `loop_delay` and `start_delay` are not read. |
 | `animation/loop_delay` | stub |  |
 | `animation/start_delay` | stub |  |
 | `animation/anim_time_update` | stub | Evaluated per frame; interaction with a variable frame rate is a fidelity concern. |
-| `animation/blend_weight` | stub |  |
+| `animation/blend_weight` | partial | Read as a number or as Molang, evaluated per frame, and multiplied into the blend the playing entry of `scripts.animate` asks for - SC-180 section 4.1.1, where the two are shown to be one quantity stated from either end. Rotation and position scale by it; scale interpolates from one, because a blend of zero has to leave a bone the size it was. No animation in the surveyed corpus writes the field, so nothing observable exercises this. It is claimed on the parser and on unit tests, not on a frame. The DOCUMENT said this field was "parsed and not applied" for as long as the section existed, and it was not parsed at all. A capability nothing in the corpus exercises can be claimed by prose alone for a long time. |
 | `animation/override_previous_animation` | stub |  |
 | `animation/particle_effects` | stub |  |
 | `animation/sound_effects` | stub |  |
 | `animation/timeline` | stub |  |
-| `animation_controller/states` | stub |  |
-| `animation_controller/transitions` | stub |  |
-| `animation_controller/blend_transition` | stub |  |
+| `animation_controller/states` | partial | A state's animations are looked up in the entity's own `animations` map, and a name that map does not define plays nothing - which is the normal case, not an error. Mojang's elytra controller names five animations and the attachables that borrow it define two. The state is the HOLDER's, kept per entity id and slot, and the machine takes at most one transition per frame from where the last one left it - which is Bedrock's. SC-180 section 5.2. `on_entry`, `on_exit` and `query.all_animations_finished` are not read. `variables` is not read either. |
+| `animation_controller/transitions` | partial | Ordered, first non-zero wins, as Mojang states. Guards written as numbers or booleans are read too - a guard of `1` is a transition that always fires, and dropping it would be a state the entity could never leave. One transition per frame, from the state the last frame left, as Bedrock does. A cycle in the pack's own file therefore flickers between two states rather than freezing - the surveyed corpus contains one, and both of its states draw nothing. SC-180 section 5.2. |
+| `animation_controller/blend_transition` | stub | Parsed and not applied: a cross-fade is a fact about the previous state, and nothing here remembers one. SC-180 section 5.2. |
 | `animation_controller/on_entry` | stub |  |
 | `animation_controller/on_exit` | stub |  |
 | `animation_controller/particle_effects` | stub |  |

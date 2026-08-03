@@ -63,7 +63,7 @@ class AnimationFilesTest {
         // A constant is a timeline of one, so the sampler has one shape to handle rather than two.
         AnimationIr.Channel root = idle.bones().get("root3").position().orElseThrow();
         assertTrue(root.isConstant());
-        assertEquals(Optional.of(3.0f), root.keyframes().get(0.0f).components().get(1).number());
+        assertEquals(Optional.of(3.0f), root.keyframes().get(0.0f).post().get(1).number());
 
         // Keyframes, in time order.
         AnimationIr.Channel body = idle.bones().get("body3").rotation().orElseThrow();
@@ -80,16 +80,16 @@ class AnimationFilesTest {
                 .keyframes().get(0.0f);
         assertFalse(head.isNumeric());
         assertEquals(Optional.of("query.target_x_rotation - 10 - this"),
-                head.components().get(0).molang());
-        assertEquals(Optional.of(-9.0f), head.components().get(2).number());
-        assertEquals(Optional.empty(), head.components().get(2).molang());
+                head.post().get(0).molang());
+        assertEquals(Optional.of(-9.0f), head.post().get(2).number());
+        assertEquals(Optional.empty(), head.post().get(2).molang());
 
         // A bare number means all three axes. This is how a pack hides a bone.
         AnimationIr.Keyframe hidden = idle.bones().get("bag2").scale().orElseThrow()
                 .keyframes().get(0.0f);
         assertTrue(hidden.isNumeric());
-        assertEquals(Optional.of(0.0f), hidden.components().get(0).number());
-        assertEquals(Optional.of(0.0f), hidden.components().get(2).number());
+        assertEquals(Optional.of(0.0f), hidden.post().get(0).number());
+        assertEquals(Optional.of(0.0f), hidden.post().get(2).number());
     }
 
     /**
@@ -116,10 +116,16 @@ class AnimationFilesTest {
                         .keyframes().keySet()));
     }
 
+    /**
+     * A keyframe carrying {@code pre} and {@code post} keeps <b>both</b>. SC-180 §4.1.2.
+     *
+     * <p>They are the value the channel arrives at and the value it leaves with, which is how an
+     * animation steps at an instant. This reader took `post` and dropped `pre` for as long as it
+     * has existed, turning every step into a ramp on the incoming edge — invisible, because no
+     * animation in the surveyed corpus writes one.
+     */
     @Test
-    void aKeyframeCarryingPreAndPostIsReadFromPost() {
-        // A step in the animation: `pre` is the value up TO that time and `post` from it onward.
-        // An interpolation starting at the keyframe needs the second.
+    void aKeyframeCarryingPreAndPostKeepsBoth() {
         AnimationIr animation = parse("""
                 {
                   "format_version": "1.8.0",
@@ -131,9 +137,70 @@ class AnimationFilesTest {
                     }
                   }
                 }""").get(0);
-        assertEquals(Optional.of(90.0f),
-                animation.bones().get("a").rotation().orElseThrow()
-                        .keyframes().get(1.0f).components().get(0).number());
+        AnimationIr.Keyframe step = animation.bones().get("a").rotation().orElseThrow()
+                .keyframes().get(1.0f);
+        assertEquals(Optional.of(0.0f), step.pre().get(0).number());
+        assertEquals(Optional.of(90.0f), step.post().get(0).number());
+        assertTrue(step.steps());
+    }
+
+    /**
+     * {@code lerp_mode} sits on the keyframe, and one value stands for both sides. SC-180 §4.1.2.
+     *
+     * <p>Written exactly as the corpus has it — 233 keyframes across 22 files, every one of them
+     * a bare {@code post} beside a {@code catmullrom} — so this fixture is the real shape rather
+     * than the schema's most general one.
+     */
+    @Test
+    void lerpModeIsReadFromTheKeyframeAndDefaultsToLinear() {
+        AnimationIr animation = parse("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.x": {
+                      "bones": {
+                        "rightLeg": {
+                          "rotation": {
+                            "0.0": { "post": [-40, 0, 0], "lerp_mode": "catmullrom" },
+                            "0.4167": [40, 0, 0]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }""").get(0);
+        AnimationIr.Channel leg = animation.bones().get("rightLeg").rotation().orElseThrow();
+        assertEquals(AnimationIr.LerpMode.CATMULLROM, leg.keyframes().get(0.0f).lerp());
+        assertEquals(Optional.of(-40.0f), leg.keyframes().get(0.0f).pre().get(0).number());
+        assertFalse(leg.keyframes().get(0.0f).steps());
+        assertEquals(AnimationIr.LerpMode.LINEAR, leg.keyframes().get(0.4167f).lerp());
+    }
+
+    /**
+     * {@code blend_weight} is a number or an expression, and absent is not zero. SC-180 §4.1.1.
+     *
+     * <p>Mojang: "default = '1.0'. How much this animation is blended with the others. 0.0 = off.
+     * 1.0 = fully apply all transforms. <b>Can be an expression.</b>" So it reads into the same
+     * number-or-Molang shape a keyframe component has, and stays absent when unwritten — a default
+     * filled in here would let nothing downstream tell "the pack said 1.0" from "the pack said
+     * nothing", which is the distinction {@code override_previous_animation} will need.
+     */
+    @Test
+    void blendWeightIsANumberOrAnExpressionAndAbsentWhenUnwritten() {
+        List<AnimationIr> animations = parse("""
+                {
+                  "format_version": "1.8.0",
+                  "animations": {
+                    "animation.half":  { "blend_weight": 0.5, "bones": {} },
+                    "animation.speed": { "blend_weight": "query.modified_move_speed",
+                                         "bones": {} },
+                    "animation.plain": { "bones": {} }
+                  }
+                }""");
+        assertEquals(Optional.of(0.5f), animations.get(0).blendWeight().orElseThrow().number());
+        assertEquals(Optional.of("query.modified_move_speed"),
+                animations.get(1).blendWeight().orElseThrow().molang());
+        assertEquals(Optional.empty(), animations.get(2).blendWeight());
     }
 
     @Test
